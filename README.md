@@ -3,8 +3,12 @@ A custom Predbat table card that allows flexible column management and styling
 
 ## Installation
 
-1. Install via HACS. Search for Predbat Table Card and install.
-2. You may need to add the resource file to your resources area of dashboard
+1. Goto HACS (if you dont have that installed, install HACS)
+2. Add a custom repository
+3. Add the URL to this repo: `https://github.com/pacemaker82/PredBat-Table-Card`
+4. Go back to HACS and search for "Predbat table card"
+5. Download and refresh
+6. Add the card to your dashboard resources if not already there. Usually located at `/hacsfiles/PredBat-Table-Card/predbat-table-card.js`
 
 ## Setup
 
