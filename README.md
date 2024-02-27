@@ -12,7 +12,7 @@ The following config items can or should be set on the card
 
 | Confiuration Item | Required | Value |
 |----------|----------|----------|
-| `type`   | YES    | `predbat-table-card-new`    |
+| `type`   | YES    | `predbat-table-card`    |
 | `entity`   | YES    | `predbat.plan_html` or name of the entity holding the Predbat plan HTML    |
 | `columns`    | YES    | `time-column` `import-column` `export-column` `state-column` `limit-column` `pv-column` `load-column` `soc-column` `cost-column` `total-column` <br>Use `car-column` if EV is setup. <br>Provide ***in any order*** you want <br>At least 1 column needs to be used|
 | `odd_row_colour`    | NO    | HEX value e.g. `#FFFFFF` otherwise default colour will be used   |
@@ -22,7 +22,7 @@ The following config items can or should be set on the card
 Use this default card config YAML to get started (paste into the card YAML):
 
 ```
-type: custom:predbat-table-card-new
+type: custom:predbat-table-card
 entity: predbat.plan_html
 columns:
   - time-column
