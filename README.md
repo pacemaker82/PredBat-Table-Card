@@ -23,7 +23,7 @@ The following config items can or should be set on the card
 | `columns`    | YES    | `time-column` `import-column` `export-column` `state-column` `limit-column` `pv-column` `load-column` `soc-column` `cost-column` `total-column` <br>Use `car-column` if EV is setup. <br>Provide ***in any order*** you want <br>At least 1 column needs to be used|
 | `odd_row_colour`    | NO    | HEX value e.g. `#FFFFFF` otherwise default colour will be used   |
 | `even_row_colour`    | NO    | HEX value e.g. `#FFFFFF` otherwise default colour will be used   |
-| `table_width`    | NO    | From `0` to `100` representing percentage width. If not set default will be used   |
+| `table_width`    | NO    | From `0` to `100` representing percentage width. If not set default will be used. <br> Card will use the percentage based on the container the card is in. E.g. if you put the card in a single card template and set to `100` it will display on the entire screen   |
 
 Use this default card config YAML to get started (paste into the card YAML):
 
@@ -44,4 +44,23 @@ columns:
 odd_row_colour: '#181f2a'
 even_row_colour: '#2a3240'
 table_width: 100
+```
+
+## Custom Setup example
+
+Below shows how you can use any column in any order, just put them in the list how you want them:
+
+```
+type: custom:predbat-table-card
+entity: predbat.plan_html
+columns:
+  - time-column
+  - state-column
+  - soc-column
+  - load-column
+  - limit-column
+  - total-column
+odd_row_colour: '#181f2a'
+even_row_colour: '#2a3240'
+table_width: 50
 ```
