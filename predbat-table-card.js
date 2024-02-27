@@ -97,9 +97,9 @@ class PredbatTableCard extends HTMLElement {
                 newContent = theItem.value.replace(/[☀]/g, '');
                 let additionalIcon = "";
                 if(theItem.value.includes("☀")) {
-                    additionalIcon = '<ha-icon icon="mdi:white-balance-sunny" style="position: relative; top: -2px;"></ha-icon>';
+                    additionalIcon = '<ha-icon icon="mdi:white-balance-sunny" style="margin: 0 4px;"></ha-icon>';
                 }
-                newCell.innerHTML = `${additionalIcon} ${newContent}`;
+                newCell.innerHTML = `<div class="iconContainer">${additionalIcon} <div style="margin: 0 4px;">${newContent}</div></div>`;
             }
         } else {
             newCell.textContent = theItem.value;
@@ -117,17 +117,17 @@ class PredbatTableCard extends HTMLElement {
 
                 if(theItem.value.includes("↘")) {
                     // include a down arrow
-                    additionalArrow = '<ha-icon icon="mdi:arrow-down-thin" style=""></ha-icon>';
+                    additionalArrow = '<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 2px;"></ha-icon>';
                 } else if (theItem.value.includes("↗")) {
                     // include a down arrow
-                    additionalArrow = '<ha-icon icon="mdi:arrow-up-thin"></ha-icon>';                    
+                    additionalArrow = '<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 2px;"></ha-icon>';                    
                 }
                 
                 if(column === "soc-column") {
                     newContent += "%";
                 }
 
-          newCell.innerHTML = `${newContent} ${additionalArrow}`;
+          newCell.innerHTML = `<div class="iconContainer"><div style="margin: 0 2px;">${newContent}</div>${additionalArrow}</div>`;
       
     } else if(column === "state-column"){
 
@@ -407,7 +407,7 @@ class PredbatTableCard extends HTMLElement {
     .card-content tbody tr td {
         
         height: 40px;
-        padding: 2px;
+        align-items: center;
         width: 60px;
         border: 0;
         text-align: center;
@@ -426,6 +426,13 @@ class PredbatTableCard extends HTMLElement {
     #limitSVG {
       position: relative;
       top: 2px;
+    }
+    
+    .iconContainer {
+      display: flex;
+      align-items: center; /* Center content vertically */
+      justify-content: center; /* Center content horizontally */
+      height: 40px; /* Set height of table cell */
     }
     
     `;
