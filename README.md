@@ -1,6 +1,8 @@
 # PredBat-Table-Card
 A custom Predbat table card that allows flexible column management and styling
 
+![A screenshot of the Predbat Table Card](https://github.com/pacemaker82/PredBat-Table-Card/blob/main/screenshot.png?raw=true)
+
 ## Installation
 
 1. Goto HACS (if you dont have that installed, install HACS)
