@@ -48,13 +48,32 @@ class PredbatTableCard extends HTMLElement {
         
         let newRow = document.createElement('tr');
         
+        let isMidnight = false;
         columnsToReturn.forEach((column, index) => { // Use arrow function here
+            if(item["time-column"].value.includes("23:30"))
+                isMidnight = true;
             let newColumn = this.getCellTransformation(item[column], column);
             newRow.appendChild(newColumn);
         });
         
         newTableBody.appendChild(newRow);
-
+        
+        if(isMidnight){
+            
+            // add two rows because otherwise it messes with the alternate row scheme
+            for (let i = 0; i < 2; i++) {
+                let dividerRow = document.createElement('tr');
+                dividerRow.classList.add('daySplitter');
+                    for(let j = 0; j < columnsToReturn.length; j++) {
+                        let newCell = document.createElement('td');
+                        newCell.style.backgroundColor = "#e1e1e1";
+                        newCell.style.height = "1px";
+                        newCell.style.opacity = 0.3;
+                        dividerRow.appendChild(newCell);
+                    }
+                newTableBody.appendChild(dividerRow);
+            }
+        }
     });
     
     theTable.appendChild(newTableBody);
@@ -93,22 +112,29 @@ class PredbatTableCard extends HTMLElement {
     
     if(column !== "import-export-column"){
         newCell.style.color = theItem.color;
-    }
-    
-    if(column === "load-column" || column === "pv-column") {
- 
-        if(column === "pv-column"){
-            if(theItem.value.length > 0) {
-                newContent = theItem.value.replace(/[☀]/g, '');
-                let additionalIcon = "";
-                if(theItem.value.includes("☀")) {
-                    additionalIcon = '<ha-icon icon="mdi:white-balance-sunny" style="margin: 0 4px;"></ha-icon>';
-                }
-                newCell.innerHTML = `<div class="iconContainer">${additionalIcon} <div style="margin: 0 4px;">${newContent}</div></div>`;
-            }
-        } else {
+        if(theItem.value.replace(/\s/g, '').length === 0) {
+            if(this.config.fill_empty_cells)
+                newCell.innerHTML = `<div class="iconContainer"><ha-icon icon="mdi:minus" style="margin: 0 2px; opacity: 0.25;"></ha-icon></div>`;
+        } else 
             newCell.textContent = theItem.value;
-        }
+    }
+
+    if(column === "load-column" || column === "pv-column") {
+        
+            if(column === "pv-column"){
+                if(theItem.value.length > 0) {
+                    newContent = theItem.value.replace(/[☀]/g, '');
+                    let additionalIcon = "";
+                    if(theItem.value.includes("☀")) {
+                        additionalIcon = '<ha-icon icon="mdi:white-balance-sunny" style="margin: 0 4px;"></ha-icon>';
+                    }
+                    newCell.innerHTML = `<div class="iconContainer">${additionalIcon} <div style="margin: 0 4px;">${newContent}</div></div>`;
+                }
+            } else {
+                newCell.textContent = theItem.value;
+            }
+
+        
     } else if(column === "time-column" || column === "total-column"){
           
         newCell.style.color = "#FFFFFF";
@@ -126,6 +152,9 @@ class PredbatTableCard extends HTMLElement {
                 } else if (theItem.value.includes("↗")) {
                     // include a down arrow
                     additionalArrow = '<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 2px;"></ha-icon>';                    
+                } else {
+                    if(this.config.fill_empty_cells)
+                        additionalArrow = '<ha-icon icon="mdi:minus" style="margin: 0 2px; opacity: 0.25;"></ha-icon>';                 
                 }
                 
                 if(column === "soc-column") {
@@ -159,21 +188,22 @@ class PredbatTableCard extends HTMLElement {
 
           newCell.innerHTML = `${additionalArrow}`;
           
-      } else if(column === "limit-column"){
-          
-            if(theItem.value.replace(/\s/g, '').length > 0){
+    } else if(column === "limit-column"){
 
-                newCell.innerHTML = `<svg version="1.1" width="42" height="42" id="limitSVG">
-                                <circle cx="21" cy="21" r="14" stroke="#2a3240" stroke-width="2" fill="#e1e1e1"/>
-                                <text x="21" y="22" dominant-baseline="middle" text-anchor="middle" fill="#2a3240" font-size="11"} font-weight="bold">${theItem.value}</text>
-                            </svg>`;
-            
-            }
-      } else if (column === "import-column" || column === "export-column") {
+        if(theItem.value.replace(/\s/g, '').length > 0){
+
+            newCell.innerHTML = `<svg version="1.1" width="42" height="42" id="limitSVG">
+                            <circle cx="21" cy="21" r="14" stroke="#2a3240" stroke-width="2" fill="#e1e1e1"/>
+                            <text x="21" y="22" dominant-baseline="middle" text-anchor="middle" fill="#2a3240" font-size="11"} font-weight="bold">${theItem.value}</text>
+                        </svg>`;
+        
+        }
+        
+    } else if (column === "import-column" || column === "export-column") {
             
             newCell.innerHTML = '<div class="iconContainer">' + this.getTransformedCostToPill(theItem) + '</div>';
 
-      } else if(column === "import-export-column"){
+    } else if(column === "import-export-column"){
           
             
             let newPills = "";
@@ -182,11 +212,9 @@ class PredbatTableCard extends HTMLElement {
             });
             
             newCell.innerHTML = '<div class="multiPillContainer">' + newPills + '</div>';
-            
-            
-    } else {
-        newCell.textContent = theItem.value;
+
     }  
+    
 
       return newCell;
   }
@@ -330,7 +358,7 @@ class PredbatTableCard extends HTMLElement {
                 // Loop through each <td> element inside the current <tr>
                 tdElements.forEach((tdElement, tdIndex) => {
                     
-                    const bgColor = tdElement.getAttribute('bgcolor');                    
+                    const bgColor = tdElement.getAttribute('bgcolor'); 
                     
                     if(tdIndex ===2){
                         currentExportRate = tdElement.innerHTML;
@@ -430,6 +458,11 @@ class PredbatTableCard extends HTMLElement {
         color: #8a919e;
     }
     
+    .daySplitter {
+        height: 1px;
+        background-color: #e1e1e1;
+    }    
+    
     .card-content tbody tr td {
         
         height: ${maxHeight};
@@ -438,6 +471,7 @@ class PredbatTableCard extends HTMLElement {
         border: 0;
         text-align: center;
         white-space: nowrap;
+        color: #FFFFFF;
     }
     
     .card-content tbody tr td:nth-child(1) {
@@ -467,7 +501,6 @@ class PredbatTableCard extends HTMLElement {
       height: 54px; /* Set height of table cell */
       margin-top: 4px;
     }    
-    
     `;
 	}
 	
