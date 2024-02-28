@@ -116,7 +116,7 @@ class PredbatTableCard extends HTMLElement {
             if(this.config.fill_empty_cells)
                 newCell.innerHTML = `<div class="iconContainer"><ha-icon icon="mdi:minus" style="margin: 0 2px; opacity: 0.25;"></ha-icon></div>`;
         } else 
-            newCell.textContent = theItem.value;
+            newCell.innerHTML = `<div class="iconContainer">${theItem.value}</div>`;
     }
 
     if(column === "load-column" || column === "pv-column") {
@@ -131,14 +131,15 @@ class PredbatTableCard extends HTMLElement {
                     newCell.innerHTML = `<div class="iconContainer">${additionalIcon} <div style="margin: 0 4px;">${newContent}</div></div>`;
                 }
             } else {
-                newCell.textContent = theItem.value;
+                newCell.innerHTML = `<div class="iconContainer">${theItem.value}</div>`;
             }
 
         
     } else if(column === "time-column" || column === "total-column"){
           
         newCell.style.color = "#FFFFFF";
-        newCell.textContent = theItem.value;
+        
+        newCell.innerHTML = `<div class="iconContainer">${theItem.value}</div>`;
         
     } else if(column === "soc-column" || column === "cost-column"){
 
@@ -186,16 +187,16 @@ class PredbatTableCard extends HTMLElement {
                     additionalArrow = '<ha-icon icon="mdi:battery-charging-100" style="color: var(--energy-battery-in-color);"></ha-icon><ha-icon icon="mdi:battery-minus" style="color: var(--energy-battery-out-color);"></ha-icon>';
                 }
 
-          newCell.innerHTML = `${additionalArrow}`;
+          newCell.innerHTML = `<div class="iconContainer">${additionalArrow}</div>`;
           
     } else if(column === "limit-column"){
 
         if(theItem.value.replace(/\s/g, '').length > 0){
 
-            newCell.innerHTML = `<svg version="1.1" width="42" height="42" id="limitSVG">
+            newCell.innerHTML = `<div class="iconContainer"><svg version="1.1" width="42" height="42" id="limitSVG">
                             <circle cx="21" cy="21" r="14" stroke="#2a3240" stroke-width="2" fill="#e1e1e1"/>
                             <text x="21" y="22" dominant-baseline="middle" text-anchor="middle" fill="#2a3240" font-size="11"} font-weight="bold">${theItem.value}</text>
-                        </svg>`;
+                        </svg></div>`;
         
         }
         
@@ -480,10 +481,11 @@ class PredbatTableCard extends HTMLElement {
       background-color:  ${oddColour};
     }
     
-    .topHeader {
+    .card-content table thead tr th {
         background-color: ${evenColour};
         height: 60px;
         color: #8a919e;
+        text-align: center; !important
     }
     
     .daySplitter {
@@ -491,7 +493,7 @@ class PredbatTableCard extends HTMLElement {
         background-color: #e1e1e1;
     }    
     
-    .card-content tbody tr td {
+    .card-content table tbody tr td {
         
         height: ${maxHeight};
         align-items: center;
@@ -513,7 +515,7 @@ class PredbatTableCard extends HTMLElement {
     
     #limitSVG {
       position: relative;
-      top: 2px;
+      top: 0px;
     }
     
     .iconContainer {
