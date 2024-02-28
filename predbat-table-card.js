@@ -200,18 +200,43 @@ class PredbatTableCard extends HTMLElement {
         }
         
     } else if (column === "import-column" || column === "export-column") {
+        
+        if (theItem.value.includes("(") || theItem.value.includes(")")) {
+            let newPills = "";
+            const hasBoldTags = /<b>.*?<\/b>/.test(theItem.value);
             
+            const regex = /(?:<[^>]+>)?([^\s<]+)\s+\(([^)]+)\)(?:<\/[^>]+>)?/;
+            const matches = theItem.value.match(regex);
+            
+            if (matches && matches.length === 3) {
+                let firstPart = matches[1] + " "; 
+                let secondPart = `(${matches[2]}) `;
+                
+                if(hasBoldTags){
+                    firstPart = `<b>${matches[1]}</b>`; 
+                    secondPart = `<b>(${matches[2]})</b>`;
+                }
+
+                newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill({"value":firstPart, "color":theItem.color}) + '</div>';
+                newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill({"value":secondPart, "color":theItem.color}) + '</div>';
+                newCell.innerHTML = '<div class="multiPillContainer">' + newPills + '</div>';
+            }
+        } else {
+            //console.log("String does not contain '(' or ')'");
             newCell.innerHTML = '<div class="iconContainer">' + this.getTransformedCostToPill(theItem) + '</div>';
+        }
+            
+        
 
     } else if(column === "import-export-column"){
           
             
-            let newPills = "";
-            theItem.forEach((item, index) => {
-                newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill(item) + '</div>';
-            });
-            
-            newCell.innerHTML = '<div class="multiPillContainer">' + newPills + '</div>';
+        let newPills = "";
+        theItem.forEach((item, index) => {
+            newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill(item) + '</div>';
+        });
+        
+        newCell.innerHTML = '<div class="multiPillContainer">' + newPills + '</div>';
 
     }  
     
@@ -241,6 +266,9 @@ class PredbatTableCard extends HTMLElement {
             
             // Measure the width of the text in pixels
             let textWidth = contentWithoutTags.length * 8.5;// Adjust the factor based on your font and size
+            if(textWidth < 45){
+                textWidth = 45;
+            }
             
             const textColor = this.getDarkenHexColor(theItem.color, 60);
             
