@@ -16,7 +16,7 @@ class PredbatTableCard extends HTMLElement {
     const state = hass.states[entityId];
     const stateStr = state ? state.state : "unavailable";
     const columnsToReturn = this.config.columns;
-    
+
     let rawHTML = hass.states[entityId].attributes.html;
 
     const lastUpdated = this.getLastUpdatedFromHTML(rawHTML);
@@ -30,8 +30,8 @@ class PredbatTableCard extends HTMLElement {
     let newHeaderRow = document.createElement('tr');
     newTableHead.classList.add('topHeader');   
         
+    //create the header rows
     columnsToReturn.forEach((column, index) => {
-            
         let newColumn = document.createElement('th');
         newColumn.textContent = this.getColumnDescription(column);
         newHeaderRow.appendChild(newColumn);
@@ -43,6 +43,7 @@ class PredbatTableCard extends HTMLElement {
     // set out the data rows
     let newTableBody = document.createElement('tbody');
     
+    // create the data rows
     dataArray.forEach((item, index) => {
         
         let newRow = document.createElement('tr');
@@ -86,10 +87,14 @@ class PredbatTableCard extends HTMLElement {
   }
   
   getCellTransformation(theItem, column) {
+    
     let newCell = document.createElement('td');
-    newCell.style.color = theItem.color;
     let newContent = "";
-        
+    
+    if(column !== "import-export-column"){
+        newCell.style.color = theItem.color;
+    }
+    
     if(column === "load-column" || column === "pv-column") {
  
         if(column === "pv-column"){
@@ -166,6 +171,28 @@ class PredbatTableCard extends HTMLElement {
             }
       } else if (column === "import-column" || column === "export-column") {
             
+            newCell.innerHTML = '<div class="iconContainer">' + this.getTransformedCostToPill(theItem) + '</div>';
+
+      } else if(column === "import-export-column"){
+          
+            
+            let newPills = "";
+            theItem.forEach((item, index) => {
+                newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill(item) + '</div>';
+            });
+            
+            newCell.innerHTML = '<div class="multiPillContainer">' + newPills + '</div>';
+            
+            
+    } else {
+        newCell.textContent = theItem.value;
+    }  
+
+      return newCell;
+  }
+  
+  getTransformedCostToPill(theItem){
+      
             const hasBoldTags = /<b>.*?<\/b>/.test(theItem.value);
             const hasItalicTags = /<i>.*?<\/i>/.test(theItem.value);
             
@@ -192,18 +219,12 @@ class PredbatTableCard extends HTMLElement {
             
             const textColor = this.getDarkenHexColor(theItem.color, 60);
             
-            let svgLozenge = `<svg version="1.1" width=${textWidth} height="40">
-                                <rect x="4" y="12" width="${textWidth-10}" height="20" fill="${theItem.color}"${boldLozenge} ry="10" rx="10"/>
-                                <text x="48%" y="22" dominant-baseline="middle" text-anchor="middle" fill="${textColor}" font-size="11"${boldAttribute}>${contentWithoutTags}</text>
+            let svgLozenge = `<svg version="1.1" width=${textWidth} height="24" style="margin-top: 0px;">
+                                <rect x="4" y="2" width="${textWidth-10}" height="20" fill="${theItem.color}"${boldLozenge} ry="10" rx="10"/>
+                                <text x="48%" y="13" dominant-baseline="middle" text-anchor="middle" fill="${textColor}" font-size="11"${boldAttribute}>${contentWithoutTags}</text>
                             </svg>`;
             
-            newCell.innerHTML = svgLozenge;
-
-      } else {
-        newCell.textContent = theItem.value;
-    }  
-
-      return newCell;
+            return svgLozenge;
   }
   
   getLastUpdatedFromHTML(html) {
@@ -242,7 +263,8 @@ class PredbatTableCard extends HTMLElement {
           'soc-column': { description: "SOC %" },
           'car-column': { description: "Car kWh" },
           'cost-column': { description: "Cost" },
-          'total-column': { description: "Total Cost" }
+          'total-column': { description: "Total Cost" },
+          'import-export-column': {description: "Import \n/ Export" }
         };
         
         if (headerClassesObject.hasOwnProperty(column)) {
@@ -352,6 +374,8 @@ class PredbatTableCard extends HTMLElement {
                     newTRObject[headerClassesArray[3]] = {"value": "Both", "color": "green"};
                 }
                 
+                newTRObject["import-export-column"] = [newTRObject[headerClassesArray[1]], newTRObject[headerClassesArray[2]]];
+                
                 newDataObject.push(newTRObject);
             }
             
@@ -367,7 +391,8 @@ class PredbatTableCard extends HTMLElement {
 	let tableWidth = 100;
 	let oddColour = "#181f2a";
 	let evenColour = "#2a3240";
-	    
+	let maxHeight = "42px";
+	
 	//use yaml width if exists
 	if(this.config.table_width !== undefined){
 	    tableWidth = this.config.table_width;
@@ -379,6 +404,10 @@ class PredbatTableCard extends HTMLElement {
 	
 	if(this.config.even_row_colour !== undefined){
 	    evenColour = this.config.even_row_colour;
+	}
+	
+	if(this.config.columns !== undefined && this.config.columns.indexOf("import-export-column") >= 0){
+	    maxHeight = "54px";
 	}
 	   
 		return `
@@ -406,7 +435,7 @@ class PredbatTableCard extends HTMLElement {
     
     .card-content tbody tr td {
         
-        height: 40px;
+        height: ${maxHeight};
         align-items: center;
         width: 60px;
         border: 0;
@@ -432,8 +461,15 @@ class PredbatTableCard extends HTMLElement {
       display: flex;
       align-items: center; /* Center content vertically */
       justify-content: center; /* Center content horizontally */
-      height: 40px; /* Set height of table cell */
+      height: 42px; /* Set height of table cell */
     }
+    
+    .multiPillContainer {
+      align-items: center; /* Center content vertically */
+      justify-content: center; /* Center content horizontally */
+      height: 54px; /* Set height of table cell */
+      margin-top: 4px;
+    }    
     
     `;
 	}
