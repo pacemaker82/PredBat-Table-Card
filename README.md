@@ -24,6 +24,7 @@ The following config items can or should be set on the card
 | `odd_row_colour`    | NO    | HEX value e.g. `#FFFFFF` otherwise default colour will be used   |
 | `even_row_colour`    | NO    | HEX value e.g. `#FFFFFF` otherwise default colour will be used   |
 | `table_width`    | NO    | From `0` to `100` representing percentage width. If not set default will be used. <br> Card will use the percentage based on the container the card is in. E.g. if you put the card in a single card template and set to `100` it will display on the entire screen   |
+| `fill_empty_cells`    | NO    | `true` or `false`. Will add a "-" symbol where data isnt available to clear out empty space   |
 
 You can use `import-export-column` to see both import and export prices in a single column
 
