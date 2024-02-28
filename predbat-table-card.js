@@ -212,10 +212,8 @@ class PredbatTableCard extends HTMLElement {
             }
             
             // Measure the width of the text in pixels
-            let textWidth = contentWithoutTags.length * 10;// Adjust the factor based on your font and size
-            if (textWidth < 40) {
-                textWidth = 60;
-            }
+            let textWidth = contentWithoutTags.length * 8.5;// Adjust the factor based on your font and size
+            console.log(textWidth);
             
             const textColor = this.getDarkenHexColor(theItem.color, 60);
             
