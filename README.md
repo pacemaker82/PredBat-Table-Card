@@ -47,6 +47,7 @@ columns:
 odd_row_colour: '#181f2a'
 even_row_colour: '#2a3240'
 table_width: 100
+fill_empty_cells: true
 ```
 
 ## Custom Setup example
@@ -66,4 +67,5 @@ columns:
 odd_row_colour: '#181f2a'
 even_row_colour: '#2a3240'
 table_width: 50
+fill_empty_cells: true
 ```
