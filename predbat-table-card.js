@@ -228,6 +228,9 @@ class PredbatTableCard extends HTMLElement {
                 contentWithoutTags = theItem.value;
             }
             
+            // remove the = sign if its in there
+            contentWithoutTags = contentWithoutTags.replace(/=/g, '');
+            
             //const regex = /(?:<[^>]+>)?([^\s<]+)\s+\(([^)]+)\)(?:<\/[^>]+>)?/;
             const regex = /(?:<[^>]+>)?([^\s<]+(?:\s*\?)?)\s+\(([^)]+)\)(?:<\/[^>]+>)?/;
             const matches = contentWithoutTags.match(regex);
@@ -242,10 +245,8 @@ class PredbatTableCard extends HTMLElement {
                 }
                 
                 if(hasItalicTags){
-                    console.log("italic tags!");
                     firstPart = `<i>${matches[1]}</i>`; 
                     secondPart = `(${matches[2]})`;
-                    console.log(firstPart + " " + secondPart);
                 }
                 
                 if(hasItalicTags && hasBoldTags){
