@@ -16,7 +16,7 @@ A custom Predbat table card that allows flexible column management and styling. 
 
 The following config items can or should be set on the card
 
-| Confiuration Item | Required | Value |
+| Configuration Item | Required | Value |
 |----------|----------|----------|
 | `type`   | YES    | `predbat-table-card`    |
 | `entity`   | YES    | `predbat.plan_html` or name of the entity holding the Predbat plan HTML    |
@@ -25,6 +25,7 @@ The following config items can or should be set on the card
 | `even_row_colour`    | NO    | HEX value e.g. `#FFFFFF` otherwise default colour will be used   |
 | `table_width`    | NO    | From `0` to `100` representing percentage width. If not set default will be used. <br> Card will use the percentage based on the container the card is in. E.g. if you put the card in a single card template and set to `100` it will display on the entire screen   |
 | `fill_empty_cells`    | NO    | `true` or `false`. Will add a "-" symbol where data isnt available to clear out empty space   |
+| `hide_last_update`    | NO    | `true` or `false`. Will determine if the last update time is shown at the top of the table   |
 
 You can use `import-export-column` to see both import and export prices in a single column
 
