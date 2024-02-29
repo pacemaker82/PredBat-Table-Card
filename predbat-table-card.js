@@ -11,6 +11,7 @@ class PredbatTableCard extends HTMLElement {
       `;
       this.content = this.querySelector("div");
     }
+    
 
     const entityId = this.config.entity;
     const state = hass.states[entityId];
@@ -94,7 +95,7 @@ class PredbatTableCard extends HTMLElement {
     this.content.innerHTML = theTable.outerHTML;
     
     const styleTag = document.createElement('style')
-	styleTag.innerHTML = this.getStyles()
+	styleTag.innerHTML = this.getStyles(hass.themes.darkMode);
 	this.content.appendChild(styleTag);
     
   }
@@ -127,7 +128,7 @@ class PredbatTableCard extends HTMLElement {
         newCell.style.color = theItem.color;
         if(theItem.value.replace(/\s/g, '').length === 0) {
             if(this.config.fill_empty_cells)
-                newCell.innerHTML = `<div class="iconContainer"><ha-icon icon="mdi:minus" style="margin: 0 2px; opacity: 0.25;"></ha-icon></div>`;
+                newCell.innerHTML = `<div class="iconContainer"><ha-icon icon="mdi:minus" style="margin: 0 2px; opacity: 0.25;" class="icons"></ha-icon></div>`;
         } else 
             newCell.innerHTML = `<div class="iconContainer">${theItem.value}</div>`;
     }
@@ -139,11 +140,12 @@ class PredbatTableCard extends HTMLElement {
                     newContent = theItem.value.replace(/[☀]/g, '');
                     let additionalIcon = "";
                     if(theItem.value.includes("☀")) {
-                        additionalIcon = '<ha-icon icon="mdi:white-balance-sunny" style="margin: 0 4px;"></ha-icon>';
+                        additionalIcon = '<ha-icon icon="mdi:white-balance-sunny" style="margin: 0 4px;" class="icons"></ha-icon>';
                     }
                     newCell.innerHTML = `<div class="iconContainer">${additionalIcon} <div style="margin: 0 4px;">${newContent}</div></div>`;
                 }
             } else {
+                newContent = theItem.value;
                 newCell.innerHTML = `<div class="iconContainer">${theItem.value}</div>`;
             }
 
@@ -162,13 +164,13 @@ class PredbatTableCard extends HTMLElement {
 
                 if(theItem.value.includes("↘")) {
                     // include a down arrow
-                    additionalArrow = '<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 2px;"></ha-icon>';
+                    additionalArrow = '<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 2px;" class="icons"></ha-icon>';
                 } else if (theItem.value.includes("↗")) {
                     // include a down arrow
-                    additionalArrow = '<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 2px;"></ha-icon>';                    
+                    additionalArrow = '<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 2px;" class="icons"></ha-icon>';                    
                 } else {
                     if(this.config.fill_empty_cells)
-                        additionalArrow = '<ha-icon icon="mdi:minus" style="margin: 0 2px; opacity: 0.25;"></ha-icon>';                 
+                        additionalArrow = '<ha-icon icon="mdi:minus" style="margin: 0 2px; opacity: 0.25;" class="icons"></ha-icon>';                 
                 }
                 
                 if(column === "soc-column") {
@@ -184,20 +186,20 @@ class PredbatTableCard extends HTMLElement {
             let additionalArrow = "";
             newCell.setAttribute('style', 'color: var(--energy-battery-out-color)');
                 if(theItem.value === "↘" || theItem.value === "↗" || theItem.value === "→"){
-                    additionalArrow = '<ha-icon icon="mdi:home-lightning-bolt" style="" title="Running Normally"></ha-icon>';
+                    additionalArrow = '<ha-icon icon="mdi:home-lightning-bolt" style="" title="Running Normally" class="icons"></ha-icon>';
                     newCell.setAttribute('style', 'color: white');
                 } else if(newContent === "Discharge"){
                         // use force discharge icon
-                        additionalArrow = '<ha-icon icon="mdi:battery-minus" style="" title="Planned Discharge"></ha-icon>';
-                } else if(newContent === "FreezeDis" || newContent === "FreezeChrg" || newContent === "HoldChrg"){
+                        additionalArrow = '<ha-icon icon="mdi:battery-minus" style="" title="Planned Discharge" class="icons"></ha-icon>';
+                } else if(newContent === "FreezeDis" || newContent === "FreezeChrg" || newContent === "HoldChrg" || newContent === "NoCharge"){
                         // use force discharge icon
-                        additionalArrow = '<ha-icon icon="mdi:battery-lock" style="" title="Planned Discharge"></ha-icon>';
+                        additionalArrow = '<ha-icon icon="mdi:battery-lock" style="" title="Holding Charge" class="icons"></ha-icon>';
                         newCell.setAttribute('style', 'color: white');
                 } else if(newContent === "Charge"){
-                    additionalArrow = '<ha-icon icon="mdi:battery-charging-100" title="Planned Charge"></ha-icon>';
+                    additionalArrow = '<ha-icon icon="mdi:battery-charging-100" title="Planned Charge" class="icons"></ha-icon>';
                     newCell.setAttribute('style', 'color: var(--energy-battery-in-color)');                    
                 } else if(newContent === "Both"){
-                    additionalArrow = '<ha-icon icon="mdi:battery-charging-100" style="color: var(--energy-battery-in-color);" title="Planned Charge"></ha-icon><ha-icon icon="mdi:battery-minus" style="color: var(--energy-battery-out-color);" title="Planned Discharge"></ha-icon>';
+                    additionalArrow = '<ha-icon icon="mdi:battery-charging-100" style="color: var(--energy-battery-in-color);" title="Planned Charge" class="icons"></ha-icon><ha-icon icon="mdi:battery-minus" style="color: var(--energy-battery-out-color);" title="Planned Discharge" class="icons"></ha-icon>';
                 }
 
           newCell.innerHTML = `<div class="iconContainer">${additionalArrow}</div>`;
@@ -208,12 +210,13 @@ class PredbatTableCard extends HTMLElement {
 
             newCell.innerHTML = `<div class="iconContainer"><svg version="1.1" width="42" height="42" id="limitSVG">
                             <circle cx="21" cy="21" r="14" stroke="#2a3240" stroke-width="2" fill="#e1e1e1"/>
-                            <text x="21" y="22" dominant-baseline="middle" text-anchor="middle" fill="#2a3240" font-size="11"} font-weight="bold">${theItem.value}</text>
+                            <text class="pill" x="21" y="22" dominant-baseline="middle" text-anchor="middle" fill="#2a3240" font-size="11"} font-weight="bold">${theItem.value}</text>
                         </svg></div>`;
         
         }
         
     } else if (column === "import-column" || column === "export-column") {
+        
         
         if (theItem.value.includes("(") || theItem.value.includes(")")) {
             let newPills = "";
@@ -282,7 +285,7 @@ class PredbatTableCard extends HTMLElement {
 
     } else if(column === "import-export-column"){
           
-            
+        
         let newPills = "";
         theItem.forEach((item, index) => {
             newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill(item) + '</div>';
@@ -322,15 +325,15 @@ class PredbatTableCard extends HTMLElement {
             
             // Measure the width of the text in pixels
             let textWidth = contentWithoutTags.length * 8.5;// Adjust the factor based on your font and size
-            if(textWidth < 45){
-                textWidth = 45;
+            if(textWidth < 55){
+                textWidth = 55;
             }
             
             const textColor = this.getDarkenHexColor(theItem.color, 60);
             
             let svgLozenge = `<svg version="1.1" width=${textWidth} height="24" style="margin-top: 0px;">
                                 <rect x="4" y="2" width="${textWidth-10}" height="20" fill="${theItem.color}"${boldLozenge} ry="10" rx="10"/>
-                                <text x="48%" y="13" dominant-baseline="middle" text-anchor="middle" fill="${textColor}" font-size="11"${boldAttribute}${italicAttribute}>${contentWithoutTags}</text>
+                                <text class="pill" x="48%" y="13" dominant-baseline="middle" text-anchor="middle" fill="${textColor}" font-size="11"${boldAttribute}${italicAttribute}>${contentWithoutTags}</text>
                             </svg>`;
             
             return svgLozenge;
@@ -505,25 +508,47 @@ class PredbatTableCard extends HTMLElement {
       return newDataObject;
     }
   
-	getStyles() {
+	getStyles(isDarkMode) {
 	   
 	//defaults 
 	let tableWidth = 100;
-	let oddColour = "#181f2a";
-	let evenColour = "#2a3240";
+	let oddColour;
+	let evenColour;
 	let maxHeight = "42px";
+	let tableHeaderFontColour;
+	let tableHeaderBackgroundColour;
+	
+	if(isDarkMode){
+	    console.log("dark mode");
+	    oddColour = "#181f2a";
+	    evenColour = "#2a3240";
+    	if(this.config.odd_row_colour !== undefined){
+    	    oddColour = this.config.odd_row_colour;
+    	}
+    	
+    	if(this.config.even_row_colour !== undefined){
+    	    evenColour = this.config.even_row_colour;
+    	}
+    	tableHeaderFontColour = "#8a919e";
+    	tableHeaderBackgroundColour = "transparent";
+	} else {
+	    // Light Theme
+	    oddColour = "#181f2a"; //848ea1
+	    evenColour =  "#2a3240"; //2a3240
+    	if(this.config.odd_row_colour_light !== undefined){
+    	    oddColour = this.config.odd_row_colour_light;
+    	}
+    	
+    	if(this.config.even_row_colour_light !== undefined){
+    	    evenColour = this.config.even_row_colour_light;
+    	}	
+    	tableHeaderFontColour = "#FFFFFF";
+    	tableHeaderBackgroundColour = "#181f2a";
+	}
 	
 	//use yaml width if exists
 	if(this.config.table_width !== undefined){
 	    tableWidth = this.config.table_width;
-	}
-	
-	if(this.config.odd_row_colour !== undefined){
-	    oddColour = this.config.odd_row_colour;
-	}
-	
-	if(this.config.even_row_colour !== undefined){
-	    evenColour = this.config.even_row_colour;
 	}
 	
 	if(this.config.columns !== undefined && this.config.columns.indexOf("import-export-column") >= 0){
@@ -550,14 +575,14 @@ class PredbatTableCard extends HTMLElement {
     .card-content table thead tr th {
         background-color: ${evenColour};
         height: 60px;
-        color: #8a919e;
+        color: ${tableHeaderFontColour};
         text-align: center; !important
     }
     
     .card-content table thead tr .lastUpdateRow {
         height: 30px;
         font-weight: normal;
-        background-color: transparent;
+        background-color: ${tableHeaderBackgroundColour};
     }
     
     .daySplitter {
@@ -574,6 +599,15 @@ class PredbatTableCard extends HTMLElement {
         text-align: center;
         white-space: nowrap;
         color: #FFFFFF;
+        text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.6);
+    }
+    
+    .card-content table tbody tr td .pill {
+        text-shadow: 0px 0px 0px rgba(0, 0, 0, 0.0);
+    }
+    
+    .card-content table tbody tr td .icons {
+        filter: drop-shadow(1px 1px 0px rgba(0, 0, 0, 0.6));
     }
     
     .card-content tbody tr td:nth-child(1) {
