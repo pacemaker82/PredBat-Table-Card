@@ -205,9 +205,19 @@ class PredbatTableCard extends HTMLElement {
         if (theItem.value.includes("(") || theItem.value.includes(")")) {
             let newPills = "";
             const hasBoldTags = /<b>.*?<\/b>/.test(theItem.value);
+            const hasItalicTags = /<i>.*?<\/i>/.test(theItem.value);
             
-            const regex = /(?:<[^>]+>)?([^\s<]+)\s+\(([^)]+)\)(?:<\/[^>]+>)?/;
-            const matches = theItem.value.match(regex);
+            let contentWithoutTags;
+            if (hasBoldTags || hasItalicTags) {
+                contentWithoutTags = theItem.value.replace(/<b>(.*?)<\/b>/g, '$1');
+                contentWithoutTags = contentWithoutTags.replace(/<i>(.*?)<\/i>/g, '$1');
+            } else {
+                contentWithoutTags = theItem.value;
+            }
+            
+            //const regex = /(?:<[^>]+>)?([^\s<]+)\s+\(([^)]+)\)(?:<\/[^>]+>)?/;
+            const regex = /(?:<[^>]+>)?([^\s<]+(?:\s*\?)?)\s+\(([^)]+)\)(?:<\/[^>]+>)?/;
+            const matches = contentWithoutTags.match(regex);
             
             if (matches && matches.length === 3) {
                 let firstPart = matches[1] + " "; 
@@ -215,6 +225,18 @@ class PredbatTableCard extends HTMLElement {
                 
                 if(hasBoldTags){
                     firstPart = `<b>${matches[1]}</b>`; 
+                    secondPart = `<b>(${matches[2]})</b>`;
+                }
+                
+                if(hasItalicTags){
+                    console.log("italic tags!");
+                    firstPart = `<i>${matches[1]}</i>`; 
+                    secondPart = `(${matches[2]})`;
+                    console.log(firstPart + " " + secondPart);
+                }
+                
+                if(hasItalicTags && hasBoldTags){
+                    firstPart = `<b><i>${matches[1]}</i></b>`; 
                     secondPart = `<b>(${matches[2]})</b>`;
                 }
 
@@ -252,6 +274,7 @@ class PredbatTableCard extends HTMLElement {
             
             let contentWithoutTags;
             let boldAttribute = "";
+            let italicAttribute = "";
             let boldLozenge = "";
             if (hasBoldTags || hasItalicTags) {
                 contentWithoutTags = theItem.value.replace(/<b>(.*?)<\/b>/g, '$1');
@@ -260,6 +283,9 @@ class PredbatTableCard extends HTMLElement {
                     boldAttribute = ' font-weight="bold"';
                     let borderLozengeColor = this.getDarkenHexColor(theItem.color, 60);
                     boldLozenge = ' stroke="'+ borderLozengeColor +'" stroke-width="2"';
+                }
+                if(hasItalicTags){
+                    italicAttribute = ' font-style="italic"';
                 }
             } else {
                 contentWithoutTags = theItem.value;
@@ -275,7 +301,7 @@ class PredbatTableCard extends HTMLElement {
             
             let svgLozenge = `<svg version="1.1" width=${textWidth} height="24" style="margin-top: 0px;">
                                 <rect x="4" y="2" width="${textWidth-10}" height="20" fill="${theItem.color}"${boldLozenge} ry="10" rx="10"/>
-                                <text x="48%" y="13" dominant-baseline="middle" text-anchor="middle" fill="${textColor}" font-size="11"${boldAttribute}>${contentWithoutTags}</text>
+                                <text x="48%" y="13" dominant-baseline="middle" text-anchor="middle" fill="${textColor}" font-size="11"${boldAttribute}${italicAttribute}>${contentWithoutTags}</text>
                             </svg>`;
             
             return svgLozenge;
