@@ -27,6 +27,19 @@ class PredbatTableCard extends HTMLElement {
     
     let newTableHead = document.createElement('thead');
     
+    // Create an optional Last Updated Table Header Row
+    if(this.config.hide_last_update !== true) {
+    
+        let lastUpdateHeaderRow = document.createElement('tr');
+        let lastUpdateCell = document.createElement('th');
+        lastUpdateCell.classList.add('lastUpdateRow');
+        lastUpdateCell.colSpan = columnsToReturn.length;
+        lastUpdateCell.innerHTML = `<b>Plan Last Updated:</b> ${lastUpdated}`;
+        lastUpdateHeaderRow.appendChild(lastUpdateCell);
+        newTableHead.appendChild(lastUpdateHeaderRow);
+    
+    }
+    
     let newHeaderRow = document.createElement('tr');
     newTableHead.classList.add('topHeader');   
         
@@ -322,13 +335,24 @@ class PredbatTableCard extends HTMLElement {
                     const dateTimeString = tdElement.innerHTML.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/)[0];
 
                     // Create a JavaScript Date object from the extracted date/time string
-                    lastUpdate = new Date(dateTimeString);
- 
+                    const date = new Date(dateTimeString);
+                    const today = new Date();
+
+                    const options = { hour: 'numeric', minute: '2-digit', hour12: true };
+                    const timeString = date.toLocaleTimeString('en-US', options);
+                
+                    if (date.toDateString() === today.toDateString()) {
+                        lastUpdate = `Today at ${timeString}`;
+                    } else {
+                        // Format for other days if needed
+                        lastUpdate = date.toDateString(); // Example format
+                    }
+                    
               });
           }
       });
-      
       return lastUpdate;
+      
   }
   
   getColumnDescription(column) {
@@ -512,6 +536,12 @@ class PredbatTableCard extends HTMLElement {
         height: 60px;
         color: #8a919e;
         text-align: center; !important
+    }
+    
+    .card-content table thead tr .lastUpdateRow {
+        height: 30px;
+        font-weight: normal;
+        background-color: transparent;
     }
     
     .daySplitter {
