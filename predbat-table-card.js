@@ -184,20 +184,20 @@ class PredbatTableCard extends HTMLElement {
             let additionalArrow = "";
             newCell.setAttribute('style', 'color: var(--energy-battery-out-color)');
                 if(theItem.value === "↘" || theItem.value === "↗" || theItem.value === "→"){
-                    additionalArrow = '<ha-icon icon="mdi:home-lightning-bolt" style=""></ha-icon>';
+                    additionalArrow = '<ha-icon icon="mdi:home-lightning-bolt" style="" title="Running Normally"></ha-icon>';
                     newCell.setAttribute('style', 'color: white');
                 } else if(newContent === "Discharge"){
                         // use force discharge icon
-                        additionalArrow = '<ha-icon icon="mdi:battery-minus" style=""></ha-icon>';
+                        additionalArrow = '<ha-icon icon="mdi:battery-minus" style="" title="Planned Discharge"></ha-icon>';
                 } else if(newContent === "FreezeDis" || newContent === "FreezeChrg" || newContent === "HoldChrg"){
                         // use force discharge icon
-                        additionalArrow = '<ha-icon icon="mdi:battery-lock" style=""></ha-icon>';
+                        additionalArrow = '<ha-icon icon="mdi:battery-lock" style="" title="Planned Discharge"></ha-icon>';
                         newCell.setAttribute('style', 'color: white');
                 } else if(newContent === "Charge"){
-                    additionalArrow = '<ha-icon icon="mdi:battery-charging-100"></ha-icon>';
+                    additionalArrow = '<ha-icon icon="mdi:battery-charging-100" title="Planned Charge"></ha-icon>';
                     newCell.setAttribute('style', 'color: var(--energy-battery-in-color)');                    
                 } else if(newContent === "Both"){
-                    additionalArrow = '<ha-icon icon="mdi:battery-charging-100" style="color: var(--energy-battery-in-color);"></ha-icon><ha-icon icon="mdi:battery-minus" style="color: var(--energy-battery-out-color);"></ha-icon>';
+                    additionalArrow = '<ha-icon icon="mdi:battery-charging-100" style="color: var(--energy-battery-in-color);" title="Planned Charge"></ha-icon><ha-icon icon="mdi:battery-minus" style="color: var(--energy-battery-out-color);" title="Planned Discharge"></ha-icon>';
                 }
 
           newCell.innerHTML = `<div class="iconContainer">${additionalArrow}</div>`;
@@ -231,33 +231,48 @@ class PredbatTableCard extends HTMLElement {
             // remove the = sign if its in there
             contentWithoutTags = contentWithoutTags.replace(/=/g, '');
             
-            //const regex = /(?:<[^>]+>)?([^\s<]+)\s+\(([^)]+)\)(?:<\/[^>]+>)?/;
-            const regex = /(?:<[^>]+>)?([^\s<]+(?:\s*\?)?)\s+\(([^)]+)\)(?:<\/[^>]+>)?/;
-            const matches = contentWithoutTags.match(regex);
             
-            if (matches && matches.length === 3) {
-                let firstPart = matches[1] + " "; 
-                let secondPart = `(${matches[2]}) `;
+//            ? ⅆ - Rate that has been modified based on input_number.predbat_metric_future_rate_offset_import or input_number.predbat_metric_future_rate_offset_export
+//            ? ⚖ - Rate that has been estimated using future rate estimation data (e.g. Nordpool)
+//            = - Rate that has been overridden by the users apps.yaml
+//            ± - Rate that has been adjusted with a rate offset in the users apps.yaml
+//            $ - Rate that has been adjusted for an Octopus Saving session
+//            ? - Rate that has not yet been defined and the previous days data was used instead
                 
-                if(hasBoldTags){
-                    firstPart = `<b>${matches[1]}</b>`; 
-                    secondPart = `<b>(${matches[2]})</b>`;
-                }
-                
-                if(hasItalicTags){
-                    firstPart = `<i>${matches[1]}</i>`; 
-                    secondPart = `(${matches[2]})`;
-                }
-                
-                if(hasItalicTags && hasBoldTags){
-                    firstPart = `<b><i>${matches[1]}</i></b>`; 
-                    secondPart = `<b>(${matches[2]})</b>`;
-                }
+                // Old way
+//            const regex = /(?:<[^>]+>)?([^\s<]+(?:\s*\?)?)\s+\(([^)]+)\)(?:<\/[^>]+>)?/;
+//            const matches = contentWithoutTags.match(regex);
+            
+            const testRegex = /(\d+\.\d+)\D+(\d+\.\d+)/;
+            const testString = "1.23 (3.45)";
+            const testMatches = contentWithoutTags.match(testRegex);
+            const strippedString = contentWithoutTags.replace(testMatches[1], '').replace(testMatches[2], '').replace(/[()]/g, '').trim();
 
-                newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill({"value":firstPart, "color":theItem.color}) + '</div>';
-                newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill({"value":secondPart, "color":theItem.color}) + '</div>';
-                newCell.innerHTML = '<div class="multiPillContainer">' + newPills + '</div>';
+            const firstPillString = testMatches[1] + "strippedString";
+            const secondPillString = testMatches[2];
+            
+            let firstPart = firstPillString; 
+            let secondPart = `(${secondPillString}) `;
+            
+            if(hasBoldTags){
+                firstPart = `<b>${firstPillString}</b>`; 
+                secondPart = `<b>(${secondPillString})</b>`;
             }
+            
+            if(hasItalicTags){
+                firstPart = `<i>${firstPillString}</i>`; 
+                secondPart = `(${secondPillString})`;
+            }
+            
+            if(hasItalicTags && hasBoldTags){
+                firstPart = `<b><i>${firstPillString}</i></b>`; 
+                secondPart = `<b>(${secondPillString})</b>`;
+            }
+
+            newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill({"value":firstPart, "color":theItem.color}) + '</div>';
+            newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill({"value":secondPart, "color":theItem.color}) + '</div>';
+            newCell.innerHTML = '<div class="multiPillContainer">' + newPills + '</div>';
+
         } else {
             //console.log("String does not contain '(' or ')'");
             newCell.innerHTML = '<div class="iconContainer">' + this.getTransformedCostToPill(theItem) + '</div>';
