@@ -248,7 +248,7 @@ class PredbatTableCard extends HTMLElement {
             const testMatches = contentWithoutTags.match(testRegex);
             const strippedString = contentWithoutTags.replace(testMatches[1], '').replace(testMatches[2], '').replace(/[()]/g, '').trim();
 
-            const firstPillString = testMatches[1] + "strippedString";
+            const firstPillString = testMatches[1] + strippedString;
             const secondPillString = testMatches[2];
             
             let firstPart = firstPillString; 
