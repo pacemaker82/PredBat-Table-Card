@@ -1,5 +1,5 @@
 # PredBat-Table-Card
-A custom Predbat table card that allows flexible column management and styling
+A custom Predbat table card that allows flexible column management and styling. The card also supports Predbat's HMTL debug mode, and collapsing import/export prices into a single column.
 
 ![A screenshot of the Predbat Table Card](https://github.com/pacemaker82/PredBat-Table-Card/blob/main/screenshot.png?raw=true)
 
