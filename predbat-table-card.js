@@ -355,7 +355,11 @@ class PredbatTableCard extends HTMLElement {
                 
                 if(hasItalicTags){
                     italicAttribute = ' font-style="italic"';
+                    boldLozenge = ' stroke="'+ borderLozengeColor +'" stroke-width="1"';
                 }
+                
+                if(hasItalicTags && hasBoldTags)
+                    boldLozenge = ' stroke="'+ borderLozengeColor +'" stroke-width="2"';
                 
             } else {
                 contentWithoutTags = theItem.value;
@@ -686,7 +690,7 @@ class PredbatTableCard extends HTMLElement {
     }
     
     .card-content table tbody tr td .icons {
-        filter: drop-shadow(1px 1px 0px rgba(0, 0, 0, 0.6));
+    /*    filter: drop-shadow(1px 1px 0px rgba(0, 0, 0, 0.6));*/
     }
     
     .card-content tbody tr td:nth-child(1) {
