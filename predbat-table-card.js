@@ -237,10 +237,14 @@ class PredbatTableCard extends HTMLElement {
 
         if(theItem.value.replace(/\s/g, '').length > 0){
 
-            newCell.innerHTML = `<div class="iconContainer"><svg version="1.1" width="42" height="42" id="limitSVG">
-                            <circle cx="21" cy="21" r="14" stroke="#2a3240" stroke-width="2" fill="#e1e1e1"/>
-                            <text class="pill" x="21" y="22" dominant-baseline="middle" text-anchor="middle" fill="#2a3240" font-size="11"} font-weight="bold">${theItem.value}</text>
-                        </svg></div>`;
+            newCell.innerHTML = `
+            
+                <div class="iconContainer">
+                    <svg version="1.1" width="34" height="34" id="limitSVG">
+                    <circle cx="17" cy="17" r="11" stroke="#2a3240" stroke-width="2" fill="#e1e1e1"/>
+                    <text class="pill" x="17" y="18" dominant-baseline="middle" text-anchor="middle" fill="#2a3240" font-size="10"} font-weight="bold">${theItem.value}</text>
+                    </svg>
+                </div>`;
         
         }
         
@@ -580,7 +584,7 @@ class PredbatTableCard extends HTMLElement {
 	let tableWidth = 100;
 	let oddColour;
 	let evenColour;
-	let maxHeight = "42px";
+	let maxHeight = "30px";
 	let tableHeaderFontColour;
 	let tableHeaderBackgroundColour;
 	let tableHeaderColumnsBackgroundColour;
