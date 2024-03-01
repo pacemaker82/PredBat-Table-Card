@@ -215,20 +215,20 @@ class PredbatTableCard extends HTMLElement {
             let additionalArrow = "";
             newCell.setAttribute('style', 'color: var(--energy-battery-out-color)');
                 if(theItem.value === "↘" || theItem.value === "↗" || theItem.value === "→"){
-                    additionalArrow = '<ha-icon icon="mdi:home-lightning-bolt" style="" title="Running Normally"></ha-icon>';
+                    additionalArrow = '<ha-icon icon="mdi:home-lightning-bolt" title="Running Normally" style="--mdc-icon-size: 22px;"></ha-icon>';
                     newCell.setAttribute('style', `color: ${theItem.color}`);
                 } else if(newContent === "Discharge"){
                         // use force discharge icon
-                        additionalArrow = '<ha-icon icon="mdi:battery-minus" style="" title="Planned Discharge" class="icons"></ha-icon>';
+                        additionalArrow = '<ha-icon icon="mdi:battery-minus" style="" title="Planned Discharge" class="icons" style="--mdc-icon-size: 22px;"></ha-icon>';
                 } else if(newContent === "FreezeDis" || newContent === "FreezeChrg" || newContent === "HoldChrg" || newContent === "NoCharge"){
                         // use force discharge icon
                         additionalArrow = '<ha-icon icon="mdi:battery-lock" style="" title="Pausing Charge"></ha-icon>';
                         newCell.setAttribute('style', `color: ${theItem.color}`);
                 } else if(newContent === "Charge"){
-                    additionalArrow = '<ha-icon icon="mdi:battery-charging-100" title="Planned Charge" class="icons"></ha-icon>';
+                    additionalArrow = '<ha-icon icon="mdi:battery-charging-100" title="Planned Charge" style="--mdc-icon-size: 22px;"></ha-icon>';
                     newCell.setAttribute('style', 'color: var(--energy-battery-in-color)');                    
                 } else if(newContent === "Both"){
-                    additionalArrow = '<ha-icon icon="mdi:battery-charging-100" style="color: var(--energy-battery-in-color);" title="Planned Charge" class="icons"></ha-icon><ha-icon icon="mdi:battery-minus" style="color: var(--energy-battery-out-color);" title="Planned Discharge" class="icons"></ha-icon>';
+                    additionalArrow = '<ha-icon icon="mdi:battery-charging-100" style="color: var(--energy-battery-in-color); --mdc-icon-size: 22px;" title="Planned Charge" class="icons"></ha-icon><ha-icon icon="mdi:battery-minus" style="color: var(--energy-battery-out-color);" title="Planned Discharge" class="icons"></ha-icon>';
                 }
 
           newCell.innerHTML = `<div class="iconContainer">${additionalArrow}</div>`;
@@ -656,13 +656,13 @@ class PredbatTableCard extends HTMLElement {
     
     .card-content table thead tr th {
         background-color: ${tableHeaderColumnsBackgroundColour};
-        height: 60px;
+        height: 24px;
         color: ${tableHeaderFontColour};
         text-align: center; !important
     }
     
     .card-content table thead tr .lastUpdateRow {
-        height: 30px;
+        height: 24px;
         font-weight: normal;
         background-color: ${tableHeaderBackgroundColour};
     }
