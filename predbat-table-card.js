@@ -480,9 +480,9 @@ class PredbatTableCard extends HTMLElement {
                     let bgColor = tdElement.getAttribute('bgcolor'); 
                     
                     if(this.getLightMode(hassDarkMode) !== hassDarkMode){
-                        console.log("forced light/dark mode");
+                        //console.log("forced light/dark mode");
                     } else {
-                        if(bgColor.toUpperCase() === "#FFFFFF")
+                        if(bgColor.toUpperCase() === "#FFFFFF" && tdIndex != 1 && tdIndex != 2)
                             bgColor = "var(--primary-text-color)";
                     }
                     
