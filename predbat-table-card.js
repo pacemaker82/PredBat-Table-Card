@@ -133,11 +133,12 @@ class PredbatTableCard extends HTMLElement {
             newCell.innerHTML = `<div class="iconContainer">${theItem.value}</div>`;
     }
 
-    if(column === "load-column" || column === "pv-column") {
+    if(column === "load-column" || column === "pv-column" || column == "car") {
         
             if(column === "pv-column"){
                 if(theItem.value.length > 0) {
                     newContent = theItem.value.replace(/[☀]/g, '');
+                    newContent = parseFloat(newContent).toFixed(2);
                     let additionalIcon = "";
                     if(theItem.value.includes("☀")) {
                         additionalIcon = '<ha-icon icon="mdi:white-balance-sunny" style="margin: 0 4px;" class="icons"></ha-icon>';
@@ -146,13 +147,15 @@ class PredbatTableCard extends HTMLElement {
                 }
             } else {
                 newContent = theItem.value;
-                newCell.innerHTML = `<div class="iconContainer">${theItem.value}</div>`;
+                newContent = parseFloat(newContent).toFixed(2);
+                newCell.innerHTML = `<div class="iconContainer">${newContent}</div>`;
             }
 
         
     } else if(column === "time-column" || column === "total-column"){
           
-        newCell.style.color = "#FFFFFF";
+        newCell.style.color = theItem.color;
+        newCell.style.textShadow = "none";
         
         newCell.innerHTML = `<div class="iconContainer">${theItem.value}</div>`;
         
@@ -186,15 +189,15 @@ class PredbatTableCard extends HTMLElement {
             let additionalArrow = "";
             newCell.setAttribute('style', 'color: var(--energy-battery-out-color)');
                 if(theItem.value === "↘" || theItem.value === "↗" || theItem.value === "→"){
-                    additionalArrow = '<ha-icon icon="mdi:home-lightning-bolt" style="" title="Running Normally" class="icons"></ha-icon>';
-                    newCell.setAttribute('style', 'color: white');
+                    additionalArrow = '<ha-icon icon="mdi:home-lightning-bolt" style="" title="Running Normally"></ha-icon>';
+                    newCell.setAttribute('style', 'color: var(--primary-text-color)');
                 } else if(newContent === "Discharge"){
                         // use force discharge icon
                         additionalArrow = '<ha-icon icon="mdi:battery-minus" style="" title="Planned Discharge" class="icons"></ha-icon>';
                 } else if(newContent === "FreezeDis" || newContent === "FreezeChrg" || newContent === "HoldChrg" || newContent === "NoCharge"){
                         // use force discharge icon
-                        additionalArrow = '<ha-icon icon="mdi:battery-lock" style="" title="Holding Charge" class="icons"></ha-icon>';
-                        newCell.setAttribute('style', 'color: white');
+                        additionalArrow = '<ha-icon icon="mdi:battery-lock" style="" title="Pausing Charge"></ha-icon>';
+                        newCell.setAttribute('style', 'color: var(--primary-text-color)');
                 } else if(newContent === "Charge"){
                     additionalArrow = '<ha-icon icon="mdi:battery-charging-100" title="Planned Charge" class="icons"></ha-icon>';
                     newCell.setAttribute('style', 'color: var(--energy-battery-in-color)');                    
@@ -456,7 +459,10 @@ class PredbatTableCard extends HTMLElement {
                 // Loop through each <td> element inside the current <tr>
                 tdElements.forEach((tdElement, tdIndex) => {
                     
-                    const bgColor = tdElement.getAttribute('bgcolor'); 
+                    let bgColor = tdElement.getAttribute('bgcolor'); 
+                    
+                    if(bgColor.toUpperCase() === "#FFFFFF")
+                        bgColor = "var(--primary-text-color)";
                     
                     if(tdIndex ===2){
                         currentExportRate = tdElement.innerHTML;
@@ -517,24 +523,33 @@ class PredbatTableCard extends HTMLElement {
 	let maxHeight = "42px";
 	let tableHeaderFontColour;
 	let tableHeaderBackgroundColour;
+	let tableHeaderColumnsBackgroundColour;
 	
 	if(isDarkMode){
 	    console.log("dark mode");
 	    oddColour = "#181f2a";
 	    evenColour = "#2a3240";
+	    tableHeaderColumnsBackgroundColour = evenColour;
+	    
     	if(this.config.odd_row_colour !== undefined){
     	    oddColour = this.config.odd_row_colour;
     	}
     	
     	if(this.config.even_row_colour !== undefined){
     	    evenColour = this.config.even_row_colour;
+    	    tableHeaderColumnsBackgroundColour = this.config.even_row_colour;
     	}
     	tableHeaderFontColour = "#8a919e";
     	tableHeaderBackgroundColour = "transparent";
+    	
 	} else {
 	    // Light Theme
-	    oddColour = "#181f2a"; //848ea1
-	    evenColour =  "#2a3240"; //2a3240
+	    //oddColour = "#d2d3db"; //848ea1
+	    //evenColour =  "#9394a5"; //2a3240
+	    
+	    oddColour = "var(--background-card-color)";
+	    evenColour = "var(--light-primary-color)"
+	    
     	if(this.config.odd_row_colour_light !== undefined){
     	    oddColour = this.config.odd_row_colour_light;
     	}
@@ -543,7 +558,8 @@ class PredbatTableCard extends HTMLElement {
     	    evenColour = this.config.even_row_colour_light;
     	}	
     	tableHeaderFontColour = "#FFFFFF";
-    	tableHeaderBackgroundColour = "#181f2a";
+    	tableHeaderBackgroundColour = "var(--primary-color)";
+    	tableHeaderColumnsBackgroundColour = "var(--primary-color)";
 	}
 	
 	//use yaml width if exists
@@ -573,7 +589,7 @@ class PredbatTableCard extends HTMLElement {
     }
     
     .card-content table thead tr th {
-        background-color: ${evenColour};
+        background-color: ${tableHeaderColumnsBackgroundColour};
         height: 60px;
         color: ${tableHeaderFontColour};
         text-align: center; !important
@@ -584,6 +600,12 @@ class PredbatTableCard extends HTMLElement {
         font-weight: normal;
         background-color: ${tableHeaderBackgroundColour};
     }
+    
+    
+    .card-content table thead tr .topHeader {
+        background-color: ${tableHeaderColumnsBackgroundColour};
+    }
+
     
     .daySplitter {
         height: 1px;
@@ -598,8 +620,7 @@ class PredbatTableCard extends HTMLElement {
         border: 0;
         text-align: center;
         white-space: nowrap;
-        color: #FFFFFF;
-        text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.6);
+        text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.7);
     }
     
     .card-content table tbody tr td .pill {
@@ -628,7 +649,7 @@ class PredbatTableCard extends HTMLElement {
       display: flex;
       align-items: center; /* Center content vertically */
       justify-content: center; /* Center content horizontally */
-      height: 42px; /* Set height of table cell */
+      height: 100%; /* Set height of table cell */
     }
     
     .multiPillContainer {
