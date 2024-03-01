@@ -80,9 +80,17 @@ class PredbatTableCard extends HTMLElement {
                 dividerRow.classList.add('daySplitter');
                     for(let j = 0; j < columnsToReturn.length; j++) {
                         let newCell = document.createElement('td');
-                        newCell.style.backgroundColor = "#e1e1e1";
+                        
+                        if(this.getLightMode(hass.themes.darkMode)){
+                            newCell.style.backgroundColor = "#e1e1e1"; 
+                            newCell.style.opacity = 0.4; 
+                        } else {
+                            // light mode
+                            newCell.style.backgroundColor = "#2a3240"; 
+                            newCell.style.opacity = 0.75; 
+                        }
+                        
                         newCell.style.height = "1px";
-                        newCell.style.opacity = 0.3;
                         dividerRow.appendChild(newCell);
                     }
                 newTableBody.appendChild(dividerRow);
@@ -299,7 +307,7 @@ class PredbatTableCard extends HTMLElement {
 
         } else {
             //console.log("String does not contain '(' or ')'");
-            newCell.innerHTML = '<div class="iconContainer">' + this.getTransformedCostToPill(theItem) + '</div>';
+            newCell.innerHTML = '<div class="iconContainer">' + this.getTransformedCostToPill(theItem, darkMode) + '</div>';
         }
             
         
@@ -363,8 +371,11 @@ class PredbatTableCard extends HTMLElement {
             let textColor;
             let pillColor = theItem.color;
             if(this.getLightMode(darkMode) === true){
+                // card is dark mode
                 textColor = this.getDarkenHexColor(theItem.color, 60);
             } else {
+                // card is light mode
+                console.log("LIGHT MODE IS ACTIVE");
                 textColor = this.getDarkenHexColor(theItem.color, 70);
                 pillColor = this.getVibrantColor(theItem.color, 15);
                 pillColor = this.getLightenHexColor(pillColor, 10);
@@ -501,8 +512,8 @@ class PredbatTableCard extends HTMLElement {
                             bgColor = "var(--primary-text-color)";
                     
                     if(this.getLightMode(hassDarkMode) === false ){
-                        // light mode active so adjust the colours from trefor
                         
+                        // light mode active so adjust the colours from trefor
                         bgColor = this.getDarkenHexColor(bgColor, 30);
                         
                     }
