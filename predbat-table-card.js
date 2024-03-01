@@ -21,7 +21,7 @@ class PredbatTableCard extends HTMLElement {
     let rawHTML = hass.states[entityId].attributes.html;
 
     const lastUpdated = this.getLastUpdatedFromHTML(rawHTML);
-    const dataArray = this.getArrayDataFromHTML(rawHTML); 
+    const dataArray = this.getArrayDataFromHTML(rawHTML, hass.themes.darkMode); 
     let theTable = document.createElement('table');
     
     //set out the table header row
@@ -93,11 +93,29 @@ class PredbatTableCard extends HTMLElement {
     theTable.appendChild(newTableBody);
     
     this.content.innerHTML = theTable.outerHTML;
-    
-    const styleTag = document.createElement('style')
-	styleTag.innerHTML = this.getStyles(hass.themes.darkMode);
+    const styleTag = document.createElement('style');
+	styleTag.innerHTML = this.getStyles(this.getLightMode(hass.themes.darkMode));
 	this.content.appendChild(styleTag);
     
+  }
+  
+  getLightMode(hassDarkMode){
+    let lightMode = "auto";
+    let cssLightMode;
+    if(this.config.light_mode)
+        lightMode = this.config.light_mode;
+        
+    switch (lightMode) {
+      case "dark":
+        cssLightMode = true;
+        break;
+      case "light":
+        cssLightMode = false;
+        break;
+      default:
+        cssLightMode = hassDarkMode;
+    }
+    return cssLightMode;
   }
 
   // The user supplied configuration. Throw an exception and Home Assistant
@@ -190,14 +208,14 @@ class PredbatTableCard extends HTMLElement {
             newCell.setAttribute('style', 'color: var(--energy-battery-out-color)');
                 if(theItem.value === "↘" || theItem.value === "↗" || theItem.value === "→"){
                     additionalArrow = '<ha-icon icon="mdi:home-lightning-bolt" style="" title="Running Normally"></ha-icon>';
-                    newCell.setAttribute('style', 'color: var(--primary-text-color)');
+                    newCell.setAttribute('style', `color: ${theItem.color}`);
                 } else if(newContent === "Discharge"){
                         // use force discharge icon
                         additionalArrow = '<ha-icon icon="mdi:battery-minus" style="" title="Planned Discharge" class="icons"></ha-icon>';
                 } else if(newContent === "FreezeDis" || newContent === "FreezeChrg" || newContent === "HoldChrg" || newContent === "NoCharge"){
                         // use force discharge icon
                         additionalArrow = '<ha-icon icon="mdi:battery-lock" style="" title="Pausing Charge"></ha-icon>';
-                        newCell.setAttribute('style', 'color: var(--primary-text-color)');
+                        newCell.setAttribute('style', `color: ${theItem.color}`);
                 } else if(newContent === "Charge"){
                     additionalArrow = '<ha-icon icon="mdi:battery-charging-100" title="Planned Charge" class="icons"></ha-icon>';
                     newCell.setAttribute('style', 'color: var(--energy-battery-in-color)');                    
@@ -402,7 +420,7 @@ class PredbatTableCard extends HTMLElement {
           }
   }
   
-  getArrayDataFromHTML(html) {
+  getArrayDataFromHTML(html, hassDarkMode) {
       
       // Define column headers and corresponding classes
       const headerClassesArray = [
@@ -461,8 +479,14 @@ class PredbatTableCard extends HTMLElement {
                     
                     let bgColor = tdElement.getAttribute('bgcolor'); 
                     
-                    if(bgColor.toUpperCase() === "#FFFFFF")
-                        bgColor = "var(--primary-text-color)";
+                    if(this.getLightMode(hassDarkMode) !== hassDarkMode){
+                        console.log("forced light/dark mode");
+                    } else {
+                        if(bgColor.toUpperCase() === "#FFFFFF")
+                            bgColor = "var(--primary-text-color)";
+                    }
+                    
+
                     
                     if(tdIndex ===2){
                         currentExportRate = tdElement.innerHTML;
@@ -526,7 +550,6 @@ class PredbatTableCard extends HTMLElement {
 	let tableHeaderColumnsBackgroundColour;
 	
 	if(isDarkMode){
-	    console.log("dark mode");
 	    oddColour = "#181f2a";
 	    evenColour = "#2a3240";
 	    tableHeaderColumnsBackgroundColour = evenColour;
