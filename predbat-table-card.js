@@ -66,7 +66,7 @@ class PredbatTableCard extends HTMLElement {
         columnsToReturn.forEach((column, index) => { // Use arrow function here
             if(item["time-column"].value.includes("23:30"))
                 isMidnight = true;
-            let newColumn = this.getCellTransformation(item[column], column);
+            let newColumn = this.getCellTransformation(item[column], column, hass.themes.darkMode);
             newRow.appendChild(newColumn);
         });
         
@@ -137,7 +137,7 @@ class PredbatTableCard extends HTMLElement {
     return 3;
   }
   
-  getCellTransformation(theItem, column) {
+  getCellTransformation(theItem, column, darkMode) {
     
     let newCell = document.createElement('td');
     let newContent = "";
@@ -146,7 +146,7 @@ class PredbatTableCard extends HTMLElement {
         newCell.style.color = theItem.color;
         if(theItem.value.replace(/\s/g, '').length === 0) {
             if(this.config.fill_empty_cells)
-                newCell.innerHTML = `<div class="iconContainer"><ha-icon icon="mdi:minus" style="margin: 0 2px; opacity: 0.25;" class="icons"></ha-icon></div>`;
+                newCell.innerHTML = `<div class="iconContainer"><ha-icon icon="mdi:minus" style="margin: 0 2px; opacity: 0.25;"></ha-icon></div>`;
         } else 
             newCell.innerHTML = `<div class="iconContainer">${theItem.value}</div>`;
     }
@@ -159,7 +159,7 @@ class PredbatTableCard extends HTMLElement {
                     newContent = parseFloat(newContent).toFixed(2);
                     let additionalIcon = "";
                     if(theItem.value.includes("☀")) {
-                        additionalIcon = '<ha-icon icon="mdi:white-balance-sunny" style="margin: 0 4px;" class="icons"></ha-icon>';
+                        additionalIcon = '<ha-icon icon="mdi:white-balance-sunny" style="margin: 0 4px;"></ha-icon>';
                     }
                     newCell.innerHTML = `<div class="iconContainer">${additionalIcon} <div style="margin: 0 4px;">${newContent}</div></div>`;
                 }
@@ -185,13 +185,13 @@ class PredbatTableCard extends HTMLElement {
 
                 if(theItem.value.includes("↘")) {
                     // include a down arrow
-                    additionalArrow = '<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 2px;" class="icons"></ha-icon>';
+                    additionalArrow = '<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 2px;"></ha-icon>';
                 } else if (theItem.value.includes("↗")) {
                     // include a down arrow
-                    additionalArrow = '<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 2px;" class="icons"></ha-icon>';                    
+                    additionalArrow = '<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 2px;"></ha-icon>';                    
                 } else {
                     if(this.config.fill_empty_cells)
-                        additionalArrow = '<ha-icon icon="mdi:minus" style="margin: 0 2px; opacity: 0.25;" class="icons"></ha-icon>';                 
+                        additionalArrow = '<ha-icon icon="mdi:minus" style="margin: 0 2px; opacity: 0.25;"></ha-icon>';                 
                 }
                 
                 if(column === "soc-column") {
@@ -293,8 +293,8 @@ class PredbatTableCard extends HTMLElement {
                 secondPart = `<b>(${secondPillString})</b>`;
             }
 
-            newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill({"value":firstPart, "color":theItem.color}) + '</div>';
-            newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill({"value":secondPart, "color":theItem.color}) + '</div>';
+            newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill({"value":firstPart, "color":theItem.color}, darkMode) + '</div>';
+            newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill({"value":secondPart, "color":theItem.color}, darkMode) + '</div>';
             newCell.innerHTML = '<div class="multiPillContainer">' + newPills + '</div>';
 
         } else {
@@ -309,7 +309,7 @@ class PredbatTableCard extends HTMLElement {
         
         let newPills = "";
         theItem.forEach((item, index) => {
-            newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill(item) + '</div>';
+            newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill(item, darkMode) + '</div>';
         });
         
         newCell.innerHTML = '<div class="multiPillContainer">' + newPills + '</div>';
@@ -320,7 +320,7 @@ class PredbatTableCard extends HTMLElement {
       return newCell;
   }
   
-  getTransformedCostToPill(theItem){
+  getTransformedCostToPill(theItem, darkMode){
       
             const hasBoldTags = /<b>.*?<\/b>/.test(theItem.value);
             const hasItalicTags = /<i>.*?<\/i>/.test(theItem.value);
@@ -329,19 +329,29 @@ class PredbatTableCard extends HTMLElement {
             let boldAttribute = "";
             let italicAttribute = "";
             let boldLozenge = "";
+            
+            let borderLozengeColor;
+                if(this.getLightMode(darkMode) === true)
+                    borderLozengeColor= this.getDarkenHexColor(theItem.color, 60);
+                else
+                    borderLozengeColor= this.getDarkenHexColor(theItem.color, 60);
+            
             if (hasBoldTags || hasItalicTags) {
                 contentWithoutTags = theItem.value.replace(/<b>(.*?)<\/b>/g, '$1');
                 contentWithoutTags = contentWithoutTags.replace(/<i>(.*?)<\/i>/g, '$1');
+                
                 if(hasBoldTags){
                     boldAttribute = ' font-weight="bold"';
-                    let borderLozengeColor = this.getDarkenHexColor(theItem.color, 60);
                     boldLozenge = ' stroke="'+ borderLozengeColor +'" stroke-width="2"';
-                }
+                } 
+                
                 if(hasItalicTags){
                     italicAttribute = ' font-style="italic"';
                 }
+                
             } else {
                 contentWithoutTags = theItem.value;
+                boldLozenge = ' stroke="'+ borderLozengeColor +'" stroke-width="1"';
             }
             
             // Measure the width of the text in pixels
@@ -350,10 +360,18 @@ class PredbatTableCard extends HTMLElement {
                 textWidth = 55;
             }
             
-            const textColor = this.getDarkenHexColor(theItem.color, 60);
-            
+            let textColor;
+            let pillColor = theItem.color;
+            if(this.getLightMode(darkMode) === true){
+                textColor = this.getDarkenHexColor(theItem.color, 60);
+            } else {
+                textColor = this.getDarkenHexColor(theItem.color, 70);
+                pillColor = this.getVibrantColor(theItem.color, 15);
+                pillColor = this.getLightenHexColor(pillColor, 10);
+            }
+                
             let svgLozenge = `<svg version="1.1" width=${textWidth} height="24" style="margin-top: 0px;">
-                                <rect x="4" y="2" width="${textWidth-10}" height="20" fill="${theItem.color}"${boldLozenge} ry="10" rx="10"/>
+                                <rect x="4" y="2" width="${textWidth-10}" height="20" fill="${pillColor}"${boldLozenge} ry="10" rx="10"/>
                                 <text class="pill" x="48%" y="13" dominant-baseline="middle" text-anchor="middle" fill="${textColor}" font-size="11"${boldAttribute}${italicAttribute}>${contentWithoutTags}</text>
                             </svg>`;
             
@@ -479,11 +497,14 @@ class PredbatTableCard extends HTMLElement {
                     
                     let bgColor = tdElement.getAttribute('bgcolor'); 
                     
-                    if(this.getLightMode(hassDarkMode) !== hassDarkMode){
-                        //console.log("forced light/dark mode");
-                    } else {
-                        if(bgColor.toUpperCase() === "#FFFFFF" && tdIndex != 1 && tdIndex != 2)
+                    if(bgColor.toUpperCase() === "#FFFFFF" && tdIndex != 1 && tdIndex != 2)
                             bgColor = "var(--primary-text-color)";
+                    
+                    if(this.getLightMode(hassDarkMode) === false ){
+                        // light mode active so adjust the colours from trefor
+                        
+                        bgColor = this.getDarkenHexColor(bgColor, 30);
+                        
                     }
                     
 
@@ -548,6 +569,7 @@ class PredbatTableCard extends HTMLElement {
 	let tableHeaderFontColour;
 	let tableHeaderBackgroundColour;
 	let tableHeaderColumnsBackgroundColour;
+	let boldTextDisplay;
 	
 	if(isDarkMode){
 	    oddColour = "#181f2a";
@@ -564,14 +586,15 @@ class PredbatTableCard extends HTMLElement {
     	}
     	tableHeaderFontColour = "#8a919e";
     	tableHeaderBackgroundColour = "transparent";
+    	boldTextDisplay = "font-weight: normal;";
     	
 	} else {
 	    // Light Theme
 	    //oddColour = "#d2d3db"; //848ea1
 	    //evenColour =  "#9394a5"; //2a3240
 	    
-	    oddColour = "var(--background-card-color)";
-	    evenColour = "var(--light-primary-color)"
+	    oddColour = "#FFFFFF";
+	    evenColour = "#E5E5E5"
 	    
     	if(this.config.odd_row_colour_light !== undefined){
     	    oddColour = this.config.odd_row_colour_light;
@@ -583,6 +606,7 @@ class PredbatTableCard extends HTMLElement {
     	tableHeaderFontColour = "#FFFFFF";
     	tableHeaderBackgroundColour = "var(--primary-color)";
     	tableHeaderColumnsBackgroundColour = "var(--primary-color)";
+    	boldTextDisplay = "font-weight: bold;";
 	}
 	
 	//use yaml width if exists
@@ -643,11 +667,11 @@ class PredbatTableCard extends HTMLElement {
         border: 0;
         text-align: center;
         white-space: nowrap;
-        text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.7);
+        */text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.7);*/
     }
     
     .card-content table tbody tr td .pill {
-        text-shadow: 0px 0px 0px rgba(0, 0, 0, 0.0);
+       text-shadow: 0px 0px 0px rgba(0, 0, 0, 0.0);
     }
     
     .card-content table tbody tr td .icons {
@@ -673,6 +697,7 @@ class PredbatTableCard extends HTMLElement {
       align-items: center; /* Center content vertically */
       justify-content: center; /* Center content horizontally */
       height: 100%; /* Set height of table cell */
+      ${boldTextDisplay}
     }
     
     .multiPillContainer {
@@ -683,6 +708,43 @@ class PredbatTableCard extends HTMLElement {
     }    
     `;
 	}
+	
+    getLightModeColor(hexColor) {
+      // Convert HEX color to RGB
+      let r = parseInt(hexColor.substring(1, 3), 16);
+      let g = parseInt(hexColor.substring(3, 5), 16);
+      let b = parseInt(hexColor.substring(5, 7), 16);
+    
+      // Calculate the light mode color (increase each RGB component)
+      let lightR = Math.min(r + 0, 255);
+      let lightG = Math.min(g - 30, 255);
+      let lightB = Math.min(b - 30, 255);
+    
+      // Convert the updated RGB values back to HEX
+      let lightHexColor = '#' + ((1 << 24) + (lightR << 16) + (lightG << 8) + lightB).toString(16).slice(1);
+    
+      return lightHexColor;
+    }	
+
+    getVibrantColor(hexColor, percent) {
+      // Convert HEX color to RGB
+      let r = parseInt(hexColor.substring(1, 3), 16);
+      let g = parseInt(hexColor.substring(3, 5), 16);
+      let b = parseInt(hexColor.substring(5, 7), 16);
+    
+      // Calculate the amount to increase the RGB values based on the percent vibrancy
+      let increase = Math.round(percent / 100 * 255);
+    
+      // Increase the RGB values to make the color more vibrant
+      r = Math.min(r + increase, 255);
+      g = Math.min(g + increase, 255);
+      b = Math.min(b + increase, 255);
+    
+      // Convert the updated RGB values back to HEX
+      let vibrantHexColor = '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    
+      return vibrantHexColor;
+    }	
 	
 	getDarkenHexColor(hexColor, percent) {
           // Ensure the percent is within the valid range
