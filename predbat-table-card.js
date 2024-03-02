@@ -250,42 +250,89 @@ class PredbatTableCard extends HTMLElement {
         
     } else if (column === "import-column" || column === "export-column") {
         
-        
+        // manage debug price pills appropriately
+        // debug_prices_only | true | false
         if (theItem.value.includes("(") || theItem.value.includes(")")) {
+            // if debug prices are present based on ( ) search
+            
             let newPills = "";
             const hasBoldTags = /<b>.*?<\/b>/.test(theItem.value);
             const hasItalicTags = /<i>.*?<\/i>/.test(theItem.value);
+            let contentWithoutTags = theItem.value.replace(/<b>(.*?)<\/b>/g, '$1');
+            contentWithoutTags = contentWithoutTags.replace(/<i>(.*?)<\/i>/g, '$1');
             
-            let contentWithoutTags;
-            if (hasBoldTags || hasItalicTags) {
-                contentWithoutTags = theItem.value.replace(/<b>(.*?)<\/b>/g, '$1');
-                contentWithoutTags = contentWithoutTags.replace(/<i>(.*?)<\/i>/g, '$1');
+            let priceStrings;
+            if(this.config.debug_prices_only === true){
+                // force debug price pill only
+                priceStrings = this.getPricesFromPriceString(contentWithoutTags, hasBoldTags, hasItalicTags, true);
+                newCell.innerHTML = '<div class="iconContainer">' + this.getTransformedCostToPill({"value":priceStrings[1], "color":theItem.color}, darkMode) + '</div>';
             } else {
-                contentWithoutTags = theItem.value;
+                priceStrings = this.getPricesFromPriceString(contentWithoutTags, hasBoldTags, hasItalicTags, false);
+                newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill({"value":priceStrings[0], "color":theItem.color}, darkMode) + '</div>';
+                newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill({"value":priceStrings[1], "color":theItem.color}, darkMode) + '</div>';
+                newCell.innerHTML = '<div class="multiPillContainer">' + newPills + '</div>';
             }
             
-            // remove the = sign if its in there
-            contentWithoutTags = contentWithoutTags.replace(/=/g, '');
+        } else {
+
+            newCell.innerHTML = '<div class="iconContainer">' + this.getTransformedCostToPill(theItem, darkMode) + '</div>';
+        }
+
+    } else if(column === "import-export-column"){
+          
+        
+        let newPills = "";
+        theItem.forEach((item, index) => {
             
+            const hasBoldTags = /<b>.*?<\/b>/.test(item.value);
+            const hasItalicTags = /<i>.*?<\/i>/.test(item.value);
+            let contentWithoutTags = item.value.replace(/<b>(.*?)<\/b>/g, '$1');
+            contentWithoutTags = contentWithoutTags.replace(/<i>(.*?)<\/i>/g, '$1');
+            let priceStrings;
             
+            if(this.config.debug_prices_only === true){
+                // force debug price pill only
+                priceStrings = this.getPricesFromPriceString(contentWithoutTags, hasBoldTags, hasItalicTags, true);
+            
+                newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill({"value": priceStrings[1], "color": item.color}, darkMode) + '</div>';
+            } else {
+                newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill(item, darkMode) + '</div>';
+            }
+            
+        });
+        
+        newCell.innerHTML = '<div class="multiPillContainer">' + newPills + '</div>';
+
+    }  
+    
+
+      return newCell;
+  }
+  
+  getPricesFromPriceString(thePriceString, hasBoldTags, hasItalicTags, debugOnly){
+      
 //            ? ⅆ - Rate that has been modified based on input_number.predbat_metric_future_rate_offset_import or input_number.predbat_metric_future_rate_offset_export
 //            ? ⚖ - Rate that has been estimated using future rate estimation data (e.g. Nordpool)
 //            = - Rate that has been overridden by the users apps.yaml
 //            ± - Rate that has been adjusted with a rate offset in the users apps.yaml
 //            $ - Rate that has been adjusted for an Octopus Saving session
-//            ? - Rate that has not yet been defined and the previous days data was used instead
-                
-                // Old way
-//            const regex = /(?:<[^>]+>)?([^\s<]+(?:\s*\?)?)\s+\(([^)]+)\)(?:<\/[^>]+>)?/;
-//            const matches = contentWithoutTags.match(regex);
-            
+//            ? - Rate that has not yet been defined and the previous days data was used instead      
+      
             const testRegex = /(\d+\.\d+)\D+(\d+\.\d+)/;
-            const testString = "1.23 (3.45)";
-            const testMatches = contentWithoutTags.match(testRegex);
-            const strippedString = contentWithoutTags.replace(testMatches[1], '').replace(testMatches[2], '').replace(/[()]/g, '').trim();
+            //const testString = "1.23 (3.45)";
+            const testMatches = thePriceString.match(testRegex);
+            const strippedString = thePriceString.replace(testMatches[1], '').replace(testMatches[2], '').replace(/[()]/g, '').trim();
 
-            const firstPillString = testMatches[1] + strippedString;
-            const secondPillString = testMatches[2];
+            let firstPillString; 
+            let secondPillString;
+            
+            if(debugOnly){
+                firstPillString = testMatches[1];
+                secondPillString = testMatches[2] + strippedString;                
+            } else {
+                firstPillString = testMatches[1] + strippedString;
+                secondPillString = testMatches[2];
+            }
             
             let firstPart = firstPillString; 
             let secondPart = `(${secondPillString}) `;
@@ -297,39 +344,15 @@ class PredbatTableCard extends HTMLElement {
             
             if(hasItalicTags){
                 firstPart = `<i>${firstPillString}</i>`; 
-                secondPart = `(${secondPillString})`;
+                secondPart = `<i>(${secondPillString})</i>`;
             }
             
             if(hasItalicTags && hasBoldTags){
                 firstPart = `<b><i>${firstPillString}</i></b>`; 
-                secondPart = `<b>(${secondPillString})</b>`;
+                secondPart = `<b><i>(${secondPillString})</i></b>`;
             }
-
-            newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill({"value":firstPart, "color":theItem.color}, darkMode) + '</div>';
-            newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill({"value":secondPart, "color":theItem.color}, darkMode) + '</div>';
-            newCell.innerHTML = '<div class="multiPillContainer">' + newPills + '</div>';
-
-        } else {
-            //console.log("String does not contain '(' or ')'");
-            newCell.innerHTML = '<div class="iconContainer">' + this.getTransformedCostToPill(theItem, darkMode) + '</div>';
-        }
             
-        
-
-    } else if(column === "import-export-column"){
-          
-        
-        let newPills = "";
-        theItem.forEach((item, index) => {
-            newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill(item, darkMode) + '</div>';
-        });
-        
-        newCell.innerHTML = '<div class="multiPillContainer">' + newPills + '</div>';
-
-    }  
-    
-
-      return newCell;
+            return[firstPart, secondPart];
   }
   
   getTransformedCostToPill(theItem, darkMode){
@@ -371,9 +394,10 @@ class PredbatTableCard extends HTMLElement {
             }
             
             // Measure the width of the text in pixels
+            
             let textWidth = contentWithoutTags.length * 8.5;// Adjust the factor based on your font and size
-            if(textWidth < 55){
-                textWidth = 55;
+            if(textWidth < 65){
+                textWidth = 65;
             }
             
             let textColor;
@@ -383,7 +407,7 @@ class PredbatTableCard extends HTMLElement {
                 textColor = this.getDarkenHexColor(theItem.color, 60);
             } else {
                 // card is light mode
-                console.log("LIGHT MODE IS ACTIVE");
+                //console.log("LIGHT MODE IS ACTIVE");
                 textColor = this.getDarkenHexColor(theItem.color, 70);
                 pillColor = this.getVibrantColor(theItem.color, 15);
                 pillColor = this.getLightenHexColor(pillColor, 10);
@@ -716,7 +740,7 @@ class PredbatTableCard extends HTMLElement {
       align-items: center; /* Center content vertically */
       justify-content: center; /* Center content horizontally */
       height: 100%; /* Set height of table cell */
-      ${boldTextDisplay}
+      
     }
     
     .multiPillContainer {
@@ -724,6 +748,7 @@ class PredbatTableCard extends HTMLElement {
       justify-content: center; /* Center content horizontally */
       height: 54px; /* Set height of table cell */
       margin-top: 4px;
+     
     }    
     `;
 	}
