@@ -1,5 +1,5 @@
 # PredBat-Table-Card
-A custom Predbat table card that allows flexible column management and styling. The card also supports Predbat's HMTL debug mode, and collapsing import/export prices into a single column.
+A custom Predbat table card that allows flexible column management and styling. The card also supports Predbat's HTML debug mode, and collapsing import/export prices into a single column. The card can switch between light modes or you can force the mode you want through the YAML configuration.
 
 | ![Screenshot of light-mode](https://github.com/pacemaker82/PredBat-Table-Card/blob/main/light-screen.png?raw=true) | ![Screenshot of dark-mode](https://github.com/pacemaker82/PredBat-Table-Card/blob/main/dark-screen.png?raw=true) |
 |----------|----------|
