@@ -137,6 +137,7 @@ class PredbatTableCard extends HTMLElement {
     }
     
     this.config = config;
+
   }
 
   // The height of your card. Home Assistant uses this to automatically
@@ -150,10 +151,18 @@ class PredbatTableCard extends HTMLElement {
     let newCell = document.createElement('td');
     let newContent = "";
     
+    //override fill empty cells
+    let fillEmptyCells;
+    if(this.config.fill_empty_cells === undefined)
+        fillEmptyCells = true;
+    else 
+        fillEmptyCells = this.config.fill_empty_cells;
+    
+        
     if(column !== "import-export-column"){
         newCell.style.color = theItem.color;
         if(theItem.value.replace(/\s/g, '').length === 0) {
-            if(this.config.fill_empty_cells)
+            if(fillEmptyCells)
                 newCell.innerHTML = `<div class="iconContainer"><ha-icon icon="mdi:minus" style="margin: 0 2px; opacity: 0.25;"></ha-icon></div>`;
         } else 
             newCell.innerHTML = `<div class="iconContainer">${theItem.value}</div>`;
@@ -166,9 +175,9 @@ class PredbatTableCard extends HTMLElement {
                     newContent = theItem.value.replace(/[☀]/g, '');
                     newContent = parseFloat(newContent).toFixed(2);
                     let additionalIcon = "";
-                    if(theItem.value.includes("☀")) {
-                        additionalIcon = '<ha-icon icon="mdi:white-balance-sunny" style="margin: 0 4px;"></ha-icon>';
-                    }
+
+                    additionalIcon = '<ha-icon icon="mdi:white-balance-sunny" style="margin: 0 4px;"></ha-icon>';
+                    
                     newCell.innerHTML = `<div class="iconContainer">${additionalIcon} <div style="margin: 0 4px;">${newContent}</div></div>`;
                 }
             } else {
@@ -198,7 +207,7 @@ class PredbatTableCard extends HTMLElement {
                     // include a down arrow
                     additionalArrow = '<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 2px;"></ha-icon>';                    
                 } else {
-                    if(this.config.fill_empty_cells)
+                    if(fillEmptyCells)
                         additionalArrow = '<ha-icon icon="mdi:minus" style="margin: 0 2px; opacity: 0.25;"></ha-icon>';                 
                 }
                 
@@ -222,7 +231,7 @@ class PredbatTableCard extends HTMLElement {
                         additionalArrow = '<ha-icon icon="mdi:battery-minus" style="" title="Planned Discharge" class="icons" style="--mdc-icon-size: 22px;"></ha-icon>';
                 } else if(newContent === "FreezeDis" || newContent === "FreezeChrg" || newContent === "HoldChrg" || newContent === "NoCharge"){
                         // use force discharge icon
-                        additionalArrow = '<ha-icon icon="mdi:battery-lock" style="" title="Pausing Charge"></ha-icon>';
+                        additionalArrow = '<ha-icon icon="mdi:battery-lock" style="" title="Charging Paused"></ha-icon>';
                         newCell.setAttribute('style', `color: ${theItem.color}`);
                 } else if(newContent === "Charge"){
                     additionalArrow = '<ha-icon icon="mdi:battery-charging-100" title="Planned Charge" style="--mdc-icon-size: 22px;"></ha-icon>';
@@ -279,7 +288,8 @@ class PredbatTableCard extends HTMLElement {
         }
 
     } else if(column === "import-export-column"){
-          
+        
+        
         
         let newPills = "";
         theItem.forEach((item, index) => {
@@ -292,8 +302,9 @@ class PredbatTableCard extends HTMLElement {
             
             if(this.config.debug_prices_only === true){
                 // force debug price pill only
+                
                 priceStrings = this.getPricesFromPriceString(contentWithoutTags, hasBoldTags, hasItalicTags, true);
-            
+                
                 newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill({"value": priceStrings[1], "color": item.color}, darkMode) + '</div>';
             } else {
                 newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill(item, darkMode) + '</div>';
