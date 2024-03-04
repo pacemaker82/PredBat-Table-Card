@@ -21,7 +21,7 @@ The following config items can or should be set on the card
 |----------|----------|----------|
 | `type`   | YES    | `predbat-table-card`    |
 | `entity`   | YES    | `predbat.plan_html` or name of the entity holding the Predbat plan HTML    |
-| `columns`    | YES    | `time-column` `import-column` `export-column` `import-export-column` `state-column` `limit-column` `pv-column` `load-column` `soc-column` `cost-column` `total-column` <br>Use `car-column` if EV is setup. <br>Provide ***in any order*** you want <br>At least 1 column needs to be used|
+| `columns`    | YES    | `time-column` `import-column` `export-column` `import-export-column` `state-column` `limit-column` `pv-column` `load-column` `soc-column` `cost-column` `total-column` <br>Use `car-column` if EV is setup. <br> use `iboost-column` if iBoost is setup <br>Provide ***in any order*** you want <br>At least 1 column needs to be used|
 | `odd_row_colour`    | NO    | Dark Mode Colour - HEX value e.g. `#FFFFFF` otherwise default colour will be used   |
 | `even_row_colour`    | NO    | Dark Mode Colour - HEX value e.g. `#FFFFFF` otherwise default colour will be used   |
 | `table_width`    | NO    | From `0` to `100` representing percentage width. If not set default will be used. <br> Card will use the percentage based on the container the card is in. E.g. if you put the card in a single card template and set to `100` it will display on the entire screen   |
