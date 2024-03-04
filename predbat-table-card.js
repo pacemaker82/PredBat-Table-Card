@@ -525,6 +525,7 @@ class PredbatTableCard extends HTMLElement {
           'load-column': { description: "Load kWh", smallDescription: "Load <br>kWh" },
           'soc-column': { description: "SOC", smallDescription: "SOC" },
           'car-column': { description: "Car kWh", smallDescription: "Car <br>kWh" },
+          'iboost-column': { description: "iBoost kWh", smallDescription: "iBoost <br>kWh" },          
           'cost-column': { description: "Cost", smallDescription: "Cost" },
           'total-column': { description: "Total Cost", smallDescription: "Total <br>Cost" },
           'import-export-column': {description: "Import / Export", smallDescription: "Import / <br>Export" }
@@ -588,10 +589,14 @@ class PredbatTableCard extends HTMLElement {
             if (index === 1) {
 
                 //check for car column in the first row and add new car-column class to array in position 7
-                tdElements.forEach(tdElement => {
+                tdElements.forEach((tdElement, checkIndex) => {
                     let columnHeaderTitle = tdElement.innerHTML.toUpperCase();
                     if (columnHeaderTitle.includes("CAR")) {
-                        headerClassesArray.splice(7, 0, "car-column");
+                        
+                        headerClassesArray.splice(checkIndex-1, 0, "car-column");
+                    }
+                    if(columnHeaderTitle.includes("IBOOST")) {
+                        headerClassesArray.splice(checkIndex-1, 0, "iboost-column");
                     }
                 });
                 
