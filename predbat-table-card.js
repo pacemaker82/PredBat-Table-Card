@@ -791,7 +791,10 @@ class PredbatTableCard extends HTMLElement {
     /*    filter: drop-shadow(1px 1px 0px rgba(0, 0, 0, 0.6));*/
     }
     
-
+    .card-content tbody tr td:nth-child(1) {
+      white-space: normal;
+    }
+    
     
     #limitSVG {
       position: relative;
