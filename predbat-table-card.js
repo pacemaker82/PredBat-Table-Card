@@ -1,18 +1,45 @@
 class PredbatTableCard extends HTMLElement {
   // Whenever the state changes, a new `hass` object is set. Use this to
   // update your content.
+    static get properties() {
+        return {
+            _config: {},
+            _hass: {},
+        };
+    }
+    
   set hass(hass) {
     // Initialize the content if it's not there yet.
     if (!this.content) {
       this.innerHTML = `
         <ha-card>
-          <div class="card-content"></div>
+          <div class="card-content" id="predbat-card-content"></div>
         </ha-card>
       `;
       this.content = this.querySelector("div");
     }
     
+    const oldHass = this._hass;
+    this._hass = hass;
+    
+    const entityId = this.config.entity;
+    
+    if(oldHass === undefined){
+        // Render html on the first load
+        this.processAndRender(hass);
+    } else {
+        const oldEntityUpdateTime = oldHass.states[entityId].last_updated;
+        const newEntityUpdateTime = hass.states[entityId].last_updated;
+        
+        //only render new HTML if the entity actually changed
+        if(oldEntityUpdateTime !== newEntityUpdateTime)
+            this.processAndRender(hass);        
+    }
+    
 
+  }
+  
+  processAndRender(hass){
     const entityId = this.config.entity;
     const state = hass.states[entityId];
     const stateStr = state ? state.state : "unavailable";
@@ -20,9 +47,12 @@ class PredbatTableCard extends HTMLElement {
 
     let rawHTML = hass.states[entityId].attributes.html;
 
+    console.log(hass.states[entityId].last_updated);
+
     const lastUpdated = this.getLastUpdatedFromHTML(rawHTML);
     const dataArray = this.getArrayDataFromHTML(rawHTML, hass.themes.darkMode); 
     let theTable = document.createElement('table');
+    theTable.setAttribute('id', 'predbat-table');
     
     //set out the table header row
     
@@ -47,7 +77,7 @@ class PredbatTableCard extends HTMLElement {
     //create the header rows
     columnsToReturn.forEach((column, index) => {
         let newColumn = document.createElement('th');
-        newColumn.textContent = this.getColumnDescription(column);
+        newColumn.innerHTML = this.getColumnDescription(column);
         newHeaderRow.appendChild(newColumn);
     });
         
@@ -103,14 +133,15 @@ class PredbatTableCard extends HTMLElement {
     this.content.innerHTML = theTable.outerHTML;
     const styleTag = document.createElement('style');
 	styleTag.innerHTML = this.getStyles(this.getLightMode(hass.themes.darkMode));
-	this.content.appendChild(styleTag);
-    
+	this.content.appendChild(styleTag);      
   }
   
   getLightMode(hassDarkMode){
     let lightMode = "auto";
     let cssLightMode;
-    if(this.config.light_mode)
+    
+    //set the light mode if the YAML is present
+    if(this.config.light_mode !== undefined)
         lightMode = this.config.light_mode;
         
     switch (lightMode) {
@@ -275,11 +306,20 @@ class PredbatTableCard extends HTMLElement {
                 // force debug price pill only
                 priceStrings = this.getPricesFromPriceString(contentWithoutTags, hasBoldTags, hasItalicTags, true);
                 newCell.innerHTML = '<div class="iconContainer">' + this.getTransformedCostToPill({"value":priceStrings[1], "color":theItem.color}, darkMode) + '</div>';
+            
+                
             } else {
                 priceStrings = this.getPricesFromPriceString(contentWithoutTags, hasBoldTags, hasItalicTags, false);
-                newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill({"value":priceStrings[0], "color":theItem.color}, darkMode) + '</div>';
-                newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill({"value":priceStrings[1], "color":theItem.color}, darkMode) + '</div>';
-                newCell.innerHTML = '<div class="multiPillContainer">' + newPills + '</div>';
+                
+                    if(this.config.stack_pills === false){
+                        newCell.innerHTML = '<div class="iconContainer">' + this.getTransformedCostToPill({"value":priceStrings[0], "color":theItem.color}, darkMode) 
+                        + this.getTransformedCostToPill({"value":priceStrings[1], "color":theItem.color}, darkMode) 
+                        + '</div>';
+                    } else {
+                        newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill({"value":priceStrings[0], "color":theItem.color}, darkMode) + '</div>';
+                        newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill({"value":priceStrings[1], "color":theItem.color}, darkMode) + '</div>';
+                        newCell.innerHTML = '<div class="multiPillContainer">' + newPills + '</div>';                        
+                    }
             }
             
         } else {
@@ -289,9 +329,8 @@ class PredbatTableCard extends HTMLElement {
 
     } else if(column === "import-export-column"){
         
-        
-        
         let newPills = "";
+        let newPillsNoContainer = "";
         theItem.forEach((item, index) => {
             
             const hasBoldTags = /<b>.*?<\/b>/.test(item.value);
@@ -304,15 +343,23 @@ class PredbatTableCard extends HTMLElement {
                 // force debug price pill only
                 
                 priceStrings = this.getPricesFromPriceString(contentWithoutTags, hasBoldTags, hasItalicTags, true);
-                
                 newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill({"value": priceStrings[1], "color": item.color}, darkMode) + '</div>';
+                newPillsNoContainer += this.getTransformedCostToPill({"value": priceStrings[1], "color": item.color}, darkMode);
+
             } else {
                 newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill(item, darkMode) + '</div>';
+                newPillsNoContainer += this.getTransformedCostToPill(item, darkMode);
             }
             
         });
         
-        newCell.innerHTML = '<div class="multiPillContainer">' + newPills + '</div>';
+        if(this.config.stack_pills === false){
+            newCell.innerHTML = '<div class="iconContainer">' + newPillsNoContainer + '</div>';
+        } else {
+        
+            newCell.innerHTML = '<div class="multiPillContainer">' + newPills + '</div>';
+            
+        }
 
     }  
     
@@ -469,23 +516,34 @@ class PredbatTableCard extends HTMLElement {
   
   getColumnDescription(column) {
         const headerClassesObject = {
-          'time-column': { description: "Time" },
-          'import-column': { description: "Import" },
-          'export-column': { description: "Export" },
-          'state-column': { description: "Status" },
-          'limit-column': { description: "Limit" },
-          'pv-column': { description: "PV kWh" },
-          'load-column': { description: "Load kWh" },
-          'soc-column': { description: "SOC %" },
-          'car-column': { description: "Car kWh" },
-          'cost-column': { description: "Cost" },
-          'total-column': { description: "Total Cost" },
-          'import-export-column': {description: "Import \n/ Export" }
+          'time-column': { description: "Time", smallDescription: "Time"},
+          'import-column': { description: "Import", smallDescription: "Import" },
+          'export-column': { description: "Export", smallDescription: "Export" },
+          'state-column': { description: "Status", smallDescription: "Status" },
+          'limit-column': { description: "Limit", smallDescription: "Limit" },
+          'pv-column': { description: "PV kWh", smallDescription: "PV <br>kWh" },
+          'load-column': { description: "Load kWh", smallDescription: "Load <br>kWh" },
+          'soc-column': { description: "SOC", smallDescription: "SOC" },
+          'car-column': { description: "Car kWh", smallDescription: "Car <br>kWh" },
+          'cost-column': { description: "Cost", smallDescription: "Cost" },
+          'total-column': { description: "Total Cost", smallDescription: "Total <br>Cost" },
+          'import-export-column': {description: "Import / Export", smallDescription: "Import / <br>Export" }
         };
         
         if (headerClassesObject.hasOwnProperty(column)) {
             // Return the description associated with the key
-            return headerClassesObject[column].description;
+            
+            const screenWidth = window.innerWidth;
+            // predbat-card-content
+            // const tableWidth = document.getElementById('predbat-table').offsetWidth;
+            // const cardContentWidth = document.getElementById('predbat-card-content').offsetWidth;
+            
+            if(screenWidth < 815){
+                return headerClassesObject[column].smallDescription;
+            } else {
+                return headerClassesObject[column].description;
+            }
+            
           } else {
             // If the key does not exist, return a default description or handle the error as needed
             return "Description not found";
@@ -669,7 +727,8 @@ class PredbatTableCard extends HTMLElement {
 	}
 	
 	if(this.config.columns !== undefined && this.config.columns.indexOf("import-export-column") >= 0){
-	    maxHeight = "54px";
+	    if(this.config.stack_pills === true || this.config.stack_pills === undefined)
+	        maxHeight = "54px";
 	}
 	   
 		return `
@@ -732,14 +791,7 @@ class PredbatTableCard extends HTMLElement {
     /*    filter: drop-shadow(1px 1px 0px rgba(0, 0, 0, 0.6));*/
     }
     
-    .card-content tbody tr td:nth-child(1) {
-      max-width: 40px; /* Adjust the maximum width as needed */
-      white-space: normal;
-    }
-    
-    .card-content tbody tr td:nth-child(4) {
-    width: 100px;
-    }
+
     
     #limitSVG {
       position: relative;
