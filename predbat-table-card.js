@@ -257,11 +257,25 @@ class PredbatTableCard extends HTMLElement {
             let additionalArrow = "";
             newCell.setAttribute('style', 'color: var(--energy-battery-out-color)');
                 if(theItem.value === "↘" || theItem.value === "↗" || theItem.value === "→"){
-                    additionalArrow = '<ha-icon icon="mdi:home-lightning-bolt" title="Running Normally" style="--mdc-icon-size: 22px;"></ha-icon>';
+                    let tooltip = "Running Normally";
+                    if(theItem.value.includes("Ⅎ"))
+                        tooltip = "Manually Forced Idle";
+                        
+                    additionalArrow = `<ha-icon icon="mdi:home-lightning-bolt" title=${tooltip} style="--mdc-icon-size: 22px;"></ha-icon>`;
+                    if(theItem.value.includes("Ⅎ"))
+                        additionalArrow += `<ha-icon icon="mdi:hand-back-right" title="${tooltip}" style="--mdc-icon-size: 22px;"></ha-icon>`;
+                        
                     newCell.setAttribute('style', `color: ${theItem.color}`);
                 } else if(newContent === "Discharge"){
                         // use force discharge icon
-                        additionalArrow = '<ha-icon icon="mdi:battery-minus" style="" title="Planned Discharge" class="icons" style="--mdc-icon-size: 22px;"></ha-icon>';
+                        let tooltip = "Planned Discharge";
+                        if(theItem.value.includes("Ⅎ"))
+                            tooltip = "Manual Forced Discharge";                        
+
+                        additionalArrow = `<ha-icon icon="mdi:battery-minus" style="" title="${tooltip}" class="icons" style="--mdc-icon-size: 22px;"></ha-icon>`;
+                        if(theItem.value.includes("Ⅎ"))
+                            additionalArrow += `<ha-icon icon="mdi:hand-back-right" title="${tooltip}" style="--mdc-icon-size: 22px;"></ha-icon>`;
+                        
                 } else if(newContent === "FreezeDis" || newContent === "FreezeChrg" || newContent === "HoldChrg" || newContent === "NoCharge"){
                         // use force discharge icon
                         additionalArrow = '<ha-icon icon="mdi:battery-lock" style="" title="Charging Paused"></ha-icon>';
