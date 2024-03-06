@@ -250,7 +250,7 @@ class PredbatTableCard extends HTMLElement {
       
     } else if(column === "state-column"){
 
-          newContent = theItem.value.replace(/[↘↗→]/g, '');
+          newContent = theItem.value.replace(/[↘↗→Ⅎ]/g, '');
          
             let additionalArrow = "";
             newCell.setAttribute('style', 'color: var(--energy-battery-out-color)');
