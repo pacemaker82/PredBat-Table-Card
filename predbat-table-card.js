@@ -250,31 +250,36 @@ class PredbatTableCard extends HTMLElement {
       
     } else if(column === "state-column"){
         
-        
-          newContent = theItem.value.replace(/[↘↗→Ⅎ]/g, '').trim();
+
+          newContent = theItem.value.replace(/[↘↗→ⅎ]/g, '').trim();
         
          
             let additionalArrow = "";
             newCell.setAttribute('style', 'color: var(--energy-battery-out-color)');
                 if(theItem.value === "↘" || theItem.value === "↗" || theItem.value === "→"){
                     let tooltip = "Running Normally";
-                    if(theItem.value.includes("Ⅎ"))
+                    if(theItem.value.includes("ⅎ"))
                         tooltip = "Manually Forced Idle";
                         
                     additionalArrow = `<ha-icon icon="mdi:home-lightning-bolt" title=${tooltip} style="--mdc-icon-size: 22px;"></ha-icon>`;
-                    if(theItem.value.includes("Ⅎ"))
-                        additionalArrow += `<ha-icon icon="mdi:hand-back-right" title="${tooltip}" style="--mdc-icon-size: 22px;"></ha-icon>`;
+                    if(theItem.value.includes("ⅎ"))
+                        additionalArrow += `<ha-icon icon="mdi:hand-back-right-outline" title="${tooltip}" style="--mdc-icon-size: 22px;"></ha-icon>`;
                         
+                    newCell.setAttribute('style', `color: ${theItem.color}`);
+                } else if(theItem.value === "↘ ⅎ" || theItem.value === "↗ ⅎ" || theItem.value === "→ ⅎ"){
+                    let tooltip = "Manually Forced Idle";
+                    additionalArrow = `<ha-icon icon="mdi:home-lightning-bolt" title=${tooltip} style="--mdc-icon-size: 22px;"></ha-icon>`;
+                    additionalArrow += `<ha-icon icon="mdi:hand-back-right-outline" title="${tooltip}" style="--mdc-icon-size: 22px;"></ha-icon>`;
                     newCell.setAttribute('style', `color: ${theItem.color}`);
                 } else if(newContent === "Discharge"){
                         // use force discharge icon
                         let tooltip = "Planned Discharge";
-                        if(theItem.value.includes("Ⅎ"))
+                        if(theItem.value.includes("ⅎ"))
                             tooltip = "Manual Forced Discharge";                        
 
                         additionalArrow = `<ha-icon icon="mdi:battery-minus" style="" title="${tooltip}" class="icons" style="--mdc-icon-size: 22px;"></ha-icon>`;
-                        if(theItem.value.includes("Ⅎ"))
-                            additionalArrow += `<ha-icon icon="mdi:hand-back-right" title="${tooltip}" style="--mdc-icon-size: 22px;"></ha-icon>`;
+                        if(theItem.value.includes("ⅎ"))
+                            additionalArrow += `<ha-icon icon="mdi:hand-back-right-outline" title="${tooltip}" style="--mdc-icon-size: 22px;"></ha-icon>`;
                         
                 } else if(newContent === "FreezeDis" || newContent === "FreezeChrg" || newContent === "HoldChrg" || newContent === "NoCharge"){
                         // use force discharge icon
@@ -283,12 +288,12 @@ class PredbatTableCard extends HTMLElement {
                 } else if(newContent === "Charge"){
                     let tooltip = "Planned Charge";
                     
-                    if(theItem.value.includes("Ⅎ"))
+                    if(theItem.value.includes("ⅎ"))
                         tooltip = "Manual Forced Charge";
                     
                     additionalArrow = `<ha-icon icon="mdi:battery-charging-100" title="${tooltip}" style="--mdc-icon-size: 22px;"></ha-icon>`;
-                    if(theItem.value.includes("Ⅎ"))
-                        additionalArrow += `<ha-icon icon="mdi:hand-back-right" title="${tooltip}" style="--mdc-icon-size: 22px;"></ha-icon>`;
+                    if(theItem.value.includes("ⅎ"))
+                        additionalArrow += `<ha-icon icon="mdi:hand-back-right-outline" title="${tooltip}" style="--mdc-icon-size: 22px;"></ha-icon>`;
                     newCell.setAttribute('style', 'color: var(--energy-battery-in-color)');                    
                 } else if(newContent === "Both"){
                     additionalArrow = '<ha-icon icon="mdi:battery-charging-100" style="color: var(--energy-battery-in-color); --mdc-icon-size: 22px;" title="Planned Charge" class="icons"></ha-icon><ha-icon icon="mdi:battery-minus" style="color: var(--energy-battery-out-color);" title="Planned Discharge" class="icons"></ha-icon>';
