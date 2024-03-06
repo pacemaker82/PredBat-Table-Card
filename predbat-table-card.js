@@ -249,8 +249,10 @@ class PredbatTableCard extends HTMLElement {
           newCell.innerHTML = `<div class="iconContainer"><div style="margin: 0 2px;">${newContent}</div>${additionalArrow}</div>`;
       
     } else if(column === "state-column"){
-
-          newContent = theItem.value.replace(/[↘↗→Ⅎ]/g, '');
+        
+        
+          newContent = theItem.value.replace(/[↘↗→Ⅎ]/g, '').trim();
+        
          
             let additionalArrow = "";
             newCell.setAttribute('style', 'color: var(--energy-battery-out-color)');
@@ -265,7 +267,14 @@ class PredbatTableCard extends HTMLElement {
                         additionalArrow = '<ha-icon icon="mdi:battery-lock" style="" title="Charging Paused"></ha-icon>';
                         newCell.setAttribute('style', `color: ${theItem.color}`);
                 } else if(newContent === "Charge"){
-                    additionalArrow = '<ha-icon icon="mdi:battery-charging-100" title="Planned Charge" style="--mdc-icon-size: 22px;"></ha-icon>';
+                    let tooltip = "Planned Charge";
+                    
+                    if(theItem.value.includes("Ⅎ"))
+                        tooltip = "Manual Forced Charge";
+                    
+                    additionalArrow = `<ha-icon icon="mdi:battery-charging-100" title="${tooltip}" style="--mdc-icon-size: 22px;"></ha-icon>`;
+                    if(theItem.value.includes("Ⅎ"))
+                        additionalArrow += `<ha-icon icon="mdi:hand-back-right" title="${tooltip}" style="--mdc-icon-size: 22px;"></ha-icon>`;
                     newCell.setAttribute('style', 'color: var(--energy-battery-in-color)');                    
                 } else if(newContent === "Both"){
                     additionalArrow = '<ha-icon icon="mdi:battery-charging-100" style="color: var(--energy-battery-in-color); --mdc-icon-size: 22px;" title="Planned Charge" class="icons"></ha-icon><ha-icon icon="mdi:battery-minus" style="color: var(--energy-battery-out-color);" title="Planned Discharge" class="icons"></ha-icon>';
