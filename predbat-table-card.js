@@ -188,7 +188,52 @@ class PredbatTableCard extends HTMLElement {
         fillEmptyCells = true;
     else 
         fillEmptyCells = this.config.fill_empty_cells;
+      
+    //  
+    //Set the table up for people that like the Trefor style
+    //
     
+    if(column !== "import-export-column"){
+    
+        if(theItem.value.replace(/\s/g, '').length === 0) {
+            
+        }
+    }
+    
+    if(this.config.old_skool === true){
+        newCell.style.border = "1px solid white";
+        newCell.style.backgroundColor = "#FFFFFF";
+        newCell.style.color = "#000000";
+        
+        if(theItem.value === "Both" && column === "state-column"){
+            
+            newCell.style.minWidth = "150px";
+            newCell.innerHTML = `<div style="width: 100%; height: 100%;">
+            <div style='background-color:#3AEE85; width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center;'>Charge↗</div>
+            <div style='background-color:#FFFF00; width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center;'>Discharge↘</div>
+            </div>`;
+        
+        } else if(column === "import-export-column"){
+            
+            theItem.forEach((item, index) => {
+                newContent += `<div style="display: flex; align-items: center; justify-content: center; height: 50%; background-color: ${item.color}">${item.value}</div>`;
+            });
+            
+            newCell.innerHTML = newContent;
+            
+        } else {
+            newCell.style.backgroundColor = theItem.color;
+            if(theItem.value.replace(/\s/g, '').length === 0) {
+                if(fillEmptyCells)
+                    newCell.innerHTML = `<div class="iconContainer"><ha-icon icon="mdi:minus" style="margin: 0 2px; opacity: 0.25;"></ha-icon></div>`;
+            } else {
+                newCell.innerHTML = theItem.value;
+            }
+        }
+    
+        return newCell;
+    }    
+
         
     if(column !== "import-export-column"){
         newCell.style.color = theItem.color;
@@ -198,6 +243,8 @@ class PredbatTableCard extends HTMLElement {
         } else 
             newCell.innerHTML = `<div class="iconContainer">${theItem.value}</div>`;
     }
+    
+
 
     if(column === "load-column" || column === "pv-column" || column == "car") {
         
@@ -642,10 +689,10 @@ class PredbatTableCard extends HTMLElement {
                     
                     let bgColor = tdElement.getAttribute('bgcolor'); 
                     
-                    if(bgColor.toUpperCase() === "#FFFFFF" && tdIndex != 1 && tdIndex != 2)
+                    if(bgColor.toUpperCase() === "#FFFFFF" && tdIndex != 1 && tdIndex != 2 && this.config.old_skool !== true && this.getLightMode(hassDarkMode) !== true)
                             bgColor = "var(--primary-text-color)";
-                    
-                    if(this.getLightMode(hassDarkMode) === false ){
+                            
+                    if(this.getLightMode(hassDarkMode) === false && this.config.old_skool !== true){
                         
                         // light mode active so adjust the colours from trefor
                         bgColor = this.getDarkenHexColor(bgColor, 30);
@@ -715,6 +762,9 @@ class PredbatTableCard extends HTMLElement {
 	let tableHeaderBackgroundColour;
 	let tableHeaderColumnsBackgroundColour;
 	let boldTextDisplay;
+	
+	if(this.config.old_skool === true)
+	    maxHeight = "22px";
 	
 	if(isDarkMode){
 	    oddColour = "#181f2a";
@@ -809,7 +859,7 @@ class PredbatTableCard extends HTMLElement {
         
         height: ${maxHeight};
         align-items: center;
-        width: 60px;
+       -- width: 60px;
         border: 0;
         text-align: center;
         white-space: nowrap;
@@ -839,7 +889,7 @@ class PredbatTableCard extends HTMLElement {
       align-items: center; /* Center content vertically */
       justify-content: center; /* Center content horizontally */
       height: 100%; /* Set height of table cell */
-      
+      --font-weight: bold;
     }
     
     .multiPillContainer {
