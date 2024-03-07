@@ -31,7 +31,8 @@ The following config items can or should be set on the card
 | `odd_row_colour_light`    | NO    | Light Mode Colour HEX value e.g. `#FFFFFF` otherwise default colour will be used   |
 | `even_row_colour_light`    | NO    | Light Mode Colour HEX value e.g. `#FFFFFF` otherwise default colour will be used   |
 | `debug_prices_only` | NO | `true` or `false`. If HTML debug prices enabled, set to `true` to only show the adjusted prices. **Important:** The Predbat `HTML Plan debug` mode must be enabled for this to work! | 
-| `stack_pills` | NO | `true` or `false`. Set to `false` if you want the price pills to only display on one line, `true` for on top of each other. Default is `true`
+| `stack_pills` | NO | `true` or `false`. Set to `false` if you want the price pills to only display on one line, `true` for on top of each other. Default is `true`|
+| `old_skool | NO | Set to `true` if you want to override the styling to follow the original Predbat card, but allow for the flexibility of this card. Overrides any styling settings like light mode, row colours etc... |
 
 You can use `import-export-column` to see both import and export prices in a single column
 
