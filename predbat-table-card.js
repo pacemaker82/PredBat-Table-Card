@@ -53,6 +53,7 @@ class PredbatTableCard extends HTMLElement {
     const dataArray = this.getArrayDataFromHTML(rawHTML, hass.themes.darkMode); 
     let theTable = document.createElement('table');
     theTable.setAttribute('id', 'predbat-table');
+    theTable.setAttribute('cellpadding', '0px');
     
     //set out the table header row
     
@@ -204,6 +205,7 @@ class PredbatTableCard extends HTMLElement {
         newCell.style.border = "1px solid white";
         newCell.style.backgroundColor = "#FFFFFF";
         newCell.style.color = "#000000";
+        newCell.style.height = "22px";
         
         if(theItem.value === "Both" && column === "state-column"){
             
@@ -763,9 +765,6 @@ class PredbatTableCard extends HTMLElement {
 	let tableHeaderColumnsBackgroundColour;
 	let boldTextDisplay;
 	
-	if(this.config.old_skool === true)
-	    maxHeight = "22px";
-	
 	if(isDarkMode){
 	    oddColour = "#181f2a";
 	    evenColour = "#2a3240";
@@ -813,7 +812,10 @@ class PredbatTableCard extends HTMLElement {
 	    if(this.config.stack_pills === true || this.config.stack_pills === undefined)
 	        maxHeight = "54px";
 	}
-	   
+	
+	if(this.config.old_skool === true)
+	    maxHeight = "22px";
+	    
 		return `
     .card-content table {
       /* Your styles for the table inside .card-content */
@@ -858,6 +860,7 @@ class PredbatTableCard extends HTMLElement {
     .card-content table tbody tr td {
         
         height: ${maxHeight};
+        vertical-align: middle;
         align-items: center;
        -- width: 60px;
         border: 0;
