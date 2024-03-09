@@ -364,9 +364,9 @@ class PredbatTableCard extends HTMLElement {
             newCell.innerHTML = `
             
                 <div class="iconContainer">
-                    <svg version="1.1" width="34" height="34" id="limitSVG">
-                    <circle cx="17" cy="17" r="11" stroke="#2a3240" stroke-width="2" fill="#e1e1e1"/>
-                    <text class="pill" x="17" y="18" dominant-baseline="middle" text-anchor="middle" fill="#2a3240" font-size="10"} font-weight="bold">${theItem.value}</text>
+                    <svg version="1.1" width="26" height="26" id="limitSVG">
+                    <circle cx="13" cy="13" r="11" stroke="#2a3240" stroke-width="2" fill="#e1e1e1"/>
+                    <text class="pill" x="13" y="14" dominant-baseline="middle" text-anchor="middle" fill="#2a3240" font-size="10"} font-weight="bold">${theItem.value}</text>
                     </svg>
                 </div>`;
         
@@ -780,7 +780,7 @@ class PredbatTableCard extends HTMLElement {
 	let tableWidth = 100;
 	let oddColour;
 	let evenColour;
-	let maxHeight = "30px";
+	let maxHeight = "28px";
 	let tableHeaderFontColour;
 	let tableHeaderBackgroundColour;
 	let tableHeaderColumnsBackgroundColour;
@@ -835,7 +835,7 @@ class PredbatTableCard extends HTMLElement {
 	}
 	
 	if(this.config.old_skool === true)
-	    maxHeight = "22px";
+	    maxHeight = "28px";
 	    
 		return `
     .card-content table {
