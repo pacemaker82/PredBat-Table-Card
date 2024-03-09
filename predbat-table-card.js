@@ -215,7 +215,9 @@ class PredbatTableCard extends HTMLElement {
             
             if(theItem.value === "Both" && column === "state-column"){
                 
-                newCell.style.minWidth = "150px";
+                newCell.style.minWidth = "160px";
+                newCell.style.paddingLeft = "0px";
+                newCell.style.paddingRight = "0px";
                 newCell.innerHTML = `<div style="width: 100%; height: 100%;">
                 <div style='background-color:#3AEE85; width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center;'>Charge↗</div>
                 <div style='background-color:#FFFF00; width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center;'>Discharge↘</div>
@@ -879,7 +881,9 @@ class PredbatTableCard extends HTMLElement {
     }    
     
     .card-content table tbody tr td {
-        padding: 0px;        
+        padding: 0px;
+        padding-left: 4px;
+        padding-right: 4px; 
         height: ${maxHeight};
         vertical-align: middle;
         align-items: center;
