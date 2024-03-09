@@ -879,7 +879,7 @@ class PredbatTableCard extends HTMLElement {
     }    
     
     .card-content table tbody tr td {
-        
+        padding: 0px;        
         height: ${maxHeight};
         vertical-align: middle;
         align-items: center;
