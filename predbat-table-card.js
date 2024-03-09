@@ -207,20 +207,36 @@ class PredbatTableCard extends HTMLElement {
         
             //this.config.old_skool_columns.indexOf(column) >= 0
             
+            newContent = theItem.value.replace(/[↘↗→]/g, '');
+          
+            let additionalArrow = "";
+
+            if(theItem.value.includes("↘")) {
+                // include a down arrow
+                additionalArrow = '<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 2px; opacity:0.75;"></ha-icon>';
+            } else if (theItem.value.includes("↗")) {
+                // include a up arrow
+                additionalArrow = '<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 2px; opacity:0.75;""></ha-icon>';                    
+            } else if (theItem.value.includes("→")) {
+
+                    additionalArrow = '<ha-icon icon="mdi:arrow-left-right" style="margin: 0 2px; opacity: 0.75;"></ha-icon>';                 
+            }
+            
             if(this.config.old_skool === true)
                 newCell.style.border = "1px solid white";
+            
             newCell.style.backgroundColor = "#FFFFFF";
             newCell.style.color = "#000000";
             newCell.style.height = "22px";
             
             if(theItem.value === "Both" && column === "state-column"){
                 
-                newCell.style.minWidth = "160px";
+                newCell.style.minWidth = "186px";
                 newCell.style.paddingLeft = "0px";
                 newCell.style.paddingRight = "0px";
                 newCell.innerHTML = `<div style="width: 100%; height: 100%;">
-                <div style='background-color:#3AEE85; width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center;'>Charge↗</div>
-                <div style='background-color:#FFFF00; width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center;'>Discharge↘</div>
+                <div style='background-color:#3AEE85; width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center;'>Charge<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 2px;"></ha-icon></div>
+                <div style='background-color:#FFFF00; width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center;'>Discharge<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 2px;"></ha-icon></div>
                 </div>`;
             
             } else if(column === "import-export-column"){
@@ -237,7 +253,7 @@ class PredbatTableCard extends HTMLElement {
                     if(fillEmptyCells)
                         newCell.innerHTML = `<div class="iconContainer"><ha-icon icon="mdi:minus" style="margin: 0 2px; opacity: 0.25;"></ha-icon></div>`;
                 } else {
-                    newCell.innerHTML = theItem.value;
+                    newCell.innerHTML = `<div class="iconContainer"><div style="margin: 0 2px;">${newContent}</div>${additionalArrow}</div>`;
                 }
             }
         
