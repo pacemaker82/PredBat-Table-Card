@@ -201,39 +201,46 @@ class PredbatTableCard extends HTMLElement {
         }
     }
     
-    if(this.config.old_skool === true){
-        newCell.style.border = "1px solid white";
-        newCell.style.backgroundColor = "#FFFFFF";
-        newCell.style.color = "#000000";
-        newCell.style.height = "22px";
+    if(this.config.old_skool === true || this.config.old_skool_columns !== undefined){
         
-        if(theItem.value === "Both" && column === "state-column"){
-            
-            newCell.style.minWidth = "150px";
-            newCell.innerHTML = `<div style="width: 100%; height: 100%;">
-            <div style='background-color:#3AEE85; width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center;'>Charge↗</div>
-            <div style='background-color:#FFFF00; width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center;'>Discharge↘</div>
-            </div>`;
+        if(this.config.old_skool === true || this.config.old_skool_columns.indexOf(column) >= 0){
         
-        } else if(column === "import-export-column"){
+            //this.config.old_skool_columns.indexOf(column) >= 0
             
-            theItem.forEach((item, index) => {
-                newContent += `<div style="display: flex; align-items: center; justify-content: center; height: 50%; background-color: ${item.color}">${item.value}</div>`;
-            });
+            if(this.config.old_skool === true)
+                newCell.style.border = "1px solid white";
+            newCell.style.backgroundColor = "#FFFFFF";
+            newCell.style.color = "#000000";
+            newCell.style.height = "22px";
             
-            newCell.innerHTML = newContent;
+            if(theItem.value === "Both" && column === "state-column"){
+                
+                newCell.style.minWidth = "150px";
+                newCell.innerHTML = `<div style="width: 100%; height: 100%;">
+                <div style='background-color:#3AEE85; width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center;'>Charge↗</div>
+                <div style='background-color:#FFFF00; width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center;'>Discharge↘</div>
+                </div>`;
             
-        } else {
-            newCell.style.backgroundColor = theItem.color;
-            if(theItem.value.replace(/\s/g, '').length === 0) {
-                if(fillEmptyCells)
-                    newCell.innerHTML = `<div class="iconContainer"><ha-icon icon="mdi:minus" style="margin: 0 2px; opacity: 0.25;"></ha-icon></div>`;
+            } else if(column === "import-export-column"){
+                
+                theItem.forEach((item, index) => {
+                    newContent += `<div style="display: flex; align-items: center; justify-content: center; height: 50%; background-color: ${item.color}">${item.value}</div>`;
+                });
+                
+                newCell.innerHTML = newContent;
+                
             } else {
-                newCell.innerHTML = theItem.value;
+                newCell.style.backgroundColor = theItem.color;
+                if(theItem.value.replace(/\s/g, '').length === 0) {
+                    if(fillEmptyCells)
+                        newCell.innerHTML = `<div class="iconContainer"><ha-icon icon="mdi:minus" style="margin: 0 2px; opacity: 0.25;"></ha-icon></div>`;
+                } else {
+                    newCell.innerHTML = theItem.value;
+                }
             }
+        
+            return newCell;
         }
-    
-        return newCell;
     }    
 
         
@@ -596,7 +603,7 @@ class PredbatTableCard extends HTMLElement {
           'time-column': { description: "Time", smallDescription: "Time"},
           'import-column': { description: "Import", smallDescription: "Import" },
           'export-column': { description: "Export", smallDescription: "Export" },
-          'state-column': { description: "Status", smallDescription: "Status" },
+          'state-column': { description: "State", smallDescription: "State" },
           'limit-column': { description: "Limit", smallDescription: "Limit" },
           'pv-column': { description: "PV kWh", smallDescription: "PV <br>kWh" },
           'load-column': { description: "Load kWh", smallDescription: "Load <br>kWh" },
@@ -691,7 +698,7 @@ class PredbatTableCard extends HTMLElement {
                     
                     let bgColor = tdElement.getAttribute('bgcolor'); 
                     
-                    if(bgColor.toUpperCase() === "#FFFFFF" && tdIndex != 1 && tdIndex != 2 && this.config.old_skool !== true && this.getLightMode(hassDarkMode) !== true)
+                    if(bgColor.toUpperCase() === "#FFFFFF" && tdIndex != 1 && tdIndex != 2 && (this.config.old_skool !== true) && this.getLightMode(hassDarkMode) !== true)
                             bgColor = "var(--primary-text-color)";
                             
                     if(this.getLightMode(hassDarkMode) === false && this.config.old_skool !== true){
@@ -701,23 +708,38 @@ class PredbatTableCard extends HTMLElement {
                         
                     }
                     
-
-                    
                     if(tdIndex ===2){
                         currentExportRate = tdElement.innerHTML;
                         currentExportColor = bgColor;
                     }
                     
+                    let headerIndex;
                     if(tdIndex <= 2){
-                        newTRObject[headerClassesArray[tdIndex]] = {"value": tdElement.innerHTML, "color": bgColor};
+                        headerIndex = tdIndex
                     } else {
                         //2
                         if(countDifference != 0){
-                            newTRObject[headerClassesArray[tdIndex+countDifference]] = {"value": tdElement.innerHTML, "color": bgColor};
+                            headerIndex = tdIndex+countDifference;
                         } else {
-                            newTRObject[headerClassesArray[tdIndex]] = {"value": tdElement.innerHTML, "color": bgColor};
+                            headerIndex = tdIndex;
                         }
                     }
+                    
+                    if(this.config.old_skool_columns !== undefined) {
+                        if(this.config.old_skool_columns.length > 0){
+                            this.config.old_skool_columns.forEach((oldColumn, oldIndex) => {
+                                 if(oldColumn === headerClassesArray[headerIndex]){
+                                     if(tdElement.getAttribute('bgcolor') != "#FFFFFF"){
+                                         bgColor = tdElement.getAttribute('bgcolor');
+                                     } else {
+                                        bgColor = null; 
+                                     }
+                                 }
+                            });
+                        }
+                    }
+                
+                    newTRObject[headerClassesArray[headerIndex]] = {"value": tdElement.innerHTML, "color": bgColor};
                     
                     
                     
@@ -726,8 +748,7 @@ class PredbatTableCard extends HTMLElement {
                         // having to do some nasty overrides here because of colspan stuff and my brain cant do the math today. will fix.
                         newTRObject[headerClassesArray[2]] = {"value": currentExportRate, "color": currentExportColor};
                     }
-                    
-                    
+
                 });
                 
                 //if there are no state & limit cells because they are spanning rows, get the previous row data
