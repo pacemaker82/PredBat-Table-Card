@@ -33,6 +33,7 @@ The following config items can or should be set on the card
 | `debug_prices_only` | NO | `true` or `false`. If HTML debug prices enabled, set to `true` to only show the adjusted prices. **Important:** The Predbat `HTML Plan debug` mode must be enabled for this to work! | 
 | `stack_pills` | NO | `true` or `false`. Set to `false` if you want the price pills to only display on one line, `true` for on top of each other. Default is `true`|
 | `old_skool` | NO | Set to `true` if you want to override the styling to follow the original Predbat card, but allow for the flexibility of this card. Overrides any styling settings like light mode, row colours etc... |
+| `old_skool_columns` | NO | Like `columns`, override which columns appear like the original Predbat card. `old_skool` setting is ignored if these are set. Supports all the same `columns`. Order is set in `columns` not here. Works in dark and light mode. |
 
 You can use `import-export-column` to see both import and export prices in a single column
 
@@ -60,7 +61,7 @@ fill_empty_cells: true
 
 ## Custom Setup example
 
-Below shows how you can use any column in any order, just put them in the list how you want them:
+Below shows how you can use any column in any order, just put them in the list how you want them. This example is also showing the `state` and `soc` columns in the style of the original Predbat card.
 
 ```
 type: custom:predbat-table-card
@@ -76,4 +77,10 @@ odd_row_colour: '#181f2a'
 even_row_colour: '#2a3240'
 table_width: 50
 fill_empty_cells: true
+old_skool_columns:
+  - state-column
+  - soc-column
 ```
+
+<img width="598" alt="Screenshot 2024-03-09 at 07 53 23" src="https://github.com/pacemaker82/PredBat-Table-Card/assets/157808562/626b2151-b612-4c9c-b9f6-02cf56c960c5">
+
