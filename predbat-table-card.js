@@ -211,15 +211,22 @@ class PredbatTableCard extends HTMLElement {
           
             let additionalArrow = "";
 
+            let forceColor = "";
+            const regex = /[↘↗→]/;
+            
+            // if user uses old_skool: true AND old_skool_columns on dark mode then this will not work, they need to turn off old_skool
+            
+            if(darkMode && regex.test(theItem.value) && theItem.value.length == 1 && this.config.old_skool !== true)
+                forceColor = " color: #FFFFFF;";
+            
             if(theItem.value.includes("↘")) {
                 // include a down arrow
-                additionalArrow = '<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 2px; opacity:0.75;"></ha-icon>';
+                additionalArrow = `<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 2px; opacity:0.75;${forceColor}"></ha-icon>`;
             } else if (theItem.value.includes("↗")) {
                 // include a up arrow
-                additionalArrow = '<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 2px; opacity:0.75;""></ha-icon>';                    
+                additionalArrow = `<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 2px; opacity:0.75;${forceColor}"></ha-icon>`;                    
             } else if (theItem.value.includes("→")) {
-
-                    additionalArrow = '<ha-icon icon="mdi:arrow-left-right" style="margin: 0 2px; opacity: 0.75;"></ha-icon>';                 
+                    additionalArrow = `<ha-icon icon="mdi:arrow-right-thin" style="margin: 0 2px; opacity: 0.75;${forceColor}"></ha-icon>`;                 
             }
             
             if(this.config.old_skool === true)
@@ -234,9 +241,18 @@ class PredbatTableCard extends HTMLElement {
                 newCell.style.minWidth = "186px";
                 newCell.style.paddingLeft = "0px";
                 newCell.style.paddingRight = "0px";
+                
+                let chargeString = "Charge";
+                let dischargeString = "Discharge";
+                if(this.isSmallScreen()){
+                    chargeString = "Chg";
+                    dischargeString = "Dis";
+                    newCell.style.minWidth = "126px";
+                }
+                
                 newCell.innerHTML = `<div style="width: 100%; height: 100%;">
-                <div style='background-color:#3AEE85; width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center;'>Charge<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 2px;"></ha-icon></div>
-                <div style='background-color:#FFFF00; width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center;'>Discharge<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 2px;"></ha-icon></div>
+                <div style='background-color:#3AEE85; width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center;'>${chargeString}<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 2px;"></ha-icon></div>
+                <div style='background-color:#FFFF00; width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center;'>${dischargeString}<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 2px;"></ha-icon></div>
                 </div>`;
             
             } else if(column === "import-export-column"){
@@ -616,6 +632,15 @@ class PredbatTableCard extends HTMLElement {
       
   }
   
+  isSmallScreen() {
+    const screenWidth = window.innerWidth;
+    if(screenWidth < 815){
+        return true;
+    } else {
+        return false;
+    }
+  }
+  
   getColumnDescription(column) {
         const headerClassesObject = {
           'time-column': { description: "Time", smallDescription: "Time"},
@@ -635,22 +660,17 @@ class PredbatTableCard extends HTMLElement {
         
         if (headerClassesObject.hasOwnProperty(column)) {
             // Return the description associated with the key
-            
-            const screenWidth = window.innerWidth;
-            // predbat-card-content
-            // const tableWidth = document.getElementById('predbat-table').offsetWidth;
-            // const cardContentWidth = document.getElementById('predbat-card-content').offsetWidth;
-            
-            if(screenWidth < 815){
+
+            if(this.isSmallScreen()){
                 return headerClassesObject[column].smallDescription;
             } else {
                 return headerClassesObject[column].description;
             }
             
-          } else {
-            // If the key does not exist, return a default description or handle the error as needed
-            return "Description not found";
-          }
+        } else {
+        // If the key does not exist, return a default description or handle the error as needed
+        return "Description not found";
+        }
   }
   
   getArrayDataFromHTML(html, hassDarkMode) {
