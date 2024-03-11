@@ -211,29 +211,20 @@ class PredbatTableCard extends HTMLElement {
           
             let additionalArrow = "";
 
-            let forceColor = "";
-            const regex = /[↘↗→]/;
-            
-            // if user uses old_skool: true AND old_skool_columns on dark mode then this will not work, they need to turn off old_skool
-            
-            if(darkMode && regex.test(theItem.value) && theItem.value.length == 1 && this.config.old_skool !== true)
-                forceColor = " color: #FFFFFF;";
-            
             if(theItem.value.includes("↘")) {
                 // include a down arrow
-                additionalArrow = `<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 2px; opacity:0.75;${forceColor}"></ha-icon>`;
+                additionalArrow = `<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 2px; opacity:0.75;"></ha-icon>`;
             } else if (theItem.value.includes("↗")) {
                 // include a up arrow
-                additionalArrow = `<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 2px; opacity:0.75;${forceColor}"></ha-icon>`;                    
+                additionalArrow = `<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 2px; opacity:0.75;"></ha-icon>`;                    
             } else if (theItem.value.includes("→")) {
-                    additionalArrow = `<ha-icon icon="mdi:arrow-right-thin" style="margin: 0 2px; opacity: 0.75;${forceColor}"></ha-icon>`;                 
+                additionalArrow = `<ha-icon icon="mdi:arrow-right-thin" style="margin: 0 2px; opacity: 0.75;"></ha-icon>`;                 
             }
             
             if(this.config.old_skool === true)
                 newCell.style.border = "1px solid white";
             
             newCell.style.backgroundColor = "#FFFFFF";
-            newCell.style.color = "#000000";
             newCell.style.height = "22px";
             
             if(theItem.value === "Both" && column === "state-column"){
@@ -247,7 +238,7 @@ class PredbatTableCard extends HTMLElement {
                 if(this.isSmallScreen()){
                     chargeString = "Chg";
                     dischargeString = "Dis";
-                    newCell.style.minWidth = "126px";
+                    newCell.style.minWidth = "110px";
                 }
                 
                 newCell.innerHTML = `<div style="width: 100%; height: 100%;">
@@ -271,6 +262,17 @@ class PredbatTableCard extends HTMLElement {
                 } else {
                     newCell.innerHTML = `<div class="iconContainer"><div style="margin: 0 2px;">${newContent}</div>${additionalArrow}</div>`;
                 }
+            }
+            
+            // if user uses old_skool: true AND old_skool_columns on dark mode then this will not work, they need to turn off old_skool
+            if(this.config.old_skool_columns !== undefined && this.config.old_skool_columns.indexOf(column) >= 0 && darkMode){
+                if(theItem.value.includes("ⅎ"))
+                    newCell.style.backgroundColor = "white";
+                newCell.style.color = "black";
+                if(newCell.style.backgroundColor.length === 0)
+                    newCell.style.color = "white";
+            } else {
+                newCell.style.color = "#000000";
             }
         
             return newCell;
