@@ -4,6 +4,12 @@ A custom Predbat table card that allows flexible column management and styling. 
 | ![Screenshot of light-mode](https://github.com/pacemaker82/PredBat-Table-Card/blob/main/light-screen-mode.png?raw=true) | ![Screenshot of dark-mode](https://github.com/pacemaker82/PredBat-Table-Card/blob/main/dark-screen.png?raw=true) |
 |----------|----------|
 
+## Table of Contents
+1. [Installation](#installation)
+2. [Card Setup](#card-setup)
+3. [Custom Card Setup](#custom-setup-example)
+4. [Managing table width for different devices](#managing-table-width-for-different-devices)
+
 ## Installation
 
 1. Goto HACS (if you dont have that installed, install HACS)
@@ -13,7 +19,7 @@ A custom Predbat table card that allows flexible column management and styling. 
 5. Download and refresh
 6. Add the card to your dashboard resources if not already there. Usually located at `/hacsfiles/PredBat-Table-Card/predbat-table-card.js`
 
-## Setup
+## Card Setup
 
 The following config items can or should be set on the card
 
