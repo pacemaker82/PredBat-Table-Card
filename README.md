@@ -82,6 +82,9 @@ old_skool_columns:
 
 ## Managing table width for different devices
 
+| ![IMG_D1EF0A21CA2E-1](https://github.com/pacemaker82/PredBat-Table-Card/assets/157808562/65a06929-b20c-4fc6-be7b-cfa49b14755b) | <img width="1331" alt="Screenshot 2024-03-11 at 09 51 40" src="https://github.com/pacemaker82/PredBat-Table-Card/assets/157808562/77deb544-998a-4ce8-a548-867f9091b255">|
+|----------|----------|
+
 The card has built in logic to reduce column widths the best it can, it will dynamically truncate some labels and column headers too to maximise the real estate. However there is only so much you can do if you choose to show a lot of the Predbat data.
 
 As an alternative, you can use the built in `conditional` card in Home Assistant to make two versions of the Predbat card, one for mobile screen and one for full computer screen (or any size wider than mobile). In the example below, the first version of the card is for mobile phone screen size, limiting the number of columns to see, the second is the full size version showing all the columns. Of course as this card is very flexible you can have different columns in different orders depending on the screen size. Check out the `conditional` card for even more options (like a tablet version etc)
