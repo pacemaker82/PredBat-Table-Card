@@ -80,3 +80,58 @@ old_skool_columns:
 
 <img width="598" alt="Screenshot 2024-03-09 at 07 53 23" src="https://github.com/pacemaker82/PredBat-Table-Card/assets/157808562/626b2151-b612-4c9c-b9f6-02cf56c960c5">
 
+## Managing table width for different devices
+
+The card has built in logic to reduce column widths the best it can, it will dynamically truncate some labels and column headers too to maximise the real estate. However there is only so much you can do if you choose to show a lot of the Predbat data.
+
+As an alternative, you can use the built in `conditional` card in Home Assistant to make two versions of the Predbat card, one for mobile screen and one for full computer screen (or any size wider than mobile). In the example below, the first version of the card is for mobile phone screen size, limiting the number of columns to see, the second is the full size version showing all the columns. Of course as this card is very flexible you can have different columns in different orders depending on the screen size. Check out the `conditional` card for even more options (like a tablet version etc)
+
+```
+type: vertical-stack
+cards:
+  - type: conditional
+    conditions:
+      - condition: screen
+        media_query: '(min-width: 0px) and (max-width: 767px)'
+    card:
+      type: custom:predbat-table-card
+      entity: predbat.plan_html
+      columns:
+        - time-column
+        - soc-column
+        - state-column
+        - limit-column
+        - total-column
+      odd_row_colour: '#181f2a'
+      even_row_colour: '#2a3240'
+      fill_empty_cells: true
+      stack_pills: false
+      old_skool_columns:
+        - soc-column
+        - state-column
+  - type: conditional
+    conditions:
+      - condition: screen
+        media_query: '(min-width: 768px)'
+    card:
+      type: custom:predbat-table-card
+      entity: predbat.plan_html
+      columns:
+        - time-column
+        - import-column
+        - state-column
+        - limit-column
+        - soc-column
+        - pv-column
+        - load-column
+        - car-column
+        - cost-column
+        - total-column
+      odd_row_colour: '#181f2a'
+      even_row_colour: '#2a3240'
+      fill_empty_cells: true
+      stack_pills: false
+      old_skool_columns:
+        - soc-column
+        - state-column
+```
