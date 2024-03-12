@@ -201,6 +201,9 @@ class PredbatTableCard extends HTMLElement {
         }
     }
     
+    if(column === "time-column" && this.config.force_single_line === true)
+        newCell.style.whiteSpace = "nowrap";
+    
     if(this.config.old_skool === true || this.config.old_skool_columns !== undefined){
         
         if(this.config.old_skool === true || this.config.old_skool_columns.indexOf(column) >= 0){
