@@ -213,12 +213,12 @@ class PredbatTableCard extends HTMLElement {
 
             if(theItem.value.includes("↘")) {
                 // include a down arrow
-                additionalArrow = `<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 2px; opacity:0.75;"></ha-icon>`;
+                additionalArrow = `<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 0 0 -5px; opacity:0.75;"></ha-icon>`;
             } else if (theItem.value.includes("↗")) {
                 // include a up arrow
-                additionalArrow = `<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 2px; opacity:0.75;"></ha-icon>`;                    
+                additionalArrow = `<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 0 0 -5px; opacity:0.75;"></ha-icon>`;                    
             } else if (theItem.value.includes("→")) {
-                additionalArrow = `<ha-icon icon="mdi:arrow-right-thin" style="margin: 0 2px; opacity: 0.75;"></ha-icon>`;                 
+                additionalArrow = `<ha-icon icon="mdi:arrow-right-thin" style="margin: 0 0 0 -5px; opacity: 0.75;"></ha-icon>`;                 
             }
             
             if(this.config.old_skool === true)
@@ -242,8 +242,8 @@ class PredbatTableCard extends HTMLElement {
                 }
                 
                 newCell.innerHTML = `<div style="width: 100%; height: 100%;">
-                <div style='background-color:#3AEE85; width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center;'>${chargeString}<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 2px;"></ha-icon></div>
-                <div style='background-color:#FFFF00; width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center;'>${dischargeString}<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 2px;"></ha-icon></div>
+                <div style='background-color:#3AEE85; width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center;'>${chargeString}<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 0 0 -5px"></ha-icon></div>
+                <div style='background-color:#FFFF00; width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center;'>${dischargeString}<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 0 0 -5px"></ha-icon></div>
                 </div>`;
             
             } else if(column === "import-export-column"){
@@ -254,12 +254,25 @@ class PredbatTableCard extends HTMLElement {
                 
                 newCell.innerHTML = newContent;
                 
+            } else if(column === "pv-column") {
+                newCell.style.backgroundColor = theItem.color;
+                if(theItem.value.includes("☀")) {
+                    newContent = theItem.value.replace(/[☀]/g, '');
+                    newContent = parseFloat(newContent).toFixed(2);
+                    let additionalIcon = '<ha-icon icon="mdi:white-balance-sunny" style="margin: 0; opacity: 0.5; --mdc-icon-size: 16px; display: flex; align-items: center; justify-content: center;"></ha-icon>';
+                    
+                    newCell.innerHTML = `<div class="iconContainer">${additionalIcon} <div style="margin: 0 4px;">${newContent}</div></div>`;
+                }
             } else {
                 newCell.style.backgroundColor = theItem.color;
                 if(theItem.value.replace(/\s/g, '').length === 0) {
                     if(fillEmptyCells)
                         newCell.innerHTML = `<div class="iconContainer"><ha-icon icon="mdi:minus" style="margin: 0 2px; opacity: 0.25;"></ha-icon></div>`;
                 } else {
+                    if(column === "cost-column"){
+                        newContent = newContent.replace(' ', '');
+                        newContent = newContent.trim();                        
+                    }
                     newCell.innerHTML = `<div class="iconContainer"><div style="margin: 0 2px;">${newContent}</div>${additionalArrow}</div>`;
                 }
             }
@@ -294,12 +307,12 @@ class PredbatTableCard extends HTMLElement {
     if(column === "load-column" || column === "pv-column" || column == "car") {
         
             if(column === "pv-column"){
-                if(theItem.value.length > 0) {
+                if(theItem.value.includes("☀")) {
                     newContent = theItem.value.replace(/[☀]/g, '');
                     newContent = parseFloat(newContent).toFixed(2);
                     let additionalIcon = "";
 
-                    additionalIcon = '<ha-icon icon="mdi:white-balance-sunny" style="margin: 0 4px;"></ha-icon>';
+                    additionalIcon = '<ha-icon icon="mdi:white-balance-sunny" style="margin: 0; --mdc-icon-size: 20px; display: flex; align-items: center; justify-content: center;"></ha-icon>';
                     
                     newCell.innerHTML = `<div class="iconContainer">${additionalIcon} <div style="margin: 0 4px;">${newContent}</div></div>`;
                 }
@@ -320,25 +333,27 @@ class PredbatTableCard extends HTMLElement {
     } else if(column === "soc-column" || column === "cost-column"){
 
           newContent = theItem.value.replace(/[↘↗→]/g, '');
+          newContent = newContent.replace(' ', '');
+          newContent = newContent.trim();
           
             let additionalArrow = "";
 
                 if(theItem.value.includes("↘")) {
                     // include a down arrow
-                    additionalArrow = '<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 2px;"></ha-icon>';
+                    additionalArrow = '<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 0 0 -5px;"></ha-icon>';
                 } else if (theItem.value.includes("↗")) {
                     // include a down arrow
-                    additionalArrow = '<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 2px;"></ha-icon>';                    
+                    additionalArrow = '<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 0 0 -5px;"></ha-icon>';                    
                 } else {
                     if(fillEmptyCells)
-                        additionalArrow = '<ha-icon icon="mdi:minus" style="margin: 0 2px; opacity: 0.25;"></ha-icon>';                 
+                        additionalArrow = '<ha-icon icon="mdi:minus" style="margin: 0 0 0 -5px; opacity: 0.25;"></ha-icon>';                 
                 }
                 
                 if(column === "soc-column") {
                     newContent += "%";
                 }
 
-          newCell.innerHTML = `<div class="iconContainer"><div style="margin: 0 2px;">${newContent}</div>${additionalArrow}</div>`;
+          newCell.innerHTML = `<div class="iconContainer"><div style="margin: 0 1px;">${newContent}</div>${additionalArrow}</div>`;
       
     } else if(column === "state-column"){
         
