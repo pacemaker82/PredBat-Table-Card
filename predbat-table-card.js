@@ -214,11 +214,14 @@ class PredbatTableCard extends HTMLElement {
             if(theItem.value.includes("↘")) {
                 // include a down arrow
                 additionalArrow = `<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 0 0 -5px; opacity:0.75;"></ha-icon>`;
+                newCell.style.paddingRight = "0px";
             } else if (theItem.value.includes("↗")) {
                 // include a up arrow
-                additionalArrow = `<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 0 0 -5px; opacity:0.75;"></ha-icon>`;                    
+                additionalArrow = `<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 0 0 -5px; opacity:0.75;"></ha-icon>`;   
+                newCell.style.paddingRight = "0px";
             } else if (theItem.value.includes("→")) {
                 additionalArrow = `<ha-icon icon="mdi:arrow-right-thin" style="margin: 0 0 0 -5px; opacity: 0.75;"></ha-icon>`;                 
+                newCell.style.paddingRight = "0px";
             }
             
             if(this.config.old_skool === true)
@@ -341,9 +344,11 @@ class PredbatTableCard extends HTMLElement {
                 if(theItem.value.includes("↘")) {
                     // include a down arrow
                     additionalArrow = '<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 0 0 -5px;"></ha-icon>';
+                    newCell.style.paddingRight = "0px";
                 } else if (theItem.value.includes("↗")) {
                     // include a down arrow
                     additionalArrow = '<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 0 0 -5px;"></ha-icon>';                    
+                    newCell.style.paddingRight = "0px";
                 } else {
                     if(fillEmptyCells)
                         additionalArrow = '<ha-icon icon="mdi:minus" style="margin: 0 0 0 -5px; opacity: 0.25;"></ha-icon>';                 
@@ -935,8 +940,8 @@ class PredbatTableCard extends HTMLElement {
     
     .card-content table tbody tr td {
         padding: 0px;
-        padding-left: 4px;
-        padding-right: 4px; 
+        padding-left: 2px;
+        padding-right: 2px; 
         height: ${maxHeight};
         vertical-align: middle;
         align-items: center;
