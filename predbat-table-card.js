@@ -259,10 +259,18 @@ class PredbatTableCard extends HTMLElement {
                 
             } else if(column === "pv-column") {
                 newCell.style.backgroundColor = theItem.color;
-                if(theItem.value.includes("☀")) {
+                
+                if(theItem.value.includes("☀") || theItem.value.length > 0) {
+                    
+                    if (theItem.value.length > 0 && !theItem.value.includes("☀"))
+                        newCell.style.backgroundColor = "#FFFFFF";
+                    
                     newContent = theItem.value.replace(/[☀]/g, '');
                     newContent = parseFloat(newContent).toFixed(2);
-                    let additionalIcon = '<ha-icon icon="mdi:white-balance-sunny" style="margin: 0; opacity: 0.5; --mdc-icon-size: 16px; display: flex; align-items: center; justify-content: center;"></ha-icon>';
+                    
+                    let additionalIcon = "";
+                    if(!this.isSmallScreen())
+                        additionalIcon = '<ha-icon icon="mdi:white-balance-sunny" style="margin: 0; opacity: 0.5; --mdc-icon-size: 16px; display: flex; align-items: center; justify-content: center;"></ha-icon>';
                     
                     newCell.innerHTML = `<div class="iconContainer">${additionalIcon} <div style="margin: 0 4px;">${newContent}</div></div>`;
                 }
@@ -310,12 +318,13 @@ class PredbatTableCard extends HTMLElement {
     if(column === "load-column" || column === "pv-column" || column == "car") {
         
             if(column === "pv-column"){
-                if(theItem.value.includes("☀")) {
+                if(theItem.value.includes("☀") || theItem.value.length > 0) {
                     newContent = theItem.value.replace(/[☀]/g, '');
                     newContent = parseFloat(newContent).toFixed(2);
                     let additionalIcon = "";
 
-                    additionalIcon = '<ha-icon icon="mdi:white-balance-sunny" style="margin: 0; --mdc-icon-size: 20px; display: flex; align-items: center; justify-content: center;"></ha-icon>';
+                    if(!this.isSmallScreen())
+                        additionalIcon = '<ha-icon icon="mdi:white-balance-sunny" style="margin: 0; --mdc-icon-size: 20px; display: flex; align-items: center; justify-content: center;"></ha-icon>';
                     
                     newCell.innerHTML = `<div class="iconContainer">${additionalIcon} <div style="margin: 0 4px;">${newContent}</div></div>`;
                 }
