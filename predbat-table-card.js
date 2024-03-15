@@ -83,7 +83,6 @@ class PredbatTableCard extends HTMLElement {
     });
         
     newTableHead.appendChild(newHeaderRow);
-    theTable.appendChild(newTableHead);
         
     // set out the data rows
     let newTableBody = document.createElement('tbody');
@@ -129,7 +128,58 @@ class PredbatTableCard extends HTMLElement {
         }
     });
     
+    // This section of code is hiding the car and iboost columns if they have no value (and the user has set them as a column to return)
+    
+    if(this.config.hide_empty_columns === true){
+
+        let carEmpty;
+        let iBoostEmpty;
+        
+        if(columnsToReturn.includes("car-column"))
+            carEmpty = true;
+            
+        if(columnsToReturn.includes("iboost-column"))
+            iboostEmpty = true;
+            
+        dataArray.forEach((item, index) => {
+            if(item["car-column"] !== undefined && item["car-column"].value.length > 0)
+                carEmpty = false;
+            
+            if(item["iboost-column"] !== undefined && item["iboost-column"].value.length > 0)
+                iBoostEmpty = false;                    
+        });
+        
+        //hide columns if empty
+        let indexesToRemove = [];
+        if(carEmpty === true)
+            indexesToRemove.push(columnsToReturn.indexOf("car-column"));
+
+        if(iBoostEmpty === true)
+            indexesToRemove.push(columnsToReturn.indexOf("iBoost-column"));
+        
+        if(indexesToRemove.length > 0) {
+            for (let row of newTableHead.rows) {
+                // Hide the cell in the specified column
+                indexesToRemove.forEach((columnIndex, index) => {
+                    if (row.cells[columnIndex]) {
+                        row.cells[columnIndex].style.display = "none";
+                    }
+                });
+            }
+            for (let row of newTableBody.rows) {
+                // Hide the cell in the specified column
+                indexesToRemove.forEach((columnIndex, index) => {
+                    if (row.cells[columnIndex]) {
+                        row.cells[columnIndex].style.display = "none";
+                    }
+                });
+            }              
+        }
+    }
+    
+    theTable.appendChild(newTableHead);    
     theTable.appendChild(newTableBody);
+    
     
     this.content.innerHTML = theTable.outerHTML;
     const styleTag = document.createElement('style');
