@@ -9,8 +9,9 @@ This is a custom [Predbat](https://github.com/springfall2008/batpred) table card
 ## Table of Contents
 1. [Installation](#installation)
 2. [Card Setup](#card-setup)
-3. [Custom Card Setup](#custom-setup-example)
-4. [Managing table width for different devices](#managing-table-width-for-different-devices)
+3. [Default Card Setup Example](#default-card-setup-example)
+4. [Custom Card Setup Example](#custom-setup-example)
+5. [Managing table width for different devices](#managing-table-width-for-different-devices)
 
 ## Installation
 
@@ -46,7 +47,9 @@ The following config items can or should be set on the card
 
 You can use `import-export-column` to see both import and export prices in a single column
 
-Use this default card config YAML to get started (paste into the card YAML):
+## Default Card Setup Example
+
+Use this default card config YAML to get started (paste into the card YAML after you have added the card to your dashbaord):
 
 ```
 type: custom:predbat-table-card
@@ -68,7 +71,7 @@ fill_empty_cells: true
 
 ## Custom Setup example
 
-Below shows how you can use any column in any order, just put them in the list how you want them. This example is also showing the `state` and `soc` columns in the style of the original Predbat card.
+Below shows how you can use any column in any order, just put them in the `columns` list how you want them. This example is also showing the `state` and `soc` columns in the style of the original Predbat card.
 
 ```
 type: custom:predbat-table-card
