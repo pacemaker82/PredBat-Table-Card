@@ -42,7 +42,7 @@ The following config items can or should be set on the card
 | `stack_pills` | NO | `true` or `false`. Set to `false` if you want the price pills to only display on one line, `true` for on top of each other. Default is `true`|
 | `old_skool` | NO | Set to `true` if you want to override the **_styling_** of the **entire table** to follow the original Predbat card. This setting still allows for the flexibility of custom columns etc. Overrides any styling settings like light mode, row colours |
 | `old_skool_columns` | NO | Like `columns`, use this setting to override specific columns to use the original Predbat card style. `old_skool` setting is ignored if these are set. Supports all the same `columns`. Column order is still set in `columns` not here, this setting just affects the style/appearance. Works in dark and light mode. See [Custom Setup Example](#custom-setup-example) below for details on how to use |
-| `hide_empty_columns` | NO | Automatically hides the `car-column` and `iboost-column` if there is no plan for them, i.e. the column is empty of data. | 
+| `hide_empty_columns` | NO | Set to `true` to automatically hide the `car-column` and `iboost-column` if there is no plan for them, i.e. the column is empty of data. The columns will re-appear when Predbat has a plan for them (like when you plug your car back in) | 
 
 You can use `import-export-column` to see both import and export prices in a single column
 
