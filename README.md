@@ -30,19 +30,19 @@ The following config items can or should be set on the card
 | `type`   | YES    | `predbat-table-card`    |
 | `entity`   | YES    | `predbat.plan_html` or name of the entity holding the Predbat plan HTML    |
 | `columns`    | YES    | `time-column` `import-column` `export-column` `import-export-column` `state-column` `limit-column` `pv-column` `load-column` `soc-column` `cost-column` `total-column` <br>Use `car-column` if EV is setup. <br> Use `iboost-column` if iBoost is setup <br>Provide ***in any order*** you want <br>At least 1 column needs to be used|
-| `odd_row_colour`    | NO    | Dark Mode Colour - HEX value e.g. `#FFFFFF` otherwise default colour will be used   |
-| `even_row_colour`    | NO    | Dark Mode Colour - HEX value e.g. `#FFFFFF` otherwise default colour will be used   |
-| `table_width`    | NO    | From `0` to `100` representing percentage width. If not set default will be used. <br> Card will use the percentage based on the container the card is in. E.g. if you put the card in a single card template and set to `100` it will display on the entire screen   |
 | `fill_empty_cells`    | NO    | `true` or `false`. Will add a "-" symbol where data isnt available to clear out empty space   |
 | `hide_last_update`    | NO    | `true` or `false`. Will determine if the last update time is shown at the top of the table   |
 | `light_mode`    | NO    | Use `light`, `dark`, or `auto` - default is `auto` if you dont set it. Use this to force the mode you want   |
-| `odd_row_colour_light`    | NO    | Light Mode Colour HEX value e.g. `#FFFFFF` otherwise default colour will be used   |
-| `even_row_colour_light`    | NO    | Light Mode Colour HEX value e.g. `#FFFFFF` otherwise default colour will be used   |
 | `debug_prices_only` | NO | `true` or `false`. If HTML debug prices enabled, set to `true` to only show the adjusted prices. **Important:** The Predbat `HTML Plan debug` mode must be enabled for this to work! | 
 | `stack_pills` | NO | `true` or `false`. Set to `false` if you want the price pills to only display on one line, `true` for on top of each other. Default is `true`|
 | `old_skool` | NO | Set to `true` if you want to override the **_styling_** of the **entire table** to follow the original Predbat card. This setting still allows for the flexibility of custom columns etc. Overrides any styling settings like light mode, row colours |
 | `old_skool_columns` | NO | Like `columns`, use this setting to override specific columns to use the original Predbat card style. `old_skool` setting is ignored if these are set. Supports all the same `columns`. Column order is still set in `columns` not here, this setting just affects the style/appearance. Works in dark and light mode. See [Custom Setup Example](#custom-setup-example) below for details on how to use |
 | `hide_empty_columns` | NO | Set to `true` to automatically hide the `car-column` and `iboost-column` if there is no plan for them, i.e. the column is empty of data. The columns will re-appear when Predbat has a plan for them (like when you plug your car back in) | 
+| `table_width`    | NO    | From `0` to `100` representing percentage width. If not set default will be used. <br> Card will use the percentage based on the container the card is in. E.g. if you put the card in a single card template and set to `100` it will display on the entire screen   |
+| `odd_row_colour`    | NO    | Override Dark Mode Odd Row Colour - HEX value e.g. `#FFFFFF` otherwise default colour will be used   |
+| `even_row_colour`    | NO    | Override Dark Mode Even Row Colour - HEX value e.g. `#FFFFFF` otherwise default colour will be used   |
+| `odd_row_colour_light`    | NO    | Override Light Mode Odd Row Colour HEX value e.g. `#FFFFFF` otherwise default colour will be used   |
+| `even_row_colour_light`    | NO    | Override Light Mode Even Row Colour HEX value e.g. `#FFFFFF` otherwise default colour will be used   |
 
 You can use `import-export-column` to see both import and export prices in a single column
 
