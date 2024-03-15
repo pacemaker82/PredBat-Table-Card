@@ -1,5 +1,7 @@
 # Predbat-Table-Card
-A custom Predbat table card that allows flexible column management and styling. The card also supports Predbat's HTML debug mode, and collapsing import/export prices into a single column. The card can switch between light modes or you can force the mode you want through the YAML configuration.
+If you're using the excellent [Predbat](https://github.com/springfall2008/batpred) integration in Home Assistant, this custom table card for the Predbat plan maybe for you.
+
+This is a custom [Predbat](https://github.com/springfall2008/batpred) table card that allows flexible column management and styling. The card also supports [Predbat's](https://github.com/springfall2008/batpred) HTML debug mode, and collapsing import/export prices into a single column. The card can switch between light modes or you can force the mode you want through the YAML configuration. The card also supports flexible styling, so you can use a mix of this card's style as well as some of the original Predbat HTML plan style in different columns.
 
 | ![Screenshot of light-mode](https://github.com/pacemaker82/PredBat-Table-Card/blob/main/light-screen-mode.png?raw=true) | ![Screenshot of dark-mode](https://github.com/pacemaker82/PredBat-Table-Card/blob/main/dark-screen.png?raw=true) |
 |----------|----------|
@@ -38,8 +40,9 @@ The following config items can or should be set on the card
 | `even_row_colour_light`    | NO    | Light Mode Colour HEX value e.g. `#FFFFFF` otherwise default colour will be used   |
 | `debug_prices_only` | NO | `true` or `false`. If HTML debug prices enabled, set to `true` to only show the adjusted prices. **Important:** The Predbat `HTML Plan debug` mode must be enabled for this to work! | 
 | `stack_pills` | NO | `true` or `false`. Set to `false` if you want the price pills to only display on one line, `true` for on top of each other. Default is `true`|
-| `old_skool` | NO | Set to `true` if you want to override the styling to follow the original Predbat card, but allow for the flexibility of this card. Overrides any styling settings like light mode, row colours etc... |
-| `old_skool_columns` | NO | Like `columns`, override which columns appear like the original Predbat card. `old_skool` setting is ignored if these are set. Supports all the same `columns`. Order is set in `columns` not here. Works in dark and light mode. |
+| `old_skool` | NO | Set to `true` if you want to override the **_styling_** of the **entire table** to follow the original Predbat card. This setting still allows for the flexibility of custom columns etc. Overrides any styling settings like light mode, row colours |
+| `old_skool_columns` | NO | Like `columns`, use this setting to override specific columns to use the original Predbat card style. `old_skool` setting is ignored if these are set. Supports all the same `columns`. Column order is still set in `columns` not here, this setting just affects the style/appearance. Works in dark and light mode. See [Custom Setup Example](#custom-setup-example) below for details on how to use |
+| `hide_empty_columns` | NO | Automatically hides the `car-column` and `iboost-column` if there is no plan for them, i.e. the column is empty of data. | 
 
 You can use `import-export-column` to see both import and export prices in a single column
 
