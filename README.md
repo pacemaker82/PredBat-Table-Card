@@ -44,6 +44,7 @@ The following config items can or should be set on the card
 | `even_row_colour`    | NO    | Override Dark Mode Even Row Colour - HEX value e.g. `#FFFFFF` otherwise default colour will be used   |
 | `odd_row_colour_light`    | NO    | Override Light Mode Odd Row Colour HEX value e.g. `#FFFFFF` otherwise default colour will be used   |
 | `even_row_colour_light`    | NO    | Override Light Mode Even Row Colour HEX value e.g. `#FFFFFF` otherwise default colour will be used   |
+| `use_friendly_states` | NO | Set to `true` if you want the Predbat `state-column` description to be more user friendly in terms of describing what is actually happening. |
 
 You can use `import-export-column` to see both import and export prices in a single column
 
