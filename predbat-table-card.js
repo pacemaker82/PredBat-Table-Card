@@ -617,10 +617,16 @@ class PredbatTableCard extends HTMLElement {
 //            $ - Rate that has been adjusted for an Octopus Saving session
 //            ? - Rate that has not yet been defined and the previous days data was used instead      
       
-            const testRegex = /(\d+\.\d+)\D+(\d+\.\d+)/;
-            //const testString = "1.23 (3.45)";
+            //const testRegex = /(\d+\.\d+)\D+(\d+\.\d+)/;
+            const testRegex = /(-?\d+(?:\.\d+)?)(?:\s*\((?=-?\d+(?:\.\d+)?))?(?:\(-)?(-?\d+(?:\.\d+)?)/;
+
+
+            //const testString = "-1.23 (-3.45)";
             const testMatches = thePriceString.match(testRegex);
+
             const strippedString = thePriceString.replace(testMatches[1], '').replace(testMatches[2], '').replace(/[()]/g, '').trim();
+
+            //console.log(testString.match(testRegex));
 
             let firstPillString; 
             let secondPillString;
@@ -907,7 +913,8 @@ class PredbatTableCard extends HTMLElement {
                     //exception||override for 12 cells and 11 headers (-1 count difference) and handling index 2
                     if(countDifference < 0 && tdIndex == 3) {
                         // having to do some nasty overrides here because of colspan stuff and my brain cant do the math today. will fix.
-                        newTRObject[headerClassesArray[2]] = {"value": currentExportRate, "color": currentExportColor};
+                         newTRObject[headerClassesArray[2]] = {"value": currentExportRate, "color": currentExportColor};
+                        
                     }
 
                 });
