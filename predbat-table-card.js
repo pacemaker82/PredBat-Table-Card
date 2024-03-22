@@ -329,21 +329,25 @@ class PredbatTableCard extends HTMLElement {
                 }
             } else {
                 
-                let friendlyText;
+
                
-               
+               let friendlyText = "";
                if(column === "state-column") {
+
+                    friendlyText = newContent;
+                    if(theItem.value.includes("ⅎ")){
+                        friendlyText = "Manually Forced " + friendlyText;
+                        if(!theItem.value.includes("Charge") && !theItem.value.includes("Discharge"))
+                            friendlyText = newCfriendlyTextontent + "Idle";
+                        friendlyText = friendlyText.replace('ⅎ', '');
+                    }
+                    friendlyText = friendlyText.replace('FreezeDis', 'Charging Paused');
+                    friendlyText = friendlyText.replace('FreezeChrg', 'Maintaining SOC'); //FreezeChrg
+                    friendlyText = friendlyText.replace('HoldChrg', 'Maintaining SOC'); //HoldChrg
+                    friendlyText = friendlyText.replace('NoCharge', 'Charge to "Limit"'); //NoCharge                   
+                   
                     if(this.config.use_friendly_states === true){
-                        if(theItem.value.includes("ⅎ")){
-                            newContent = "Manually Forced " + newContent;
-                            if(!theItem.value.includes("Charge") && !theItem.value.includes("Discharge"))
-                                newContent = newContent + "Idle";
-                            newContent = newContent.replace('ⅎ', '');
-                        }
-                        newContent = newContent.replace('FreezeDis', 'Charging Paused');
-                        newContent = newContent.replace('FreezeChrg', 'Maintaining SOC'); //FreezeChrg
-                        newContent = newContent.replace('HoldChrg', 'Maintaining SOC'); //HoldChrg
-                        newContent = newContent.replace('NoCharge', 'Charge to "Limit"'); //NoCharge
+                        newContent = friendlyText;
                     }
                }
                 
@@ -356,7 +360,7 @@ class PredbatTableCard extends HTMLElement {
                         newContent = newContent.replace(' ', '');
                         newContent = newContent.trim();                        
                     }
-                    newCell.innerHTML = `<div class="iconContainer"><div style="margin: 0 2px;">${newContent}</div>${additionalArrow}</div>`;
+                    newCell.innerHTML = `<div class="iconContainer" title="${friendlyText}"><div style="margin: 0 2px;">${newContent}</div>${additionalArrow}</div>`;
                 }
             }
             
