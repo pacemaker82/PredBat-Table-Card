@@ -328,6 +328,25 @@ class PredbatTableCard extends HTMLElement {
                     newCell.innerHTML = `<div class="iconContainer">${additionalIcon} <div style="margin: 0 4px;">${newContent}</div></div>`;
                 }
             } else {
+                
+                let friendlyText;
+               
+               
+               if(column === "state-column") {
+                    if(this.config.use_friendly_states === true){
+                        if(theItem.value.includes("ⅎ")){
+                            newContent = "Manually Forced " + newContent;
+                            if(!theItem.value.includes("Charge") && !theItem.value.includes("Discharge"))
+                                newContent = newContent + "Idle";
+                            newContent = newContent.replace('ⅎ', '');
+                        }
+                        newContent = newContent.replace('FreezeDis', 'Charging Paused');
+                        newContent = newContent.replace('FreezeChrg', 'Maintaining SOC'); //FreezeChrg
+                        newContent = newContent.replace('HoldChrg', 'Maintaining SOC'); //HoldChrg
+                        newContent = newContent.replace('NoCharge', 'Charge to "Limit"'); //NoCharge
+                    }
+               }
+                
                 newCell.style.backgroundColor = theItem.color;
                 if(theItem.value.replace(/\s/g, '').length === 0) {
                     if(fillEmptyCells)
