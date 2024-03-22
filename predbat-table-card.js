@@ -297,6 +297,11 @@ class PredbatTableCard extends HTMLElement {
                     newCell.style.minWidth = "110px";
                 }
                 
+                if(this.config.use_friendly_states === true){
+                    chargeString = "Planned Charge";
+                    dischargeString = "Planned Discharge";                    
+                }
+                
                 newCell.innerHTML = `<div style="width: 100%; height: 100%;">
                 <div style='background-color:#3AEE85; width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center;'>${chargeString}<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 0 0 -5px"></ha-icon></div>
                 <div style='background-color:#FFFF00; width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center;'>${dischargeString}<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 0 0 -5px"></ha-icon></div>
@@ -338,13 +343,24 @@ class PredbatTableCard extends HTMLElement {
                     if(theItem.value.includes("ⅎ")){
                         friendlyText = "Manually Forced " + friendlyText;
                         if(!theItem.value.includes("Charge") && !theItem.value.includes("Discharge"))
-                            friendlyText = newCfriendlyTextontent + "Idle";
+                            friendlyText = friendlyText + "Idle";
                         friendlyText = friendlyText.replace('ⅎ', '');
                     }
+                    
+                    if(theItem.value === "↘") {
+                        friendlyText = "Discharging";
+                    } else if (theItem.value === "↗") {
+                        friendlyText = "Charging";
+                    } else if (theItem.value === "→") {
+                        friendlyText = "Idle";
+                    }
+                    
                     friendlyText = friendlyText.replace('FreezeDis', 'Charging Paused');
                     friendlyText = friendlyText.replace('FreezeChrg', 'Maintaining SOC'); //FreezeChrg
                     friendlyText = friendlyText.replace('HoldChrg', 'Maintaining SOC'); //HoldChrg
                     friendlyText = friendlyText.replace('NoCharge', 'Charge to "Limit"'); //NoCharge                   
+                    friendlyText = friendlyText.replace('Charge', 'Planned Charge'); //Charge 
+                    friendlyText = friendlyText.replace('Discharge', 'Planned Discharge'); //Discharge
                    
                     if(this.config.use_friendly_states === true){
                         newContent = friendlyText;
