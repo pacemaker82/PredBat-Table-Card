@@ -617,26 +617,38 @@ class PredbatTableCard extends HTMLElement {
 //            $ - Rate that has been adjusted for an Octopus Saving session
 //            ? - Rate that has not yet been defined and the previous days data was used instead      
       
-            //const testRegex = /(\d+\.\d+)\D+(\d+\.\d+)/;
-            const testRegex = /(-?\d+(?:\.\d+)?)(?:\s*\((?=-?\d+(?:\.\d+)?))?(?:\(-)?(-?\d+(?:\.\d+)?)/;
-
-
-            //const testString = "-1.23 (-3.45)";
+            // thePriceString = "-1.23 $ (-3.45)";
+      
+            const testRegex = /(\d+\.\d+)\D+(\d+\.\d+)/;
             const testMatches = thePriceString.match(testRegex);
 
-            const strippedString = thePriceString.replace(testMatches[1], '').replace(testMatches[2], '').replace(/[()]/g, '').trim();
+            const strippedString = thePriceString.replace(/-/g, '').replace(testMatches[1], '').replace(testMatches[2], '').replace(/[()]/g, '').trim();
 
-            //console.log(testString.match(testRegex));
-
-            let firstPillString; 
-            let secondPillString;
+            let firstPillString = ""; 
+            let secondPillString = "";
+            
+            //adding back the negative values
+            if(thePriceString.includes("-")){
+                if((thePriceString.match(/-/g) || []).length == 2){
+                    firstPillString = "-";
+                    secondPillString = "-";
+                } else {
+                    if (thePriceString.startsWith("-")) {
+                        firstPillString = "-";
+                        secondPillString = "";
+                    } else {
+                        firstPillString = "";
+                        secondPillString = "-";
+                    }
+                }
+            }
             
             if(debugOnly){
-                firstPillString = testMatches[1];
-                secondPillString = testMatches[2] + strippedString;                
+                firstPillString += testMatches[1];
+                secondPillString += testMatches[2] + strippedString;                
             } else {
-                firstPillString = testMatches[1] + strippedString;
-                secondPillString = testMatches[2];
+                firstPillString += testMatches[1] + strippedString;
+                secondPillString += testMatches[2];
             }
             
             let firstPart = firstPillString; 
