@@ -47,7 +47,7 @@ class PredbatTableCard extends HTMLElement {
 
     let rawHTML = hass.states[entityId].attributes.html;
 
-    console.log(hass.states[entityId].last_updated);
+   // console.log(hass.states[entityId].last_updated);
 
     const lastUpdated = this.getLastUpdatedFromHTML(rawHTML);
     const dataArray = this.getArrayDataFromHTML(rawHTML, hass.themes.darkMode); 
@@ -97,6 +97,7 @@ class PredbatTableCard extends HTMLElement {
             if(item["time-column"].value.includes("23:30"))
                 isMidnight = true;
             let newColumn = this.getCellTransformation(item[column], column, hass.themes.darkMode);
+
             newRow.appendChild(newColumn);
         });
         
@@ -182,6 +183,8 @@ class PredbatTableCard extends HTMLElement {
     
     
     this.content.innerHTML = theTable.outerHTML;
+    //this.content.innerHTML = `<button @click=${this.handleClick}>Hello world</button>`;
+
     const styleTag = document.createElement('style');
 	styleTag.innerHTML = this.getStyles(this.getLightMode(hass.themes.darkMode));
 	this.content.appendChild(styleTag);      
@@ -228,10 +231,16 @@ class PredbatTableCard extends HTMLElement {
     return 3;
   }
   
+  handleClick() {
+    console.log('hello world');
+  }
+  
   getCellTransformation(theItem, column, darkMode) {
     
     let newCell = document.createElement('td');
     let newContent = "";
+    
+    //newCell.setAttribute('onclick', 'console.log("hello")');
     
     //override fill empty cells
     let fillEmptyCells;
@@ -244,6 +253,7 @@ class PredbatTableCard extends HTMLElement {
     //Set the table up for people that like the Trefor style
     //
     
+
     if(column !== "import-export-column"){
     
         if(theItem.value.replace(/\s/g, '').length === 0) {
@@ -253,7 +263,7 @@ class PredbatTableCard extends HTMLElement {
     
     if(column === "time-column" && this.config.force_single_line === true)
         newCell.style.whiteSpace = "nowrap";
-    
+        
     if(this.config.old_skool === true || this.config.old_skool_columns !== undefined){
         
         if(this.config.old_skool === true || this.config.old_skool_columns.indexOf(column) >= 0){
@@ -286,6 +296,8 @@ class PredbatTableCard extends HTMLElement {
             if(theItem.value === "Both" && column === "state-column"){
                 
                 newCell.style.minWidth = "186px";
+                if(this.config.use_friendly_states === true)
+                    newCell.style.minWidth = "276px";
                 newCell.style.paddingLeft = "0px";
                 newCell.style.paddingRight = "0px";
                 
