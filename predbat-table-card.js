@@ -35,7 +35,6 @@ class PredbatTableCard extends HTMLElement {
         if(oldEntityUpdateTime !== newEntityUpdateTime)
             this.processAndRender(hass);        
     }
-    
 
   }
   
@@ -309,9 +308,12 @@ class PredbatTableCard extends HTMLElement {
                     newCell.style.minWidth = "110px";
                 }
                 
-                if(this.config.use_friendly_states === true){
+                if(this.config.use_friendly_states === true && this.isSmallScreen() === false){
                     chargeString = "Planned Charge";
                     dischargeString = "Planned Discharge";                    
+                } else if(this.config.use_friendly_states === true && this.isSmallScreen() === true){
+                    chargeString = "Plnd Chg";
+                    dischargeString = "Plnd Dis"; 
                 }
                 
                 newCell.innerHTML = `<div style="width: 100%; height: 100%;">
@@ -346,8 +348,6 @@ class PredbatTableCard extends HTMLElement {
                 }
             } else {
                 
-
-               
                let friendlyText = "";
                if(column === "state-column") {
 
@@ -378,6 +378,8 @@ class PredbatTableCard extends HTMLElement {
                         newContent = friendlyText;
                     }
                }
+               
+
                 
                 newCell.style.backgroundColor = theItem.color;
                 if(theItem.value.replace(/\s/g, '').length === 0) {
@@ -388,6 +390,9 @@ class PredbatTableCard extends HTMLElement {
                         newContent = newContent.replace(' ', '');
                         newContent = newContent.trim();                        
                     }
+                    if(column === "total-column")
+                        newContent = this.adjustTotalCostField(newContent);                       
+                        
                     newCell.innerHTML = `<div class="iconContainer" title="${friendlyText}"><div style="margin: 0 2px;">${newContent}</div>${additionalArrow}</div>`;
                 }
             }
@@ -444,7 +449,11 @@ class PredbatTableCard extends HTMLElement {
         newCell.style.color = theItem.color;
         newCell.style.textShadow = "none";
         
-        newCell.innerHTML = `<div class="iconContainer">${theItem.value}</div>`;
+        let content = theItem.value;
+        if(column === "total-column")
+            content = this.adjustTotalCostField(content); 
+        
+        newCell.innerHTML = `<div class="iconContainer">${content}</div>`;
         
     } else if(column === "soc-column" || column === "cost-column"){
 
@@ -618,6 +627,14 @@ class PredbatTableCard extends HTMLElement {
     
 
       return newCell;
+  }
+  
+  adjustTotalCostField(cost){
+      if(cost.includes("-")) {
+        cost = cost.replace("-", "");
+        cost = "-" + cost;
+      }
+    return cost;
   }
   
   getPricesFromPriceString(thePriceString, hasBoldTags, hasItalicTags, debugOnly){
