@@ -8,7 +8,7 @@ This is a custom [Predbat](https://github.com/springfall2008/batpred) table card
 
 ## Table of Contents
 1. [Installation](#installation)
-2. [Card Setup](#card-setup)
+2. [Card Configuration](#card-configuration)
 3. [Default Card Setup Example](#default-card-setup-example)
 4. [Custom Card Setup Example](#custom-setup-example)
 5. [Managing table width for different devices](#managing-table-width-for-different-devices)
@@ -22,9 +22,9 @@ This is a custom [Predbat](https://github.com/springfall2008/batpred) table card
 5. Download and refresh
 6. Goto dashboard and add a new card. Use the default YAML setup below to get started.
 
-## Card Setup
+## Card Configuration
 
-The following config items can or should be set on the card
+The following YAML config items can or should be set on the card
 
 | Configuration Item | Required | Value |
 |----------|----------|----------|
