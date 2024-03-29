@@ -50,7 +50,7 @@ You can use `import-export-column` to see both import and export prices in a sin
 
 ## Default Card Setup Example
 
-Use this default card config YAML to get started (paste into the card YAML after you have added the card to your dashboard):
+This default card config YAML should be there by default to help you get started. If not, paste the below into the card YAML after you have added the card to your dashboard:
 
 ```
 type: custom:predbat-table-card
@@ -72,7 +72,7 @@ fill_empty_cells: true
 
 ## Custom Setup example
 
-Below shows how you can use any column in any order, just put them in the `columns` list how you want them. This example is also showing the `state` and `soc` columns in the style of the original Predbat card.
+Below example shows how you can use any column in any order, just put them in the `columns` list how you want them. This example is also showing the `state` and `soc` columns in the style of the original Predbat card.
 
 ```
 type: custom:predbat-table-card
