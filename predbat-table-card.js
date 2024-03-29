@@ -1,6 +1,27 @@
 class PredbatTableCard extends HTMLElement {
   // Whenever the state changes, a new `hass` object is set. Use this to
   // update your content.
+  
+  static getStubConfig() {
+    return {
+      "entity": "predbat.plan_html",
+      "columns": [
+        "time-column",
+        "import-column",
+        "export-column",
+        "state-column",
+        "limit-column",
+        "pv-column",
+        "load-column",
+        "soc-column",
+        "cost-column",
+        "total-column"
+      ],
+      "table_width": 100,
+      "fill_empty_cells": true
+    }
+  }
+  
     static get properties() {
         return {
             _config: {},
@@ -1232,6 +1253,8 @@ window.customCards = window.customCards || [];
 window.customCards.push({
 							type: "predbat-table-card",
 							name: "PredBat TableCard",
-							preview: false,
-							description: "Predbat Card showing the plan table in a nicer format"
+							preview: true,
+							description: "Predbat Card showing the plan table in a nicer format",
+							documentationURL: "https://github.com/pacemaker82/PredBat-Table-Card/blob/main/README.md"
 						});
+						
