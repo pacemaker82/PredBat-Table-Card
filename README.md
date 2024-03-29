@@ -20,7 +20,7 @@ This is a custom [Predbat](https://github.com/springfall2008/batpred) table card
 3. Add the URL to this repo: `https://github.com/pacemaker82/PredBat-Table-Card`
 4. Go back to HACS and search for "Predbat table card"
 5. Download and refresh
-6. Goto dashboard and add a new card. Default YAML setup below should be there to help get started.
+6. Goto dashboard, edit dashboard, add card button, and add the new custom Predbat Table Card. Default YAML setup below should be there to help get started.
 
 ## Card Configuration
 
