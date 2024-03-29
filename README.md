@@ -50,7 +50,7 @@ You can use `import-export-column` to see both import and export prices in a sin
 
 ## Default Card Setup Example
 
-Use this default card config YAML to get started (paste into the card YAML after you have added the card to your dashbaord):
+Use this default card config YAML to get started (paste into the card YAML after you have added the card to your dashboard):
 
 ```
 type: custom:predbat-table-card
