@@ -1,6 +1,26 @@
 class PredbatTableCard extends HTMLElement {
+
+  // The user supplied configuration. Throw an exception and Home Assistant
+  // will render an error card.
+  setConfig(config) {
+    if (!config.entity) {
+      throw new Error("You need to set the predbat entity");
+    }
+    if (!config.columns) {
+      throw new Error("You need to define a list of columns (see docs)");
+    }
+    
+    this.config = config;
+
+  }    
+    
   // Whenever the state changes, a new `hass` object is set. Use this to
   // update your content.
+  
+    static getConfigElement() {
+        // Create and return an editor element
+        // return document.createElement("predbat-table-card-editor");
+    }
   
   static getStubConfig() {
     return {
@@ -114,11 +134,14 @@ class PredbatTableCard extends HTMLElement {
         
         let isMidnight = false;
         columnsToReturn.forEach((column, index) => { // Use arrow function here
-            if(item["time-column"].value.includes("23:30"))
-                isMidnight = true;
-            let newColumn = this.getCellTransformation(item[column], column, hass.themes.darkMode);
-
-            newRow.appendChild(newColumn);
+            console.log(item[column]);
+            if(item[column] !== undefined){
+                if(item["time-column"].value.includes("23:30"))
+                    isMidnight = true;
+                let newColumn = this.getCellTransformation(item[column], column, hass.themes.darkMode);
+    
+                newRow.appendChild(newColumn);                
+            }
         });
         
         newTableBody.appendChild(newRow);
@@ -198,6 +221,7 @@ class PredbatTableCard extends HTMLElement {
         }
     }
     
+    
     theTable.appendChild(newTableHead);    
     theTable.appendChild(newTableBody);
     
@@ -231,19 +255,6 @@ class PredbatTableCard extends HTMLElement {
     return cssLightMode;
   }
 
-  // The user supplied configuration. Throw an exception and Home Assistant
-  // will render an error card.
-  setConfig(config) {
-    if (!config.entity) {
-      throw new Error("You need to set the predbat entity");
-    }
-    if (!config.columns) {
-      throw new Error("You need to define a list of columns (see docs)");
-    }
-    
-    this.config = config;
-
-  }
 
   // The height of your card. Home Assistant uses this to automatically
   // distribute all cards over the available columns.
@@ -1249,6 +1260,63 @@ class PredbatTableCard extends HTMLElement {
 
 customElements.define("predbat-table-card", PredbatTableCard);
 
+// Finally we create and register the editor itself
+class PredbatTableCardEditor extends HTMLElement {
+
+  static get properties() {
+    console.log("properties");          
+    return {
+      hass: {},
+      _config: {},
+    };
+  }
+
+  // setConfig works the same way as for the card itself
+  setConfig(config) {
+    console.log("setConfig");      
+    this._config = config;
+    
+    if (!this.content) {
+      this.innerHTML = `
+        <ha-card>
+          <div class="card-content" id="predbat-card-content-editor"></div>
+        </ha-card>
+      `;
+      this.content = this.querySelector("div");
+    }
+    
+    this.content.innerHTML = "<b>hello steve</b>";
+    
+    console.log(this);
+  }
+
+  // This function is called when the input element of the editor loses focus
+  entityChanged(ev) {
+    console.log("entityChanged");
+    // We make a copy of the current config so we don't accidentally overwrite anything too early
+    const _config = Object.assign({}, this._config);
+    // Then we update the entity value with what we just got from the input field
+    _config.entity = ev.target.value;
+    // And finally write back the updated configuration all at once
+    this._config = _config;
+
+    // A config-changed event will tell lovelace we have made changed to the configuration
+    // this make sure the changes are saved correctly later and will update the preview
+    const event = new CustomEvent("config-changed", {
+      detail: { config: _config },
+      bubbles: true,
+      composed: true,
+    });
+    this.dispatchEvent(event);
+  }
+
+  render() {
+    console.log("hellow world");
+  }
+}
+
+customElements.define("predbat-table-card-editor", PredbatTableCardEditor);
+
 window.customCards = window.customCards || [];
 window.customCards.push({
 							type: "predbat-table-card",
@@ -1257,4 +1325,3 @@ window.customCards.push({
 							description: "Predbat Card showing the plan table in a nicer format",
 							documentationURL: "https://github.com/pacemaker82/PredBat-Table-Card/blob/main/README.md"
 						});
-						
