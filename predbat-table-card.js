@@ -402,8 +402,7 @@ class PredbatTableCard extends HTMLElement {
                     friendlyText = friendlyText.replace('FreezeDis', 'Charging Paused');
                     friendlyText = friendlyText.replace('FreezeChrg', 'Maintaining SOC'); //FreezeChrg
                     friendlyText = friendlyText.replace('HoldChrg', 'Maintaining SOC'); //HoldChrg
-                    friendlyText = friendlyText.replace('NoCharge', 'Charge to "Limit"'); //NoCharge                   
-                    friendlyText = friendlyText.replace('Charge', 'Planned Charge'); //Charge 
+                    friendlyText = friendlyText.includes("NoCharge") ? friendlyText.replace('NoCharge','Charge to "limit"') : friendlyText.replace('Charge', 'Planned Charge');
                     friendlyText = friendlyText.replace('Discharge', 'Planned Discharge'); //Discharge
                    
                     if(this.config.use_friendly_states === true){
