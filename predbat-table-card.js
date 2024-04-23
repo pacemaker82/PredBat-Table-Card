@@ -829,7 +829,7 @@ class PredbatTableCard extends HTMLElement {
               const tdElements = trElement.querySelectorAll('td');
               tdElements.forEach(tdElement => {
                     //console.log("table update: " + tdElement.innerHTML);
-                    const dateTimeString = tdElement.innerHTML.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/)[0];
+                    const dateTimeString = tdElement.innerHTML.match(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2})/g)[0];
 
                     // Create a JavaScript Date object from the extracted date/time string
                     const date = new Date(dateTimeString);
