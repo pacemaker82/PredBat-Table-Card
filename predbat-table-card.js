@@ -302,6 +302,7 @@ class PredbatTableCard extends HTMLElement {
             //this.config.old_skool_columns.indexOf(column) >= 0
             
             newContent = theItem.value.replace(/[↘↗→]/g, '');
+            newContent = this.adjustStatusFields(newContent);
           
             let additionalArrow = "";
 
@@ -658,6 +659,24 @@ class PredbatTableCard extends HTMLElement {
     
 
       return newCell;
+  }
+  
+  adjustStatusFields(status){
+      
+    let newState = status;
+    if(status === "FrzChrg")
+        newState = "FreezeChrg";
+    if(status === "HoldChrg")
+        newState = "HoldChrg";
+    if(status === "NoChrg")
+        newState = "NoCharge";
+    if(status === "Chrg")
+        newState = "Charge";
+    if(status === "FrzDis")
+        newState = "FreezeDis";
+    if(status === "Dis")
+        newState = "Discharge";    
+    return newState;      
   }
   
   adjustTotalCostField(cost){
