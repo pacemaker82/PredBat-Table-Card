@@ -134,7 +134,6 @@ class PredbatTableCard extends HTMLElement {
         
         let isMidnight = false;
         columnsToReturn.forEach((column, index) => { // Use arrow function here
-            console.log(item[column]);
             if(item[column] !== undefined){
                 if(item["time-column"].value.includes("23:30"))
                     isMidnight = true;
@@ -663,6 +662,8 @@ class PredbatTableCard extends HTMLElement {
   
   adjustStatusFields(status){
       
+      //console.log(status);
+      
     let newState = status;
     if(status === "FrzChrg")
         newState = "FreezeChrg";
@@ -676,6 +677,10 @@ class PredbatTableCard extends HTMLElement {
         newState = "FreezeDis";
     if(status === "Dis")
         newState = "Discharge";    
+    if(status === "Dis ⅎ")
+        newState = "Force Discharge"
+    if(status === "Chrg ⅎ")
+        newState = "Force Charge"
     return newState;      
   }
   
