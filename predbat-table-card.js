@@ -877,7 +877,9 @@ class PredbatTableCard extends HTMLElement {
           'load-column': { description: "Load kWh", smallDescription: "Load <br>kWh" },
           'soc-column': { description: "SOC", smallDescription: "SOC" },
           'car-column': { description: "Car kWh", smallDescription: "Car <br>kWh" },
-          'iboost-column': { description: "iBoost kWh", smallDescription: "iBoost <br>kWh" },          
+          'iboost-column': { description: "iBoost kWh", smallDescription: "iBoost <br>kWh" },    
+          'co2kg-column': {description: "CO2 kg", smallDescription: "CO2 kg" },
+          'co2kwh-column': { description: "CO2 g/kWh", smallDescription: "CO2 g/kWh" },    
           'cost-column': { description: "Cost", smallDescription: "Cost" },
           'total-column': { description: "Total Cost", smallDescription: "Total <br>Cost" },
           'import-export-column': {description: "Import / Export", smallDescription: "Import / <br>Export" }
@@ -945,6 +947,15 @@ class PredbatTableCard extends HTMLElement {
                     if(columnHeaderTitle.includes("IBOOST")) {
                         headerClassesArray.splice(checkIndex-1, 0, "iboost-column");
                     }
+                    
+                    if(columnHeaderTitle.includes("CO2 G/KWH")) {
+                        headerClassesArray.splice(checkIndex-1, 0, "co2kwh-column");
+                    }  
+                    
+                    if(columnHeaderTitle.includes("CO2 KG")) {
+                        headerClassesArray.splice(checkIndex-1, 0, "co2kg-column");
+                    }  
+                    
                 });
                 
             }
