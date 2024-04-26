@@ -30,7 +30,7 @@ The following YAML config items can or should be set on the card
 |----------|----------|----------|
 | `type`   | YES    | `predbat-table-card`    |
 | `entity`   | YES    | `predbat.plan_html` or name of the entity holding the Predbat plan HTML    |
-| `columns`    | YES    | `time-column` `import-column` `export-column` `import-export-column` `state-column` `limit-column` `pv-column` `load-column` `soc-column` `cost-column` `total-column` <br>Use `car-column` if EV is setup. <br> Use `iboost-column` if iBoost is setup <br>Provide ***in any order*** you want <br>At least 1 column needs to be used|
+| `columns`    | YES    | `time-column` `import-column` `export-column` `import-export-column` `state-column` `limit-column` `pv-column` `load-column` `soc-column` `cost-column` `total-column` <br>Use `car-column` if EV is setup. <br> Use `iboost-column` if iBoost is setup <br>Use `co2kwh-column` and/or `co2kg-column` if CO2 monitoring is setup <br>Provide ***in any order*** you want <br>At least 1 column needs to be used|
 | `fill_empty_cells`    | NO    | `true` or `false`. Will add a "-" symbol where data isnt available to clear out empty space   |
 | `hide_last_update`    | NO    | `true` or `false`. Will determine if the last update time is shown at the top of the table   |
 | `light_mode`    | NO    | Use `light`, `dark`, or `auto` - default is `auto` if you dont set it. Use this to force the mode you want   |
