@@ -517,7 +517,7 @@ class PredbatTableCard extends HTMLElement {
         
 
           newContent = theItem.value.replace(/[↘↗→ⅎ]/g, '').trim();
-        
+          newContent = this.adjustStatusFields(newContent);
          
             let additionalArrow = "";
             newCell.setAttribute('style', 'color: var(--energy-battery-out-color)');
@@ -678,7 +678,7 @@ class PredbatTableCard extends HTMLElement {
     if(status === "Dis")
         newState = "Discharge";    
     if(status === "Dis ⅎ")
-        newState = "Force Discharge"
+        newState = "Force Dischrg"
     if(status === "Chrg ⅎ")
         newState = "Force Charge"
     return newState;      
