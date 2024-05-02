@@ -382,29 +382,34 @@ class PredbatTableCard extends HTMLElement {
                 
                let friendlyText = "";
                if(column === "state-column") {
-
+                
                     friendlyText = newContent;
+                    
+                    friendlyText = friendlyText.replace('Force Dischrg', 'Discharge');
+                    friendlyText = friendlyText.replace('Force Charge', 'Charge');
+                    
                     if(theItem.value.includes("ⅎ")){
                         friendlyText = "Manually Forced " + friendlyText;
-                        if(!theItem.value.includes("Charge") && !theItem.value.includes("Discharge"))
+                        if(!friendlyText.includes("Charge") && !friendlyText.includes("Discharge"))
                             friendlyText = friendlyText + "Idle";
                         friendlyText = friendlyText.replace('ⅎ', '');
+                    } else {
+                        if(theItem.value === "↘") {
+                            friendlyText = "Discharging";
+                        } else if (theItem.value === "↗") {
+                            friendlyText = "Charging";
+                        } else if (theItem.value === "→") {
+                            friendlyText = "Idle";
+                        }
+                        
+                        friendlyText = friendlyText.replace('FreezeDis', 'Charging Paused');
+                        friendlyText = friendlyText.replace('FreezeChrg', 'Maintaining SOC'); //FreezeChrg
+                        friendlyText = friendlyText.replace('HoldChrg', 'Maintaining SOC'); //HoldChrg
+                        friendlyText = friendlyText.includes("NoCharge") ? friendlyText.replace('NoCharge','Charge to "limit"') : friendlyText.replace('Charge', 'Planned Charge');
+                        friendlyText = friendlyText.replace('Discharge', 'Planned Discharge'); //Discharge
+
                     }
                     
-                    if(theItem.value === "↘") {
-                        friendlyText = "Discharging";
-                    } else if (theItem.value === "↗") {
-                        friendlyText = "Charging";
-                    } else if (theItem.value === "→") {
-                        friendlyText = "Idle";
-                    }
-                    
-                    friendlyText = friendlyText.replace('FreezeDis', 'Charging Paused');
-                    friendlyText = friendlyText.replace('FreezeChrg', 'Maintaining SOC'); //FreezeChrg
-                    friendlyText = friendlyText.replace('HoldChrg', 'Maintaining SOC'); //HoldChrg
-                    friendlyText = friendlyText.includes("NoCharge") ? friendlyText.replace('NoCharge','Charge to "limit"') : friendlyText.replace('Charge', 'Planned Charge');
-                    friendlyText = friendlyText.replace('Discharge', 'Planned Discharge'); //Discharge
-                   
                     if(this.config.use_friendly_states === true){
                         newContent = friendlyText;
                     }
@@ -1293,63 +1298,6 @@ class PredbatTableCard extends HTMLElement {
 }
 
 customElements.define("predbat-table-card", PredbatTableCard);
-
-// Finally we create and register the editor itself
-class PredbatTableCardEditor extends HTMLElement {
-
-  static get properties() {
-    console.log("properties");          
-    return {
-      hass: {},
-      _config: {},
-    };
-  }
-
-  // setConfig works the same way as for the card itself
-  setConfig(config) {
-    console.log("setConfig");      
-    this._config = config;
-    
-    if (!this.content) {
-      this.innerHTML = `
-        <ha-card>
-          <div class="card-content" id="predbat-card-content-editor"></div>
-        </ha-card>
-      `;
-      this.content = this.querySelector("div");
-    }
-    
-    this.content.innerHTML = "<b>hello steve</b>";
-    
-    console.log(this);
-  }
-
-  // This function is called when the input element of the editor loses focus
-  entityChanged(ev) {
-    console.log("entityChanged");
-    // We make a copy of the current config so we don't accidentally overwrite anything too early
-    const _config = Object.assign({}, this._config);
-    // Then we update the entity value with what we just got from the input field
-    _config.entity = ev.target.value;
-    // And finally write back the updated configuration all at once
-    this._config = _config;
-
-    // A config-changed event will tell lovelace we have made changed to the configuration
-    // this make sure the changes are saved correctly later and will update the preview
-    const event = new CustomEvent("config-changed", {
-      detail: { config: _config },
-      bubbles: true,
-      composed: true,
-    });
-    this.dispatchEvent(event);
-  }
-
-  render() {
-    console.log("hellow world");
-  }
-}
-
-customElements.define("predbat-table-card-editor", PredbatTableCardEditor);
 
 window.customCards = window.customCards || [];
 window.customCards.push({
