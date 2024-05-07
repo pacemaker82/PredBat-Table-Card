@@ -321,10 +321,10 @@ class PredbatTableCard extends HTMLElement {
             if(this.config.old_skool === true)
                 newCell.style.border = "1px solid white";
             
-            newCell.style.backgroundColor = "#FFFFFF";
+            //newCell.style.backgroundColor = "#FFFFFF";
             newCell.style.height = "22px";
             
-            if(theItem.value === "Both" && column === "state-column"){
+            if((theItem.value === "Both" || theItem.value === "Both-Idle") && column === "state-column"){
                 
                 newCell.style.minWidth = "186px";
                 if(this.config.use_friendly_states === true)
@@ -332,24 +332,42 @@ class PredbatTableCard extends HTMLElement {
                 newCell.style.paddingLeft = "0px";
                 newCell.style.paddingRight = "0px";
                 
-                let chargeString = "Charge";
+                let chargeString;
+                
+                if(theItem.value === "Both")
+                    chargeString = "Charge";
+                else if(theItem.value === "Both-Idle")
+                    chargeString = "Idle";
+                    
                 let dischargeString = "Discharge";
+                
                 if(this.isSmallScreen()){
-                    chargeString = "Chg";
+                    if(theItem.value === "Both")
+                        chargeString = "Chg";
                     dischargeString = "Dis";
                     newCell.style.minWidth = "110px";
                 }
                 
                 if(this.config.use_friendly_states === true && this.isSmallScreen() === false){
-                    chargeString = "Planned Charge";
+                    if(theItem.value === "Both")
+                        chargeString = "Planned Charge";
                     dischargeString = "Planned Discharge";                    
                 } else if(this.config.use_friendly_states === true && this.isSmallScreen() === true){
-                    chargeString = "Plnd Chg";
+                    if(theItem.value === "Both")
+                        chargeString = "Plnd Chg";
                     dischargeString = "Plnd Dis"; 
                 }
                 
+                let chargeBackgroundColor = "background-color:#3AEE85;";
+                if(theItem.value === "Both-Idle")
+                    chargeBackgroundColor = "";
+                    
+                let chargeIcon = '<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 0 0 -5px"></ha-icon>';
+                    if(theItem.value === "Both-Idle")
+                        chargeIcon = '<ha-icon icon="mdi:arrow-right-thin" style="margin: 0 0 0 -3px"></ha-icon>';
+                
                 newCell.innerHTML = `<div style="width: 100%; height: 100%;">
-                <div style='background-color:#3AEE85; width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center;'>${chargeString}<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 0 0 -5px"></ha-icon></div>
+                <div style='${chargeBackgroundColor} width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center;'>${chargeString}${chargeIcon}</div>
                 <div style='background-color:#FFFF00; width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center;'>${dischargeString}<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 0 0 -5px"></ha-icon></div>
                 </div>`;
             
@@ -567,6 +585,13 @@ class PredbatTableCard extends HTMLElement {
                     newCell.setAttribute('style', 'color: var(--energy-battery-in-color)');                    
                 } else if(newContent === "Both"){
                     additionalArrow = '<ha-icon icon="mdi:battery-charging-100" style="color: var(--energy-battery-in-color); --mdc-icon-size: 22px;" title="Planned Charge" class="icons"></ha-icon><ha-icon icon="mdi:battery-minus" style="color: var(--energy-battery-out-color);" title="Planned Discharge" class="icons"></ha-icon>';
+                } else if(newContent === "Both-Idle"){
+                    let houseColor = "#000000";
+                    if(this.getLightMode(darkMode))
+                        houseColor = "#FFFFFF";
+                            
+                    this.getLightMode(darkMode)
+                    additionalArrow = `<ha-icon icon="mdi:home-lightning-bolt" style="color: ${houseColor}" title="Idle" style="--mdc-icon-size: 22px;"></ha-icon><ha-icon icon="mdi:battery-minus" style="color: var(--energy-battery-out-color);" title="Planned Discharge" class="icons"></ha-icon>`;
                 }
 
           newCell.innerHTML = `<div class="iconContainer">${additionalArrow}</div>`;
@@ -1040,7 +1065,14 @@ class PredbatTableCard extends HTMLElement {
                 
                 // state is actually two states, so we should replace that with "both"
                 if(countDifference < 0) {
-                    newTRObject[headerClassesArray[3]] = {"value": "Both", "color": "green"};
+                    tdElements.forEach((tdElement, tdIndex) => {
+                        if(tdIndex === 3){
+                            if(tdElement.innerHTML.includes("Chrg"))
+                                newTRObject[headerClassesArray[3]] = {"value": "Both", "color": "green"};
+                            else
+                                newTRObject[headerClassesArray[3]] = {"value": "Both-Idle", "color": "green"};
+                        }
+                    });
                 }
                 
                 newTRObject["import-export-column"] = [newTRObject[headerClassesArray[1]], newTRObject[headerClassesArray[2]]];
