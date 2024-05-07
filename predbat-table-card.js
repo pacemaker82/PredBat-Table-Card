@@ -604,7 +604,7 @@ class PredbatTableCard extends HTMLElement {
                     newCell.setAttribute('style', 'color: var(--energy-battery-in-color)');                    
                 } else if(newContent === "Both"){
                     additionalArrow = '<ha-icon icon="mdi:battery-charging-100" style="color: var(--energy-battery-in-color); --mdc-icon-size: 22px;" title="Planned Charge" class="icons"></ha-icon><ha-icon icon="mdi:battery-minus" style="color: var(--energy-battery-out-color);" title="Planned Discharge" class="icons"></ha-icon>';
-                } else if(newContent === "Both-Idle"){
+                } else if(newContent === "Both-Idle" || newContent === "Both-Chg" || newContent === "Both-Dis"){
                     let houseColor = "#000000";
                     if(this.getLightMode(darkMode))
                         houseColor = "#FFFFFF";
