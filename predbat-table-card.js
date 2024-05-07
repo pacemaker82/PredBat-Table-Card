@@ -324,7 +324,7 @@ class PredbatTableCard extends HTMLElement {
             //newCell.style.backgroundColor = "#FFFFFF";
             newCell.style.height = "22px";
             
-            if((theItem.value === "Both" || theItem.value === "Both-Idle") && column === "state-column"){
+            if((theItem.value === "Both" || theItem.value === "Both-Idle" || theItem.value === "Both-Chg" || theItem.value === "Both-Dis") && column === "state-column"){
                 
                 newCell.style.minWidth = "186px";
                 if(this.config.use_friendly_states === true)
@@ -334,16 +334,21 @@ class PredbatTableCard extends HTMLElement {
                 
                 let chargeString;
                 
-                if(theItem.value === "Both")
+                if(theItem.value === "Both" || theItem.value === "Both-Chg")
                     chargeString = "Charge";
                 else if(theItem.value === "Both-Idle")
                     chargeString = "Idle";
+                else if(theItem.value === "Both-Dis")
+                    chargeString = "Discharge";    
                     
                 let dischargeString = "Discharge";
                 
                 if(this.isSmallScreen()){
-                    if(theItem.value === "Both")
+                    if(theItem.value === "Both" || theItem.value === "Both-Chg")
                         chargeString = "Chg";
+                    else if(theItem.value === "Both-Dis")
+                        chargeString = "Dis";
+                        
                     dischargeString = "Dis";
                     newCell.style.minWidth = "110px";
                 }
@@ -351,21 +356,35 @@ class PredbatTableCard extends HTMLElement {
                 if(this.config.use_friendly_states === true && this.isSmallScreen() === false){
                     if(theItem.value === "Both")
                         chargeString = "Planned Charge";
+                    else if(theItem.value === "Both-Chg")
+                        chargeString = "Charge";
+                    else if(theItem.value === "Both-Dis")
+                        chargeString = "Discharge";
+                        
                     dischargeString = "Planned Discharge";                    
                 } else if(this.config.use_friendly_states === true && this.isSmallScreen() === true){
                     if(theItem.value === "Both")
                         chargeString = "Plnd Chg";
+                    else if(theItem.value === "Both-Chg")
+                        chargeString = "Chg";    
+                    else if(theItem.value === "Both-Dis")
+                        chargeString = "Dis"; 
+                        
                     dischargeString = "Plnd Dis"; 
                 }
                 
                 let chargeBackgroundColor = "background-color:#3AEE85;";
-                if(theItem.value === "Both-Idle")
+                if(theItem.value === "Both-Idle" || theItem.value === "Both-Dis" || theItem.value === "Both-Chg")
                     chargeBackgroundColor = "";
                     
-                let chargeIcon = '<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 0 0 -5px"></ha-icon>';
-                    if(theItem.value === "Both-Idle")
-                        chargeIcon = '<ha-icon icon="mdi:arrow-right-thin" style="margin: 0 0 0 -3px"></ha-icon>';
-                
+                let chargeIcon;
+                if(theItem.value === "Both" || theItem.value === "Both-Chg")
+                    chargeIcon = '<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 0 0 -5px"></ha-icon>';
+                else if(theItem.value === "Both-Idle")
+                    chargeIcon = '<ha-icon icon="mdi:arrow-right-thin" style="margin: 0 0 0 -3px"></ha-icon>';
+                else if(theItem.value === "Both-Dis")
+                    chargeIcon = '<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 0 0 -5px"></ha-icon>';
+                    
                 newCell.innerHTML = `<div style="width: 100%; height: 100%;">
                 <div style='${chargeBackgroundColor} width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center;'>${chargeString}${chargeIcon}</div>
                 <div style='background-color:#FFFF00; width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center;'>${dischargeString}<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 0 0 -5px"></ha-icon></div>
@@ -1069,8 +1088,13 @@ class PredbatTableCard extends HTMLElement {
                         if(tdIndex === 3){
                             if(tdElement.innerHTML.includes("Chrg"))
                                 newTRObject[headerClassesArray[3]] = {"value": "Both", "color": "green"};
-                            else
-                                newTRObject[headerClassesArray[3]] = {"value": "Both-Idle", "color": "green"};
+                            else if(tdElement.innerHTML.trim() === "↘")
+                                    newTRObject[headerClassesArray[3]] = {"value": "Both-Dis", "color": "green"};
+                            else if(tdElement.innerHTML.trim() === "↗")
+                                    newTRObject[headerClassesArray[3]] = {"value": "Both-Chg", "color": "green"};
+                            else if(tdElement.innerHTML.trim() === "→")
+                                    newTRObject[headerClassesArray[3]] = {"value": "Both-Idle", "color": "green"};
+                            
                         }
                     });
                 }
