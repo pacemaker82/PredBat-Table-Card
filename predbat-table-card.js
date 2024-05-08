@@ -374,9 +374,11 @@ class PredbatTableCard extends HTMLElement {
                 }
                 
                 let chargeBackgroundColor = "background-color:#3AEE85;";
-                if(theItem.value === "Both-Idle" || theItem.value === "Both-Dis" || theItem.value === "Both-Chg")
+                let chargeTextColor = "color: #000000;";
+                if(theItem.value === "Both-Idle" || theItem.value === "Both-Dis" || theItem.value === "Both-Chg"){
                     chargeBackgroundColor = "";
-                    
+                    chargeTextColor = "";
+                }
                 let chargeIcon;
                 if(theItem.value === "Both" || theItem.value === "Both-Chg")
                     chargeIcon = '<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 0 0 -5px"></ha-icon>';
@@ -386,8 +388,8 @@ class PredbatTableCard extends HTMLElement {
                     chargeIcon = '<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 0 0 -5px"></ha-icon>';
                     
                 newCell.innerHTML = `<div style="width: 100%; height: 100%;">
-                <div style='${chargeBackgroundColor} width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center;'>${chargeString}${chargeIcon}</div>
-                <div style='background-color:#FFFF00; width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center;'>${dischargeString}<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 0 0 -5px"></ha-icon></div>
+                <div style='${chargeBackgroundColor} width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center; ${chargeTextColor}'>${chargeString}${chargeIcon}</div>
+                <div style='background-color:#FFFF00; width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center; color: #000000;'>${dischargeString}<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 0 0 -5px"></ha-icon></div>
                 </div>`;
             
             } else if(column === "import-export-column"){
