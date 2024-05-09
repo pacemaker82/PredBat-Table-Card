@@ -173,3 +173,6 @@ Full explanations of the Predbat status's [can be found here](https://springfall
 | NoChrg | Charge to "limit" |
 | Chrg | Planned Charge | 
 | Dis | Planned Discharge | 
+
+The image below demonstrates the friendly states in action:
+<img width="578" alt="Screenshot 2024-05-09 at 10 35 13" src="https://github.com/pacemaker82/PredBat-Table-Card/assets/157808562/cd0837ba-a221-42d9-b571-d9b44d08e1a2">
