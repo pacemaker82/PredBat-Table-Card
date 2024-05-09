@@ -159,7 +159,7 @@ cards:
 
 This custom card can "translate" the states in the existing Predbat card, and make them more user friendly by using the `use_friendly_states` config item (see table above). I hesitate to say "dumb them down" but it at least attempts to describe in plainer english what is happening. Here is the spec of those friendly states:
 
-Full explanations of the Predbat status's can be found here: https://springfall2008.github.io/batpred/what-does-predbat-do/#predbat-status
+Full explanations of the Predbat status's [can be found here](https://springfall2008.github.io/batpred/what-does-predbat-do/#predbat-status) 
 
 | State | Friendly Name |
 |----------|----------|
