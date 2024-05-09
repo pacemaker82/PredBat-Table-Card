@@ -332,15 +332,10 @@ class PredbatTableCard extends HTMLElement {
                 newCell.style.paddingLeft = "0px";
                 newCell.style.paddingRight = "0px";
                 
-                let chargeString;
+                let chargeString = "Charge";
+                if(theItem.value === "Both-Chg" || theItem.value === "Both-Dis" || theItem.value === "Both-Idle")
+                    chargeString = "";
                 
-                if(theItem.value === "Both" || theItem.value === "Both-Chg")
-                    chargeString = "Charge";
-                else if(theItem.value === "Both-Idle")
-                    chargeString = "Idle";
-                else if(theItem.value === "Both-Dis")
-                    chargeString = "Discharge";    
-                    
                 let dischargeString = "Discharge";
                 
                 if(this.isSmallScreen()){
@@ -357,9 +352,9 @@ class PredbatTableCard extends HTMLElement {
                     if(theItem.value === "Both")
                         chargeString = "Planned Charge";
                     else if(theItem.value === "Both-Chg")
-                        chargeString = "Charge";
+                        chargeString = "Charging";
                     else if(theItem.value === "Both-Dis")
-                        chargeString = "Discharge";
+                        chargeString = "Discharging";
                         
                     dischargeString = "Planned Discharge";                    
                 } else if(this.config.use_friendly_states === true && this.isSmallScreen() === true){
