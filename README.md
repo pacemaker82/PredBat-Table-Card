@@ -12,6 +12,7 @@ This is a custom [Predbat](https://github.com/springfall2008/batpred) table card
 3. [Default Card Setup Example](#default-card-setup-example)
 4. [Custom Card Setup Example](#custom-setup-example)
 5. [Managing table width for different devices](#managing-table-width-for-different-devices)
+6. [Friendly States](#friendly-states)
 
 ## Installation
 
@@ -44,7 +45,7 @@ The following YAML config items can or should be set on the card
 | `even_row_colour`    | NO    | Override Dark Mode Even Row Colour - HEX value e.g. `#FFFFFF` otherwise default colour will be used   |
 | `odd_row_colour_light`    | NO    | Override Light Mode Odd Row Colour HEX value e.g. `#FFFFFF` otherwise default colour will be used   |
 | `even_row_colour_light`    | NO    | Override Light Mode Even Row Colour HEX value e.g. `#FFFFFF` otherwise default colour will be used   |
-| `use_friendly_states` | NO | Set to `true` if you want the Predbat `state-column` description to be more user friendly in terms of describing what is actually happening. |
+| `use_friendly_states` | NO | Set to `true` if you want the Predbat `state-column` description to be more user friendly in terms of describing what is actually happening. [See here](#friendly-states) for more |
 
 You can use `import-export-column` to see both import and export prices in a single column
 
@@ -153,3 +154,22 @@ cards:
         - soc-column
         - state-column
 ```
+
+## Friendly States
+
+This custom card can "translate" the states in the existing Predbat card, and make them more user friendly by usiong the `use_friendly_states` config item (see table above). I hesitate to say "dumb them down" but it at least attempts to describe in plainer english what is happening. Here is the spec of those friendly states:
+
+Full explanations of the Predbat status's can be found here: https://springfall2008.github.io/batpred/what-does-predbat-do/#predbat-status
+
+| State | Friendly Name |
+|----------|----------|
+| ⅎ | Manually Forced (Idle/Charge/Discharge) |
+| ↗ | Charging |
+| ↘ | Discharging |
+| → | Idle | 
+| FrzDis | Charging Paused | 
+| FrzChrg | Maintaining SOC | 
+| HoldChrg | Maintaining SOC | 
+| NoChrg | Charge to "limit" |
+| Chrg | Planned Charge | 
+| Dis | Planned Discharge | 
