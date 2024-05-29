@@ -341,15 +341,16 @@ class PredbatTableCard extends HTMLElement {
                 
                 let dischargeString = "Discharge";
                 
-                if(this.isSmallScreen()){
+                
+                if(this.isSmallScreen() && this.config.use_friendly_states === false){
                     if(theItem.value === "Both" || theItem.value === "Both-Chg")
                         chargeString = "Chg";
-                    else if(theItem.value === "Both-Dis")
-                        chargeString = "Dis";
+                    if(theItem.value === "Both" || theItem.value === "Both-Dis")
+                        dischargeString = "Dis";
                         
-                    dischargeString = "Dis";
                     newCell.style.minWidth = "110px";
                 }
+                
                 
                 if(this.config.use_friendly_states === true && this.isSmallScreen() === false){
                     if(theItem.value === "Both")
