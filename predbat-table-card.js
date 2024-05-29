@@ -342,7 +342,7 @@ class PredbatTableCard extends HTMLElement {
                 let dischargeString = "Discharge";
                 
                 
-                if(this.isSmallScreen() && this.config.use_friendly_states === false){
+                if(this.isSmallScreen() && (this.config.use_friendly_states === false || this.config.use_friendly_states === undefined)){
                     if(theItem.value === "Both" || theItem.value === "Both-Chg")
                         chargeString = "Chg";
                     if(theItem.value === "Both" || theItem.value === "Both-Dis")
