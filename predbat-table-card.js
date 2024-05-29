@@ -318,8 +318,11 @@ class PredbatTableCard extends HTMLElement {
                 newCell.style.paddingRight = "0px";
             }
             
-            if(this.config.old_skool === true)
+            if(this.config.old_skool === true) {
                 newCell.style.border = "1px solid white";
+                newCell.style.backgroundColor = "#FFFFFF";
+            }
+            
             
             //newCell.style.backgroundColor = "#FFFFFF";
             newCell.style.height = "22px";
