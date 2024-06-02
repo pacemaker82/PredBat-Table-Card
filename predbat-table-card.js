@@ -341,6 +341,7 @@ class PredbatTableCard extends HTMLElement {
                 
                 let dischargeString = "Discharge";
                 
+                //console.log("1: " + dischargeString);
                 
                 if(this.isSmallScreen() && (this.config.use_friendly_states === false || this.config.use_friendly_states === undefined)){
                     if(theItem.value === "Both" || theItem.value === "Both-Chg")
@@ -350,6 +351,8 @@ class PredbatTableCard extends HTMLElement {
                         
                     newCell.style.minWidth = "110px";
                 }
+                
+                //console.log("2: " + dischargeString);
                 
                 
                 if(this.config.use_friendly_states === true && this.isSmallScreen() === false){
@@ -370,7 +373,10 @@ class PredbatTableCard extends HTMLElement {
                         chargeString = "Dis"; 
                         
                     dischargeString = "Plnd Dis"; 
+                    newCell.style.minWidth = "110px";
                 }
+                
+                //console.log("3: " + dischargeString);
                 
                 let chargeBackgroundColor = "background-color:#3AEE85;";
                 let chargeTextColor = "color: #000000;";
