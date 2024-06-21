@@ -879,6 +879,7 @@ class PredbatTableCard extends HTMLElement {
   }
   
   getLastUpdatedFromHTML(html) {
+      
     // Create a dummy element to manipulate the HTML
       const dummyElement = document.createElement('div');
       dummyElement.innerHTML = html;
@@ -910,6 +911,7 @@ class PredbatTableCard extends HTMLElement {
           }
       });
       return lastUpdate;
+      
       
   }
   
@@ -1016,7 +1018,7 @@ class PredbatTableCard extends HTMLElement {
                 
             }
             
-            if (index > 1) {
+            if (index > 2) {
 
                 // helps with the math when columns count and colspan at work
                 let countDifference = Object.keys(headerClassesArray).length - tdElements.length;
