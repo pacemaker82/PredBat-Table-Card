@@ -993,7 +993,7 @@ class PredbatTableCard extends HTMLElement {
         
         const tdElements = trElement.querySelectorAll('td');
             
-            if (index === 1) {
+            if (index === 2) {
 
                 //check for car column in the first row and add new car-column class to array in position 7
                 tdElements.forEach((tdElement, checkIndex) => {
