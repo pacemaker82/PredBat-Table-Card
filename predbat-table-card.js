@@ -182,7 +182,7 @@ class PredbatTableCard extends HTMLElement {
             carEmpty = true;
             
         if(columnsToReturn.includes("iboost-column"))
-            iboostEmpty = true;
+            iBoostEmpty = true;
             
         dataArray.forEach((item, index) => {
             if(item["car-column"] !== undefined && item["car-column"].value.length > 0)
@@ -413,8 +413,11 @@ class PredbatTableCard extends HTMLElement {
                     if (theItem.value.length > 0 && !theItem.value.includes("☀"))
                         newCell.style.backgroundColor = "#FFFFFF";
                     
+                    //console.log("PV Data: " + theItem.value);
                     newContent = theItem.value.replace(/[☀]/g, '');
+                    //console.log("PV Data 1: " + newContent);
                     newContent = parseFloat(newContent).toFixed(2);
+                    //console.log("PV Data 2: " + newContent);
                     
                     let additionalIcon = "";
                     if(!this.isSmallScreen())
@@ -992,6 +995,21 @@ class PredbatTableCard extends HTMLElement {
         
         let firstRowData = 0;
         
+        /*
+        const str = "1.79 (0.75)";
+
+        // Step 1: Use a regular expression to find all float numbers
+        const floatRegex = /-?\d+(\.\d+)?/g; // This regex matches positive and negative floats
+        const matches = str.match(floatRegex); // Get an array of matches
+        
+        // Step 2: Convert the matches to floating-point numbers
+        const floats = matches.map(match => parseFloat(match));
+        
+        // Step 3: Loop through each float and do something with it
+        floats.forEach(float => {
+            console.log(float); // Here you can replace this line with whatever you want to do with each float
+        });*/
+        
         trElements.forEach((trElement, index) => {
             if(firstRowData === 0){
                 const numberOfChildren = trElement.children.length;
@@ -1001,9 +1019,7 @@ class PredbatTableCard extends HTMLElement {
                     firstRowData = index;
                 }
             }
-        });
-        
-        //console.log("Index of first row data: " + firstRowData);
+        }); 
         
         trElements.forEach((trElement, index) => {
         
@@ -1028,7 +1044,15 @@ class PredbatTableCard extends HTMLElement {
                     
                     if(columnHeaderTitle.includes("CO2 KG")) {
                         headerClassesArray.splice(checkIndex-1, 0, "co2kg-column");
-                    }  
+                    }
+                    /*
+                    if(columnHeaderTitle.includes("PV KWH (10%)")) {
+                        headerClassesArray.splice(checkIndex-1, 0, "pv10-column");
+                    }    
+                    
+                    if(columnHeaderTitle.includes("LOAD KWH (10%)")) {
+                        headerClassesArray.splice(checkIndex-1, 0, "load10-column");
+                    }  */
                     
                 });
                 
