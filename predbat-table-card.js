@@ -989,11 +989,27 @@ class PredbatTableCard extends HTMLElement {
         
         let currentExportRate;
         let currentExportColor;
+        
+        let firstRowData = 0;
+        
+        trElements.forEach((trElement, index) => {
+            if(firstRowData === 0){
+                const numberOfChildren = trElement.children.length;
+                
+                //detect if row data is actual table data not metadata. If children <td> is greater than 2
+                if(numberOfChildren > 2){
+                    firstRowData = index;
+                }
+            }
+        });
+        
+        //console.log("Index of first row data: " + firstRowData);
+        
         trElements.forEach((trElement, index) => {
         
         const tdElements = trElement.querySelectorAll('td');
             
-            if (index === 2) {
+            if (index === firstRowData) {
 
                 //check for car column in the first row and add new car-column class to array in position 7
                 tdElements.forEach((tdElement, checkIndex) => {
@@ -1018,7 +1034,7 @@ class PredbatTableCard extends HTMLElement {
                 
             }
             
-            if (index > 2) {
+            if (index > firstRowData) {
 
                 // helps with the math when columns count and colspan at work
                 let countDifference = Object.keys(headerClassesArray).length - tdElements.length;
