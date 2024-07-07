@@ -198,7 +198,7 @@ class PredbatTableCard extends HTMLElement {
             indexesToRemove.push(columnsToReturn.indexOf("car-column"));
 
         if(iBoostEmpty === true)
-            indexesToRemove.push(columnsToReturn.indexOf("iBoost-column"));
+            indexesToRemove.push(columnsToReturn.indexOf("iboost-column"));
         
         if(indexesToRemove.length > 0) {
             for (let row of newTableHead.rows) {
