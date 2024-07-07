@@ -89,19 +89,16 @@ class PredbatTableCard extends HTMLElement {
 
    // console.log(hass.states[entityId].last_updated);
 
-    const lastUpdated = this.getLastUpdatedFromHTML(rawHTML);
     const dataArray = this.getArrayDataFromHTML(rawHTML, hass.themes.darkMode); 
     let theTable = document.createElement('table');
     theTable.setAttribute('id', 'predbat-table');
     theTable.setAttribute('cellpadding', '0px');
-    
-    //set out the table header row
-    
     let newTableHead = document.createElement('thead');
     
     // Create an optional Last Updated Table Header Row
     if(this.config.hide_last_update !== true) {
-    
+        
+        const lastUpdated = this.getLastUpdatedFromHTML(rawHTML);
         let lastUpdateHeaderRow = document.createElement('tr');
         let lastUpdateCell = document.createElement('th');
         lastUpdateCell.classList.add('lastUpdateRow');
@@ -110,6 +107,23 @@ class PredbatTableCard extends HTMLElement {
         lastUpdateHeaderRow.appendChild(lastUpdateCell);
         newTableHead.appendChild(lastUpdateHeaderRow);
     
+    }
+    
+    if(this.config.show_table_meta === true) {
+        const metaArray = this.getMetadataFromHTML(rawHTML);
+        
+        if(metaArray.length > 0){
+            
+            for (let i = 0; i < metaArray.length; i++) {
+                let metaHeaderRow = document.createElement('tr');
+                let metaCell = document.createElement('th');
+                metaCell.classList.add('lastUpdateRow');
+                metaCell.colSpan = columnsToReturn.length;
+                metaCell.innerHTML = `${metaArray[i]}`;
+                metaHeaderRow.appendChild(metaCell);
+                newTableHead.appendChild(metaHeaderRow); 
+            }
+        }         
     }
     
     let newHeaderRow = document.createElement('tr');
@@ -884,6 +898,32 @@ class PredbatTableCard extends HTMLElement {
                             </svg>`;
             
             return svgLozenge;
+  }
+  
+  getMetadataFromHTML(html) {
+      
+      const dummyElement = document.createElement('div');
+      dummyElement.innerHTML = html;
+      const trElements = dummyElement.querySelectorAll('tbody tr');
+      
+      let metaArray = [];
+      trElements.forEach((trElement, index) => {
+          
+                const numberOfChildren = trElement.children.length;
+                
+                //detect if row data is metadata (rows with no table data). If children <td> is less than 2
+                if(numberOfChildren < 2){
+                    const tdElements = trElement.querySelectorAll('td');
+                      tdElements.forEach(tdElement => {
+                          metaArray.splice(index, 0, tdElement.innerHTML);
+                      });
+                    
+                }
+          
+      });
+      
+      return metaArray;
+      
   }
   
   getLastUpdatedFromHTML(html) {
