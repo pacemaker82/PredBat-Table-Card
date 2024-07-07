@@ -344,11 +344,16 @@ class PredbatTableCard extends HTMLElement {
                 //console.log("1: " + dischargeString);
                 
                 if(this.isSmallScreen() && (this.config.use_friendly_states === false || this.config.use_friendly_states === undefined)){
-                    if(theItem.value === "Both" || theItem.value === "Both-Chg")
+                    
+                    if(theItem.value === "Both") {
                         chargeString = "Chg";
-                    if(theItem.value === "Both" || theItem.value === "Both-Dis")
                         dischargeString = "Dis";
-                        
+                    }
+                    
+                    if(theItem.value === "Both-Chg" || theItem.value === "Both-Dis" || theItem.value === "Both-Idle") {
+                        dischargeString = "Dis";                        
+                    }
+                    
                     newCell.style.minWidth = "110px";
                 }
                 
@@ -392,7 +397,7 @@ class PredbatTableCard extends HTMLElement {
                 else if(theItem.value === "Both-Dis")
                     chargeIcon = '<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 0 0 -5px"></ha-icon>';
                     
-                newCell.innerHTML = `<div style="width: 100%; height: 100%;">
+                newCell.innerHTML = `<div style="width: 100%; height: 100%;" id="${theItem.value}">
                 <div style='${chargeBackgroundColor} width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center; ${chargeTextColor}'>${chargeString}${chargeIcon}</div>
                 <div style='background-color:#FFFF00; width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center; color: #000000;'>${dischargeString}<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 0 0 -5px"></ha-icon></div>
                 </div>`;
