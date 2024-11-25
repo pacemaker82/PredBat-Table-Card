@@ -80,6 +80,8 @@ class PredbatTableCard extends HTMLElement {
   }
   
   processAndRender(hass){
+      
+
     const entityId = this.config.entity;
     const state = hass.states[entityId];
     const stateStr = state ? state.state : "unavailable";
@@ -382,7 +384,7 @@ class PredbatTableCard extends HTMLElement {
                     else if(theItem.value === "Both-Dis")
                         chargeString = "Discharging";
                         
-                    dischargeString = "Planned Discharge";                    
+                    dischargeString = "Planned Export";                    
                 } else if(this.config.use_friendly_states === true && this.isSmallScreen() === true){
                     if(theItem.value === "Both")
                         chargeString = "Plnd Chg";
@@ -454,9 +456,13 @@ class PredbatTableCard extends HTMLElement {
                     friendlyText = friendlyText.replace('Force Dischrg', 'Discharge');
                     friendlyText = friendlyText.replace('Force Charge', 'Charge');
                     
+                    
                     if(theItem.value.includes("ⅎ")){
+                        friendlyText = friendlyText.replace('Exp', 'Export');
+                        
                         friendlyText = "Manually Forced " + friendlyText;
-                        if(!friendlyText.includes("Charge") && !friendlyText.includes("Discharge"))
+                        
+                        if(!friendlyText.includes("Charge") && !friendlyText.includes("Discharge") && !friendlyText.includes("Export"))
                             friendlyText = friendlyText + "Idle";
                         friendlyText = friendlyText.replace('ⅎ', '');
                     } else {
@@ -472,7 +478,7 @@ class PredbatTableCard extends HTMLElement {
                         friendlyText = friendlyText.replace('FreezeChrg', 'Maintaining SOC'); //FreezeChrg
                         friendlyText = friendlyText.replace('HoldChrg', 'Maintaining SOC'); //HoldChrg
                         friendlyText = friendlyText.includes("NoCharge") ? friendlyText.replace('NoCharge','Charge to "limit"') : friendlyText.replace('Charge', 'Planned Charge');
-                        friendlyText = friendlyText.replace('Discharge', 'Planned Discharge'); //Discharge
+                        friendlyText = friendlyText.replace('Discharge', 'Planned Export'); //Discharge
 
                     }
                     
@@ -609,7 +615,7 @@ class PredbatTableCard extends HTMLElement {
                     newCell.setAttribute('style', `color: ${theItem.color}`);
                 } else if(newContent === "Discharge"){
                         // use force discharge icon
-                        let tooltip = "Planned Discharge";
+                        let tooltip = "Planned Export";
                         if(theItem.value.includes("ⅎ"))
                             tooltip = "Manual Forced Discharge";                        
 
@@ -632,14 +638,14 @@ class PredbatTableCard extends HTMLElement {
                         additionalArrow += `<ha-icon icon="mdi:hand-back-right-outline" title="${tooltip}" style="--mdc-icon-size: 22px;"></ha-icon>`;
                     newCell.setAttribute('style', 'color: var(--energy-battery-in-color)');                    
                 } else if(newContent === "Both"){
-                    additionalArrow = '<ha-icon icon="mdi:battery-charging-100" style="color: var(--energy-battery-in-color); --mdc-icon-size: 22px;" title="Planned Charge" class="icons"></ha-icon><ha-icon icon="mdi:battery-minus" style="color: var(--energy-battery-out-color);" title="Planned Discharge" class="icons"></ha-icon>';
+                    additionalArrow = '<ha-icon icon="mdi:battery-charging-100" style="color: var(--energy-battery-in-color); --mdc-icon-size: 22px;" title="Planned Charge" class="icons"></ha-icon><ha-icon icon="mdi:battery-minus" style="color: var(--energy-battery-out-color);" title="Planned Export" class="icons"></ha-icon>';
                 } else if(newContent === "Both-Idle" || newContent === "Both-Chg" || newContent === "Both-Dis"){
                     let houseColor = "#000000";
                     if(this.getLightMode(darkMode))
                         houseColor = "#FFFFFF";
                             
                     this.getLightMode(darkMode)
-                    additionalArrow = `<ha-icon icon="mdi:home-lightning-bolt" style="color: ${houseColor}" title="Idle" style="--mdc-icon-size: 22px;"></ha-icon><ha-icon icon="mdi:battery-minus" style="color: var(--energy-battery-out-color);" title="Planned Discharge" class="icons"></ha-icon>`;
+                    additionalArrow = `<ha-icon icon="mdi:home-lightning-bolt" style="color: ${houseColor}" title="Idle" style="--mdc-icon-size: 22px;"></ha-icon><ha-icon icon="mdi:battery-minus" style="color: var(--energy-battery-out-color);" title="Planned Export" class="icons"></ha-icon>`;
                 }
 
           newCell.innerHTML = `<div class="iconContainer">${additionalArrow}</div>`;
@@ -753,6 +759,10 @@ class PredbatTableCard extends HTMLElement {
         newState = "Charge";
     if(status === "FrzDis")
         newState = "FreezeDis";
+    if(status === "FrzExp")
+        newState = "FreezeDis";        
+    if(status === "Exp")
+        newState = "Discharge";     
     if(status === "Dis")
         newState = "Discharge";    
     if(status === "Dis ⅎ")
