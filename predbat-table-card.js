@@ -355,7 +355,7 @@ class PredbatTableCard extends HTMLElement {
                 if(theItem.value === "Both-Chg" || theItem.value === "Both-Dis" || theItem.value === "Both-Idle")
                     chargeString = "";
                 
-                let dischargeString = "Discharge";
+                let dischargeString = "Export";
                 
                 //console.log("1: " + dischargeString);
                 
@@ -363,11 +363,11 @@ class PredbatTableCard extends HTMLElement {
                     
                     if(theItem.value === "Both") {
                         chargeString = "Chg";
-                        dischargeString = "Dis";
+                        dischargeString = "Exp";
                     }
                     
                     if(theItem.value === "Both-Chg" || theItem.value === "Both-Dis" || theItem.value === "Both-Idle") {
-                        dischargeString = "Dis";                        
+                        dischargeString = "Exp";                        
                     }
                     
                     newCell.style.minWidth = "110px";
@@ -475,11 +475,12 @@ class PredbatTableCard extends HTMLElement {
                         }
                         
                         friendlyText = friendlyText.replace('FreezeDis', 'Charging Paused');
+                        friendlyText = friendlyText.replace('FreezeExp', 'Charging Paused');
                         friendlyText = friendlyText.replace('FreezeChrg', 'Maintaining SOC'); //FreezeChrg
                         friendlyText = friendlyText.replace('HoldChrg', 'Maintaining SOC'); //HoldChrg
                         friendlyText = friendlyText.includes("NoCharge") ? friendlyText.replace('NoCharge','Charge to "limit"') : friendlyText.replace('Charge', 'Planned Charge');
                         friendlyText = friendlyText.replace('Discharge', 'Planned Export'); //Discharge
-
+                        friendlyText = friendlyText.replace('Export', 'Planned Export'); //Discharge
                     }
                     
                     if(this.config.use_friendly_states === true){
@@ -760,9 +761,9 @@ class PredbatTableCard extends HTMLElement {
     if(status === "FrzDis")
         newState = "FreezeDis";
     if(status === "FrzExp")
-        newState = "FreezeDis";        
+        newState = "FreezeExp";        
     if(status === "Exp")
-        newState = "Discharge";     
+        newState = "Export";     
     if(status === "Dis")
         newState = "Discharge";    
     if(status === "Dis ⅎ")
