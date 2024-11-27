@@ -164,16 +164,20 @@ Full explanations of the Predbat status's [can be found here](https://springfall
 
 | State | Friendly Name |
 |----------|----------|
-| ⅎ | Manually Forced (Idle/Charge/Discharge) |
+| ⅎ | Manually Forced (Idle/Charge/Export) |
 | ↗ | Charging |
 | ↘ | Discharging |
 | → | Idle | 
-| FrzDis | Charging Paused | 
+| FrzExp | Charging Paused | 
 | FrzChrg | Maintaining SOC | 
 | HoldChrg | Maintaining SOC | 
 | NoChrg | Charge to "limit" |
 | Chrg | Planned Charge | 
-| Dis | Planned Discharge | 
+| Exp | Planned Export | 
+
+**Please note:** 
+*"Discharging"* is describing the battery discharging to the house. *"Planned Export"* describes the battery exporting to the grid. This was changed to include *"Export"* terminology when Predbat updated to 8.7.0.
 
 The image below demonstrates the friendly states in action:
-<img width="578" alt="Screenshot 2024-05-09 at 10 35 13" src="https://github.com/pacemaker82/PredBat-Table-Card/assets/157808562/cd0837ba-a221-42d9-b571-d9b44d08e1a2">
+<img width="658" alt="Screenshot 2024-11-27 at 10 36 22" src="https://github.com/user-attachments/assets/c5bf9b8e-c371-4d6d-bb9c-87dd6a76900d">
+
