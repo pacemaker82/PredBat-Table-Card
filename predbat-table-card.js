@@ -596,7 +596,7 @@ class PredbatTableCard extends HTMLElement {
 
           newContent = theItem.value.replace(/[↘↗→ⅎ]/g, '').trim();
           newContent = this.adjustStatusFields(newContent);
-         
+            
             let additionalArrow = "";
             newCell.setAttribute('style', 'color: var(--energy-battery-out-color)');
                 if(theItem.value === "↘" || theItem.value === "↗" || theItem.value === "→"){
@@ -614,7 +614,8 @@ class PredbatTableCard extends HTMLElement {
                     additionalArrow = `<ha-icon icon="mdi:home-lightning-bolt" title=${tooltip} style="--mdc-icon-size: 22px;"></ha-icon>`;
                     additionalArrow += `<ha-icon icon="mdi:hand-back-right-outline" title="${tooltip}" style="--mdc-icon-size: 22px;"></ha-icon>`;
                     newCell.setAttribute('style', `color: ${theItem.color}`);
-                } else if(newContent === "Discharge"){
+                } else if(newContent === "Discharge" || newContent === "Export"){
+                        
                         // use force discharge icon
                         let tooltip = "Planned Export";
                         if(theItem.value.includes("ⅎ"))
