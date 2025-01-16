@@ -625,7 +625,7 @@ class PredbatTableCard extends HTMLElement {
                         if(theItem.value.includes("ⅎ"))
                             additionalArrow += `<ha-icon icon="mdi:hand-back-right-outline" title="${tooltip}" style="--mdc-icon-size: 22px;"></ha-icon>`;
                         
-                } else if(newContent === "FreezeDis" || newContent === "FreezeChrg" || newContent === "HoldChrg" || newContent === "NoCharge"){
+                } else if(newContent === "FreezeDis" || newContent === "FreezeChrg" || newContent === "HoldChrg" || newContent === "NoCharge" || newContent === "FreezeExp"){
                         // use force discharge icon
                         additionalArrow = '<ha-icon icon="mdi:battery-lock" style="" title="Charging Paused"></ha-icon>';
                         newCell.setAttribute('style', `color: ${theItem.color}`);
