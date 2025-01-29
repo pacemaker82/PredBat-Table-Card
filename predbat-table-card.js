@@ -593,7 +593,8 @@ class PredbatTableCard extends HTMLElement {
       
     } else if(column === "state-column"){
         
-
+          // alert ⚠
+        
           newContent = theItem.value.replace(/[↘↗→ⅎ]/g, '').trim();
           newContent = this.adjustStatusFields(newContent);
             
@@ -655,14 +656,30 @@ class PredbatTableCard extends HTMLElement {
     } else if(column === "limit-column"){
 
         if(theItem.value.replace(/\s/g, '').length > 0){
+            
+            let debugSVG = ``;
+            let debugString = theItem.value;
+            
+            if (theItem.value.includes("(") || theItem.value.includes(")")) {
+                const match = theItem.value.match(/(\d+)\s*\((\d+)\)/);
+                // match[1]
+                debugSVG = `<svg version="1.1" width="26" height="26" id="limitSVG">
+                    <circle cx="13" cy="13" r="11" stroke="#2a3240" stroke-width="1" stroke-dasharray="5,3" fill="#e1e1e1"/>
+                    <text class="pill" x="13" y="14" dominant-baseline="middle" text-anchor="middle" fill="#2a3240" font-size="10">${match[2]}</text>
+                    </svg>`;
+                debugString = match[1];
+                //console.log('Match: ' + match);
+            }
+            
+            const mainSVG = `<svg version="1.1" width="26" height="26" id="limitSVG">
+                    <circle cx="13" cy="13" r="11" stroke="#2a3240" stroke-width="2" fill="#e1e1e1"/>
+                    <text class="pill" x="13" y="14" dominant-baseline="middle" text-anchor="middle" fill="#2a3240" font-size="10" font-weight="bold">${debugString}</text>
+                    </svg>`;
 
             newCell.innerHTML = `
             
                 <div class="iconContainer">
-                    <svg version="1.1" width="26" height="26" id="limitSVG">
-                    <circle cx="13" cy="13" r="11" stroke="#2a3240" stroke-width="2" fill="#e1e1e1"/>
-                    <text class="pill" x="13" y="14" dominant-baseline="middle" text-anchor="middle" fill="#2a3240" font-size="10"} font-weight="bold">${theItem.value}</text>
-                    </svg>
+                    ${mainSVG} ${debugSVG}
                 </div>`;
         
         }
@@ -1167,11 +1184,9 @@ class PredbatTableCard extends HTMLElement {
                             });
                         }
                     }
-                
+                    
                     newTRObject[headerClassesArray[headerIndex]] = {"value": tdElement.innerHTML, "color": bgColor};
-                    
-                    
-                    
+
                     //exception||override for 12 cells and 11 headers (-1 count difference) and handling index 2
                     if(countDifference < 0 && tdIndex == 3) {
                         // having to do some nasty overrides here because of colspan stuff and my brain cant do the math today. will fix.
@@ -1210,11 +1225,48 @@ class PredbatTableCard extends HTMLElement {
                 newDataObject.push(newTRObject);
             }
             
+            
+            
         });
     
       // Get the modified HTML
+      
+      //const newDate = this.getStringToDate(newDataObject[30]['time-column'].value);
+      
+      //console.log(newDate);
+      //console.log(newDataObject[30]['time-column'].value);
+      
       return newDataObject;
     }
+    
+    getStringToDate(input) {
+        const [day, time] = input.split(' '); // Split into "Tue" and "09:00"
+        const [hours, minutes] = time.split(':').map(Number); // Split and convert time to numbers
+    
+        // Map days of the week to numbers (Sunday = 0, Monday = 1, ..., Saturday = 6)
+        const dayMap = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+        const targetDay = dayMap[day];
+    
+        if (targetDay === undefined) {
+            throw new Error('Invalid day in input');
+        }
+    
+        // Get today's date
+        const now = new Date();
+        const currentDay = now.getDay();
+    
+        // Calculate the difference between today and the target day
+        const dayDifference = (targetDay - currentDay + 7) % 7; // Ensures it's positive
+        const targetDate = new Date(now);
+    
+        // Set the target date to the upcoming target day
+        targetDate.setDate(now.getDate() + dayDifference);
+    
+        // Set the time
+        targetDate.setHours(hours, minutes, 0, 0);
+    
+        return targetDate;
+    }    
   
 	getStyles(isDarkMode) {
 	   
