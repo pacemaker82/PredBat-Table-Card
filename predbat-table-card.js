@@ -481,6 +481,7 @@ class PredbatTableCard extends HTMLElement {
                         friendlyText = friendlyText.includes("NoCharge") ? friendlyText.replace('NoCharge','Charge to "limit"') : friendlyText.replace('Charge', 'Planned Charge');
                         friendlyText = friendlyText.replace('Discharge', 'Planned Export'); //Discharge
                         friendlyText = friendlyText.replace('Export', 'Planned Export'); //Discharge
+                        friendlyText = friendlyText.replace('Alert Charge', 'Planned Charge ⚠'); // Alert Charge
                     }
                     
                     if(this.config.use_friendly_states === true){
@@ -594,12 +595,15 @@ class PredbatTableCard extends HTMLElement {
     } else if(column === "state-column"){
         
           // alert ⚠
+        //theItem.value = "⚠Chrg↗";
+            
+        newContent = theItem.value.replace(/[↘↗→ⅎ]/g, '').trim();
         
-          newContent = theItem.value.replace(/[↘↗→ⅎ]/g, '').trim();
           newContent = this.adjustStatusFields(newContent);
             
             let additionalArrow = "";
             newCell.setAttribute('style', 'color: var(--energy-battery-out-color)');
+    
                 if(theItem.value === "↘" || theItem.value === "↗" || theItem.value === "→"){
                     let tooltip = "Running Normally";
                     if(theItem.value.includes("ⅎ"))
@@ -630,13 +634,15 @@ class PredbatTableCard extends HTMLElement {
                         // use force discharge icon
                         additionalArrow = '<ha-icon icon="mdi:battery-lock" style="" title="Charging Paused"></ha-icon>';
                         newCell.setAttribute('style', `color: ${theItem.color}`);
-                } else if(newContent === "Charge"){
+                } else if(newContent === "Charge" || newContent === "Alert Charge"){
                     let tooltip = "Planned Charge";
                     
                     if(theItem.value.includes("ⅎ"))
                         tooltip = "Manual Forced Charge";
                     
                     additionalArrow = `<ha-icon icon="mdi:battery-charging-100" title="${tooltip}" style="--mdc-icon-size: 22px;"></ha-icon>`;
+                    if(theItem.value.includes("⚠"))
+                        additionalArrow += `<ha-icon icon="mdi:alert-outline" title="${tooltip}" style="--mdc-icon-size: 18px;"></ha-icon>`;
                     if(theItem.value.includes("ⅎ"))
                         additionalArrow += `<ha-icon icon="mdi:hand-back-right-outline" title="${tooltip}" style="--mdc-icon-size: 22px;"></ha-icon>`;
                     newCell.setAttribute('style', 'color: var(--energy-battery-in-color)');                    
@@ -788,6 +794,8 @@ class PredbatTableCard extends HTMLElement {
         newState = "Force Dischrg"
     if(status === "Chrg ⅎ")
         newState = "Force Charge"
+    if(status === "⚠Chrg")
+        newState = "Alert Charge"
     return newState;      
   }
   
