@@ -144,7 +144,6 @@ cards:
         - soc-column
         - pv-column
         - load-column
-        - car-column
         - cost-column
         - total-column
       odd_row_colour: '#181f2a'
