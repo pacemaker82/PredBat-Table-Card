@@ -1025,6 +1025,7 @@ class PredbatTableCard extends HTMLElement {
           'co2kwh-column': { description: "CO2 g/kWh", smallDescription: "CO2 g/kWh" },    
           'cost-column': { description: "Cost", smallDescription: "Cost" },
           'total-column': { description: "Total Cost", smallDescription: "Total <br>Cost" },
+          'xload-column': { description: "XLoad kWh", smallDescription: "XLoad kWh" },
           'import-export-column': {description: "Import / Export", smallDescription: "Import / <br>Export" }
         };
         
@@ -1127,6 +1128,10 @@ class PredbatTableCard extends HTMLElement {
                     if(columnHeaderTitle.includes("CO2 KG")) {
                         headerClassesArray.splice(checkIndex-1, 0, "co2kg-column");
                     }
+
+                    if(columnHeaderTitle.includes("XLOAD")) {
+                        headerClassesArray.splice(checkIndex-1, 0, "xload-column");
+                    }                    
                     /*
                     if(columnHeaderTitle.includes("PV KWH (10%)")) {
                         headerClassesArray.splice(checkIndex-1, 0, "pv10-column");
