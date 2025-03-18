@@ -669,10 +669,12 @@ class PredbatTableCard extends HTMLElement {
             if (theItem.value.includes("(") || theItem.value.includes(")")) {
                 const match = theItem.value.match(/(\d+)\s*\((\d+)\)/);
                 // match[1]
-                debugSVG = `<svg version="1.1" width="26" height="26" id="limitSVG">
-                    <circle cx="13" cy="13" r="11" stroke="#2a3240" stroke-width="1" stroke-dasharray="5,3" fill="#e1e1e1"/>
-                    <text class="pill" x="13" y="14" dominant-baseline="middle" text-anchor="middle" fill="#2a3240" font-size="10">${match[2]}</text>
-                    </svg>`;
+                if(match[1] != match[2]){
+                    debugSVG = `<svg version="1.1" width="26" height="26" id="limitSVG">
+                        <circle cx="13" cy="13" r="11" stroke="#2a3240" stroke-width="1" stroke-dasharray="5,3" fill="#e1e1e1"/>
+                        <text class="pill" x="13" y="14" dominant-baseline="middle" text-anchor="middle" fill="#2a3240" font-size="10">${match[2]}</text>
+                        </svg>`;
+                }
                 debugString = match[1];
                 //console.log('Match: ' + match);
             }
