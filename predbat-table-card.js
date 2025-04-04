@@ -85,13 +85,15 @@ class PredbatTableCard extends HTMLElement {
     const entityId = this.config.entity;
     const state = hass.states[entityId];
     const stateStr = state ? state.state : "unavailable";
-    const columnsToReturn = this.config.columns;
-
+    let columnsToReturn = this.config.columns;
     let rawHTML = hass.states[entityId].attributes.html;
-
-   // console.log(hass.states[entityId].last_updated);
-
     const dataArray = this.getArrayDataFromHTML(rawHTML, hass.themes.darkMode); 
+
+    //filter out any columns not in the data
+    columnsToReturn = columnsToReturn.filter(column => {
+        return dataArray[0][column] !== undefined;
+    });
+
     let theTable = document.createElement('table');
     theTable.setAttribute('id', 'predbat-table');
     theTable.setAttribute('cellpadding', '0px');
@@ -133,9 +135,12 @@ class PredbatTableCard extends HTMLElement {
         
     //create the header rows
     columnsToReturn.forEach((column, index) => {
-        let newColumn = document.createElement('th');
-        newColumn.innerHTML = this.getColumnDescription(column);
-        newHeaderRow.appendChild(newColumn);
+        //console.log(column + " - " + dataArray[0][column])
+    
+           let newColumn = document.createElement('th');
+            newColumn.innerHTML = this.getColumnDescription(column);
+            newHeaderRow.appendChild(newColumn);        
+
     });
         
     newTableHead.appendChild(newHeaderRow);
@@ -151,6 +156,7 @@ class PredbatTableCard extends HTMLElement {
         let isMidnight = false;
         columnsToReturn.forEach((column, index) => { // Use arrow function here
             if(item[column] !== undefined){
+                //console.log(column + " " + item[column]);
                 if(item["time-column"].value.includes("23:30"))
                     isMidnight = true;
                 let newColumn = this.getCellTransformation(item[column], column, hass.themes.darkMode);
@@ -1020,7 +1026,8 @@ class PredbatTableCard extends HTMLElement {
           'limit-column': { description: "Limit", smallDescription: "Limit" },
           'pv-column': { description: "PV kWh", smallDescription: "PV <br>kWh" },
           'load-column': { description: "Load kWh", smallDescription: "Load <br>kWh" },
-          'soc-column': { description: "SOC", smallDescription: "SOC" },
+          'soc-column': { description: "SoC", smallDescription: "SoC" },
+          'clip-column': { description: "Clip kWh", smallDescription: "Clip <br>kWh" },          
           'car-column': { description: "Car kWh", smallDescription: "Car <br>kWh" },
           'iboost-column': { description: "iBoost kWh", smallDescription: "iBoost <br>kWh" },    
           'co2kg-column': {description: "CO2 kg", smallDescription: "CO2 kg" },
@@ -1134,6 +1141,9 @@ class PredbatTableCard extends HTMLElement {
                     if(columnHeaderTitle.includes("XLOAD")) {
                         headerClassesArray.splice(checkIndex-1, 0, "xload-column");
                     }                    
+                    if(columnHeaderTitle.includes("CLIP KWH")) {
+                        headerClassesArray.splice(checkIndex-1, 0, "clip-column");
+                    }                       
                     /*
                     if(columnHeaderTitle.includes("PV KWH (10%)")) {
                         headerClassesArray.splice(checkIndex-1, 0, "pv10-column");
