@@ -498,7 +498,8 @@ class PredbatTableCard extends HTMLElement {
 
                 
                 newCell.style.backgroundColor = theItem.color;
-                if(theItem.value.replace(/\s/g, '').length === 0) {
+                if(theItem.value.replace(/\s/g, '').length === 0 || theItem.value === "0") {
+                    
                     if(fillEmptyCells)
                         newCell.innerHTML = `<div class="iconContainer"><ha-icon icon="mdi:minus" style="margin: 0 2px; opacity: 0.25;"></ha-icon></div>`;
                 } else {
@@ -531,7 +532,7 @@ class PredbatTableCard extends HTMLElement {
         
     if(column !== "import-export-column"){
         newCell.style.color = theItem.color;
-        if(theItem.value.replace(/\s/g, '').length === 0) {
+        if(theItem.value.replace(/\s/g, '').length === 0 || theItem.value === "0") {
             if(fillEmptyCells)
                 newCell.innerHTML = `<div class="iconContainer"><ha-icon icon="mdi:minus" style="margin: 0 2px; opacity: 0.25;"></ha-icon></div>`;
         } else 
