@@ -1268,9 +1268,9 @@ class PredbatTableCard extends HTMLElement {
                 let pvValue = newTRObject[headerClassesArray[5]].value.replace(/[☀]/g, '');
                 if(pvValue.length === 0)
                     pvValue = 0;
-                const netPower = (parseFloat(newTRObject[headerClassesArray[6]].value) - parseFloat(pvValue)).toFixed(2);
+                const netPower = (parseFloat(pvValue) - parseFloat(newTRObject[headerClassesArray[6]].value)).toFixed(2);
                 let adjustedColor;
-                if(netPower < 0){
+                if(netPower > 0){
                     if(this.getLightMode(hassDarkMode) === false && this.config.old_skool !== true){
                         adjustedColor = this.getDarkenHexColor("#3AEE85", 30);
                     } else {
