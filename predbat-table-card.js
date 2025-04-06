@@ -600,6 +600,21 @@ class PredbatTableCard extends HTMLElement {
                 }
 
           newCell.innerHTML = `<div class="iconContainer"><div style="margin: 0 1px;">${newContent}</div>${additionalArrow}</div>`;
+
+    } else if(column === "net-power-column"){
+
+            let additionalArrow = "";
+            newContent = theItem.value;
+            if(theItem.value < 0){
+                //exporting
+                //additionalArrow = '<ha-icon icon="mdi:home-export-outline" style="margin: 0 0 0 0; --mdc-icon-size: 18px;"></ha-icon>';
+                //newCell.style.paddingRight = "0px";                
+            } else {
+             //   additionalArrow = '<ha-icon icon="mdi:home-battery-outline" style="margin: 0 0 0 0; --mdc-icon-size: 18px;"></ha-icon>';
+             //   newCell.style.paddingRight = "0px";                  
+            }
+
+          newCell.innerHTML = `<div class="iconContainer"><div style="margin: 0 1px;">${newContent}</div>${additionalArrow}</div>`;
       
     } else if(column === "state-column"){
         
@@ -1038,7 +1053,8 @@ class PredbatTableCard extends HTMLElement {
           'cost-column': { description: "Cost", smallDescription: "Cost" },
           'total-column': { description: "Total Cost", smallDescription: "Total <br>Cost" },
           'xload-column': { description: "XLoad kWh", smallDescription: "XLoad kWh" },
-          'import-export-column': {description: "Import / Export", smallDescription: "Import / <br>Export" }
+          'import-export-column': {description: "Import / Export", smallDescription: "Import / <br>Export" },
+          'net-power-column': {description: "Net kWh", smallDescription: "Net <br>kWh" }
         };
         
         if (headerClassesObject.hasOwnProperty(column)) {
@@ -1249,7 +1265,28 @@ class PredbatTableCard extends HTMLElement {
                 }
                 
                 newTRObject["import-export-column"] = [newTRObject[headerClassesArray[1]], newTRObject[headerClassesArray[2]]];
+                let pvValue = newTRObject[headerClassesArray[5]].value.replace(/[☀]/g, '');
+                if(pvValue.length === 0)
+                    pvValue = 0;
+                const netPower = (parseFloat(newTRObject[headerClassesArray[6]].value) - parseFloat(pvValue)).toFixed(2);
+                let adjustedColor;
+                if(netPower < 0){
+                    if(this.getLightMode(hassDarkMode) === false && this.config.old_skool !== true){
+                        adjustedColor = this.getDarkenHexColor("#3AEE85", 30);
+                    } else {
+                        adjustedColor = "#3AEE85"
+                    }
+                } else {
+                    if(this.getLightMode(hassDarkMode) === false && this.config.old_skool !== true){
+                        adjustedColor = this.getDarkenHexColor("#F18261", 30);
+                    } else {
+                        adjustedColor = "#F18261"
+                    }
+                }
                 
+                newTRObject["net-power-column"] = {"value": netPower, "color": adjustedColor};
+                //console.log("PV: " + netPower);
+                //#3AEE85 green #F18261 red
                 newDataObject.push(newTRObject);
             }
             
