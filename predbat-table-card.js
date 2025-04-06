@@ -508,7 +508,9 @@ class PredbatTableCard extends HTMLElement {
                         newContent = newContent.trim();                        
                     }
                     if(column === "total-column")
-                        newContent = this.adjustTotalCostField(newContent);                       
+                        newContent = this.adjustTotalCostField(newContent); 
+                    if(column === "load-column")
+                        newContent = parseFloat(newContent).toFixed(2);
                         
                     newCell.innerHTML = `<div class="iconContainer" title="${friendlyText}"><div style="margin: 0 2px;">${newContent}</div>${additionalArrow}</div>`;
                 }
@@ -589,7 +591,7 @@ class PredbatTableCard extends HTMLElement {
                     additionalArrow = '<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 0 0 -5px;"></ha-icon>';                    
                     newCell.style.paddingRight = "0px";
                 } else {
-                    if(fillEmptyCells)
+                    if(fillEmptyCells && column === "cost-column")
                         additionalArrow = '<ha-icon icon="mdi:minus" style="margin: 0 0 0 -5px; opacity: 0.25;"></ha-icon>';                 
                 }
                 
