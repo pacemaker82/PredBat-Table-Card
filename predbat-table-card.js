@@ -1215,18 +1215,12 @@ class PredbatTableCard extends HTMLElement {
                         }
                     }
                     
-                    if(this.config.old_skool_columns !== undefined) {
-                        if(this.config.old_skool_columns.length > 0){
-                            this.config.old_skool_columns.forEach((oldColumn, oldIndex) => {
-                                 if(oldColumn === headerClassesArray[headerIndex]){
-                                     if(tdElement.getAttribute('bgcolor') != "#FFFFFF"){
-                                         bgColor = tdElement.getAttribute('bgcolor');
-                                     } else {
-                                        bgColor = null; 
-                                     }
-                                 }
-                            });
-                        }
+                    if(this.config.old_skool_columns !== undefined && this.config.old_skool_columns.length > 0 && this.config.old_skool_columns.includes(headerClassesArray[headerIndex])){
+                         if(tdElement.getAttribute('bgcolor') != "#FFFFFF"){
+                             bgColor = tdElement.getAttribute('bgcolor');
+                         } else {
+                            bgColor = null; 
+                         }                    
                     }
                     
                     newTRObject[headerClassesArray[headerIndex]] = {"value": tdElement.innerHTML, "color": bgColor};
@@ -1269,24 +1263,24 @@ class PredbatTableCard extends HTMLElement {
                 if(pvValue.length === 0)
                     pvValue = 0;
                 const netPower = (parseFloat(pvValue) - parseFloat(newTRObject[headerClassesArray[6]].value)).toFixed(2);
-                let adjustedColor;
+                let adjustedColor = "#F18261";
                 if(netPower > 0){
-                    if(this.getLightMode(hassDarkMode) === false && this.config.old_skool !== true){
+                    adjustedColor = "#3AEE85";
+                    if(this.getLightMode(hassDarkMode) === false && this.config.old_skool !== true)
                         adjustedColor = this.getDarkenHexColor("#3AEE85", 30);
-                    } else {
-                        adjustedColor = "#3AEE85"
-                    }
+                    if(this.config.old_skool_columns !== undefined && this.config.old_skool_columns.length > 0 && this.config.old_skool_columns.includes("net-power-column"))
+                        adjustedColor = "#3AEE85";
+                    
                 } else {
-                    if(this.getLightMode(hassDarkMode) === false && this.config.old_skool !== true){
+                    if(this.getLightMode(hassDarkMode) === false && this.config.old_skool !== true)
                         adjustedColor = this.getDarkenHexColor("#F18261", 30);
-                    } else {
-                        adjustedColor = "#F18261"
-                    }
+                    
+                    if(this.config.old_skool_columns !== undefined && this.config.old_skool_columns.length > 0 && this.config.old_skool_columns.includes("net-power-column"))
+                        adjustedColor = "#F18261";
+                    
                 }
                 
                 newTRObject["net-power-column"] = {"value": netPower, "color": adjustedColor};
-                //console.log("PV: " + netPower);
-                //#3AEE85 green #F18261 red
                 newDataObject.push(newTRObject);
             }
             
