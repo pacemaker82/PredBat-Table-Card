@@ -1215,6 +1215,8 @@ class PredbatTableCard extends HTMLElement {
                         }
                     }
                     
+                    // set the right bgColor if old_skool_columns are set, and valid.
+                    
                     if(this.config.old_skool_columns !== undefined && this.config.old_skool_columns.length > 0 && this.config.old_skool_columns.includes(headerClassesArray[headerIndex])){
                          if(tdElement.getAttribute('bgcolor') != "#FFFFFF"){
                              bgColor = tdElement.getAttribute('bgcolor');
@@ -1259,25 +1261,45 @@ class PredbatTableCard extends HTMLElement {
                 }
                 
                 newTRObject["import-export-column"] = [newTRObject[headerClassesArray[1]], newTRObject[headerClassesArray[2]]];
+
+                // net-power-column
                 let pvValue = newTRObject[headerClassesArray[5]].value.replace(/[☀]/g, '');
+                
+                const carIndex = headerClassesArray.indexOf("car-column");
+                const iBoostIndex = headerClassesArray.indexOf("iboost-column");
+                
+                let carValue = 0;
+                let iBoostValue = 0;
+                
+                if(carIndex !== -1){
+                    carValue = newTRObject[headerClassesArray[carIndex]].value;
+                    if(carValue.length === 0)
+                        carValue = 0;
+                }
+                if(iBoostIndex !== -1){
+                    iBoostValue = newTRObject[headerClassesArray[iBoostIndex]].value;
+                    if(iBoostValue.length === 0)
+                        iBoostValue = 0;
+                }
                 if(pvValue.length === 0)
                     pvValue = 0;
-                const netPower = (parseFloat(pvValue) - parseFloat(newTRObject[headerClassesArray[6]].value)).toFixed(2);
-                let adjustedColor = "#F18261";
+                const netPower = (parseFloat(pvValue) - parseFloat(newTRObject[headerClassesArray[6]].value) - parseFloat(carValue) - parseFloat(iBoostValue)).toFixed(2);
+                const positiveColor = "#3AEE85";
+                const negativeColor = "#F18261";
+                let adjustedColor;
                 if(netPower > 0){
-                    adjustedColor = "#3AEE85";
+                    adjustedColor = positiveColor;
                     if(this.getLightMode(hassDarkMode) === false && this.config.old_skool !== true)
-                        adjustedColor = this.getDarkenHexColor("#3AEE85", 30);
+                        adjustedColor = this.getDarkenHexColor(positiveColor, 30);
                     if(this.config.old_skool_columns !== undefined && this.config.old_skool_columns.length > 0 && this.config.old_skool_columns.includes("net-power-column"))
-                        adjustedColor = "#3AEE85";
-                    
+                        adjustedColor = positiveColor;
                 } else {
+                    adjustedColor = negativeColor;
                     if(this.getLightMode(hassDarkMode) === false && this.config.old_skool !== true)
-                        adjustedColor = this.getDarkenHexColor("#F18261", 30);
+                        adjustedColor = this.getDarkenHexColor(negativeColor, 30);
                     
                     if(this.config.old_skool_columns !== undefined && this.config.old_skool_columns.length > 0 && this.config.old_skool_columns.includes("net-power-column"))
-                        adjustedColor = "#F18261";
-                    
+                        adjustedColor = negativeColor;
                 }
                 
                 newTRObject["net-power-column"] = {"value": netPower, "color": adjustedColor};
