@@ -53,7 +53,7 @@ You can use `import-export-column` to see both import and export prices in a sin
 ## Column Options
 
 | Column Name | Column YAML | Description |
-|----------|----------|----------|
+|----------------|----------------------------|----------|
 | Time   | `time-column`    | Displays the time in the Predbat plan    |
 | Import   | `import-column`    | Displays the import price for the given time    |
 | Export   | `export-column`    | Displays the export price for the given time    |
@@ -71,7 +71,7 @@ You can use `import-export-column` to see both import and export prices in a sin
 | CO2 kg   | `co2kg-column`    | Displays the predicted carbon intensity CO2/kg for that time period **   |
 | XLoad   | `xload-column`    | Displays the predicted load if also using Predheat ** ***  |
 | Clipping   | `clip-column`    | Displays the predicted PV clipping for that time period ** ***   |
-| Net Power   | `net-power-column`    | Displays the predicted net power when calculating available PV, minus house load, car and iBoost loads for that time period   |
+| Net Power   | `net-power-column`    | Displays the predicted net power when calculating available PV,<br> minus house load, car and iBoost loads for that time period   |
 
 
 ** Indicates if configured in Predbat<br>
