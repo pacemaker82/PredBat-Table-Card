@@ -31,7 +31,7 @@ The following YAML config items can or should be set on the card
 |----------|----------|----------|
 | `type`   | YES    | `predbat-table-card`    |
 | `entity`   | YES    | `predbat.plan_html` or name of the entity holding the Predbat plan HTML    |
-| `columns`    | YES    | `time-column` `import-column` `export-column` `import-export-column` `state-column` `limit-column` `pv-column` `load-column` `soc-column` `cost-column` `total-column` <br>Use `car-column` if EV is setup. <br> Use `iboost-column` if iBoost is setup <br>Use `co2kwh-column` and/or `co2kg-column` if CO2 monitoring is setup <br> Use `xload-column` if load forecasting is setup AND in `HTML Plan Debug` mode <br> Use `clip-column` when `HTML Plan Debug` is enabled <br> Use `net-power-column` to see net power demand between PV, house, car and iBoost load (if configured) <br>Provide ***in any order*** you want <br>At least 1 column needs to be used|
+| `columns`    | YES    | See [Column Options](#column-options) section for breakdown <br>Provide ***in any order*** you want <br>At least 1 column needs to be used|
 | `fill_empty_cells`    | NO    | `true` or `false`. Will add a "-" symbol where data isnt available to clear out empty space   |
 | `hide_last_update`    | NO    | `true` or `false`. Will determine if the last update time is shown at the top of the table   |
 | `light_mode`    | NO    | Use `light`, `dark`, or `auto` - default is `auto` if you dont set it. Use this to force the mode you want   |
@@ -49,6 +49,34 @@ The following YAML config items can or should be set on the card
 | `show_table_meta` | NO | Set to `true` to show the metadata that appears at the top of the original Predbat table card on this card too |
 
 You can use `import-export-column` to see both import and export prices in a single column
+
+## Column Options
+
+| Column Name | Column YAML | Description |
+|----------|----------|----------|
+| Time   | `time-column`    | Displays the time in the Predbat plan    |
+| Import   | `import-column`    | Displays the import price for the given time    |
+| Export   | `export-column`    | Displays the export price for the given time    |
+| Import/Export   | `import-export-column`    | Displays both the import **AND** export price for the given time    |
+| State   | `state-column`    | Displays the state of the battery    |
+| Limit   | `limit-column`    | Displays the limit set by Predbat on the battery for energy import or export    |
+| PV   | `pv-column`    | Displays the predicted PV generation for the given time    |
+| Load   | `load-column`    | Displays the predicted house load for the given time    |
+| SoC   | `soc-column`    | Displays the predicted battery percentage for the given time    |
+| Cost   | `cost-column`    | Displays the cost or gain for the given time    |
+| Total Cost   | `total-column`    | Displays the overall cost/gain incurred up to that point in time    |
+| Car   | `car-column`    | Displays the predicted car energy charging for that time period **   |
+| iBoost   | `iboost-column`    | Displays the predicted iBoost energy usage for that time period **   |
+| CO2 kWh   | `co2kwh-column`    | Displays the predicted carbon intensity CO2/KwH for that time period **   |
+| CO2 kg   | `co2kg-column`    | Displays the predicted carbon intensity CO2/kg for that time period **   |
+| XLoad   | `xload-column`    | Displays the predicted load if also using Predheat ** ***  |
+| Clipping   | `clip-column`    | Displays the predicted PV clipping for that time period ** ***   |
+| Net Power   | `net-power-column`    | Displays the predicted net power when calculating available PV, minus house load, car and iBoost loads for that time period   |
+
+
+** Indicates if configured in Predbat<br>
+*** Column only appears when Predbat set to HTML Debug Mode <br>
+Arrows indicate if the predicted value is increasing or decreasing
 
 ## Default Card Setup Example
 
