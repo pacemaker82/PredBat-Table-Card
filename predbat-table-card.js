@@ -1263,14 +1263,29 @@ class PredbatTableCard extends HTMLElement {
                 newTRObject["import-export-column"] = [newTRObject[headerClassesArray[1]], newTRObject[headerClassesArray[2]]];
 
                 // net-power-column
-                let pvValue = newTRObject[headerClassesArray[5]].value.replace(/[☀]/g, '');
-                
+
+                const loadIndex = headerClassesArray.indexOf("load-column");
+                const pvIndex = headerClassesArray.indexOf("pv-column");
                 const carIndex = headerClassesArray.indexOf("car-column");
                 const iBoostIndex = headerClassesArray.indexOf("iboost-column");
-                
+
+                let pvValue = 0;
+                let loadValue = 0;
                 let carValue = 0;
                 let iBoostValue = 0;
                 
+                if(pvIndex !== -1){
+                    pvValue = newTRObject[headerClassesArray[pvIndex]].value.replace(/[☀]/g, '');
+                    if(pvValue.length === 0 || Number.isNaN(parseFloat(pvValue)))
+                        pvValue = 0;
+                }
+                
+                if(loadIndex !== -1){
+                    loadValue = newTRObject[headerClassesArray[loadIndex]].value;
+                    if(loadValue.length === 0 || Number.isNaN(parseFloat(loadValue)))
+                        loadValue = 0;
+                }                
+
                 if(carIndex !== -1){
                     carValue = newTRObject[headerClassesArray[carIndex]].value;
                     if(carValue.length === 0)
@@ -1278,15 +1293,17 @@ class PredbatTableCard extends HTMLElement {
                 }
                 if(iBoostIndex !== -1){
                     iBoostValue = newTRObject[headerClassesArray[iBoostIndex]].value;
-                    if(iBoostValue.length === 0)
+                    if(iBoostValue.length === 0 || Number.isNaN(parseFloat(iBoostValue)))
                         iBoostValue = 0;
                 }
-                if(pvValue.length === 0)
-                    pvValue = 0;
-                const netPower = (parseFloat(pvValue) - parseFloat(newTRObject[headerClassesArray[6]].value) - parseFloat(carValue) - parseFloat(iBoostValue)).toFixed(2);
+                    
+                //console.log(parseFloat(pvValue) + " " + parseFloat(loadValue) + " " + parseFloat(carValue) + " " + parseFloat(iBoostValue));
+                
+                const netPower = (parseFloat(pvValue) - parseFloat(loadValue) - parseFloat(carValue) - parseFloat(iBoostValue)).toFixed(2);
                 const positiveColor = "#3AEE85";
                 const negativeColor = "#F18261";
                 let adjustedColor;
+                
                 if(netPower > 0){
                     adjustedColor = positiveColor;
                     if(this.getLightMode(hassDarkMode) === false && this.config.old_skool !== true)
