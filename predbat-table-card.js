@@ -1288,7 +1288,7 @@ class PredbatTableCard extends HTMLElement {
 
                 if(carIndex !== -1){
                     carValue = newTRObject[headerClassesArray[carIndex]].value;
-                    if(carValue.length === 0)
+                    if(carValue.length === 0 || Number.isNaN(parseFloat(carValue)))
                         carValue = 0;
                 }
                 if(iBoostIndex !== -1){
