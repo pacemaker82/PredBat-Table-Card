@@ -360,7 +360,7 @@ class PredbatTableCard extends HTMLElement {
             }   
             
             
-            if((theItem.value === "Both" || theItem.value === "Both-Idle" || theItem.value === "Both-Chg" || theItem.value === "Both-Dis") && column === "state-column"){
+            if((theItem.value === "Both" || theItem.value === "Both-Idle" || theItem.value === "Both-Chg" || theItem.value === "Both-Dis" || theItem.value === "Both-Dis-Snail") && column === "state-column"){
                 
                 newCell.style.minWidth = "186px";
                 if(this.config.use_friendly_states === true)
@@ -369,7 +369,7 @@ class PredbatTableCard extends HTMLElement {
                 newCell.style.paddingRight = "0px";
                 
                 let chargeString = "Charge";
-                if(theItem.value === "Both-Chg" || theItem.value === "Both-Dis" || theItem.value === "Both-Idle")
+                if(theItem.value === "Both-Chg" || theItem.value === "Both-Dis" || theItem.value === "Both-Idle" || theItem.value === "Both-Dis-Snail")
                     chargeString = "";
                 
                 let dischargeString = "Export";
@@ -383,7 +383,7 @@ class PredbatTableCard extends HTMLElement {
                         dischargeString = "Exp";
                     }
                     
-                    if(theItem.value === "Both-Chg" || theItem.value === "Both-Dis" || theItem.value === "Both-Idle") {
+                    if(theItem.value === "Both-Chg" || theItem.value === "Both-Dis" || theItem.value === "Both-Idle" || theItem.value === "Both-Dis-Snail") {
                         dischargeString = "Exp";                        
                     }
                     
@@ -407,7 +407,7 @@ class PredbatTableCard extends HTMLElement {
                         chargeString = "Plnd Chg";
                     else if(theItem.value === "Both-Chg")
                         chargeString = "Chg";    
-                    else if(theItem.value === "Both-Dis")
+                    else if(theItem.value === "Both-Dis" || theItem.value === "Both-Dis-Snail")
                         chargeString = "Dis"; 
                         
                     dischargeString = "Plnd Dis"; 
@@ -418,7 +418,7 @@ class PredbatTableCard extends HTMLElement {
                 
                 let chargeBackgroundColor = "background-color:#3AEE85;";
                 let chargeTextColor = "color: #000000;";
-                if(theItem.value === "Both-Idle" || theItem.value === "Both-Dis" || theItem.value === "Both-Chg"){
+                if(theItem.value === "Both-Idle" || theItem.value === "Both-Dis" || theItem.value === "Both-Chg" || theItem.value === "Both-Dis-Snail"){
                     chargeBackgroundColor = "";
                     chargeTextColor = "";
                 }
@@ -427,12 +427,17 @@ class PredbatTableCard extends HTMLElement {
                     chargeIcon = '<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 0 0 -5px"></ha-icon>';
                 else if(theItem.value === "Both-Idle")
                     chargeIcon = '<ha-icon icon="mdi:arrow-right-thin" style="margin: 0 0 0 -3px"></ha-icon>';
-                else if(theItem.value === "Both-Dis")
+                else if(theItem.value === "Both-Dis" || theItem.value === "Both-Dis-Snail")
                     chargeIcon = '<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 0 0 -5px"></ha-icon>';
+                
+                let snail = ``;
+                if(theItem.value === "Both-Dis-Snail")
+                    snail = `<ha-icon icon="mdi:snail" title="Low Power Mode" style="--mdc-icon-size: 14px;"></ha-icon>`;
+                 
                     
                 newCell.innerHTML = `<div style="width: 100%; height: 100%;" id="${theItem.value}">
                 <div style='${chargeBackgroundColor} width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center; ${chargeTextColor}'>${chargeString}${chargeIcon}</div>
-                <div style='background-color:#FFFF00; width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center; color: #000000;'>${dischargeString}<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 0 0 -5px"></ha-icon></div>
+                <div style='background-color:#FFFF00; width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center; color: #000000;'>${dischargeString}<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 0 0 -5px"></ha-icon>${snail}</div>
                 </div>`;
             
             } else if(column === "import-export-column"){
@@ -641,6 +646,7 @@ class PredbatTableCard extends HTMLElement {
         
           // alert ⚠
         //theItem.value = "⚠Chrg↗";
+            // Exp↘🐌
             
         newContent = theItem.value.replace(/[↘↗→ⅎ]/g, '').trim();
         
@@ -693,15 +699,17 @@ class PredbatTableCard extends HTMLElement {
                     newCell.setAttribute('style', 'color: var(--energy-battery-in-color)');                    
                 } else if(newContent === "Both"){
                     additionalArrow = '<ha-icon icon="mdi:battery-charging-100" style="color: var(--energy-battery-in-color); --mdc-icon-size: 22px;" title="Planned Charge" class="icons"></ha-icon><ha-icon icon="mdi:battery-minus" style="color: var(--energy-battery-out-color);" title="Planned Export" class="icons"></ha-icon>';
-                } else if(newContent === "Both-Idle" || newContent === "Both-Chg" || newContent === "Both-Dis"){
+                } else if(newContent === "Both-Idle" || newContent === "Both-Chg" || newContent === "Both-Dis" || newContent === "Both-Dis-Snail"){
                     let houseColor = "#000000";
                     if(this.getLightMode(darkMode))
                         houseColor = "#FFFFFF";
                             
                     this.getLightMode(darkMode)
                     additionalArrow = `<ha-icon icon="mdi:home-lightning-bolt" style="color: ${houseColor}" title="Idle" style="--mdc-icon-size: 22px;"></ha-icon><ha-icon icon="mdi:battery-minus" style="color: var(--energy-battery-out-color);" title="Planned Export" class="icons"></ha-icon>`;
+                    if(newContent === "Both-Dis-Snail")
+                        additionalArrow += `<ha-icon icon="mdi:snail" title="Low Power Mode" style="--mdc-icon-size: 18px;"></ha-icon>`;
                 }
-
+                
           newCell.innerHTML = `<div class="iconContainer">${additionalArrow}</div>`;
           
     } else if(column === "limit-column"){
@@ -712,7 +720,8 @@ class PredbatTableCard extends HTMLElement {
             let debugString = theItem.value;
             
             if (theItem.value.includes("(") || theItem.value.includes(")")) {
-                const match = theItem.value.match(/(\d+)\s*\((\d+)\)/);
+                const match = theItem.value.match(/(\d+)\s*\((\d+(?:\.\d+)?)\)/);
+                console.log("match: " + match);
                 // match[1]
                 if(match[1] != match[2]){
                     debugSVG = `<svg version="1.1" width="26" height="26" id="limitSVG">
@@ -1276,7 +1285,10 @@ class PredbatTableCard extends HTMLElement {
                                     newTRObject[headerClassesArray[3]] = {"value": "Both-Chg", "color": "green"};
                             else if(tdElement.innerHTML.trim() === "→")
                                     newTRObject[headerClassesArray[3]] = {"value": "Both-Idle", "color": "green"};
-                            
+                        }
+                        if(tdIndex === 4){
+                            if(tdElement.innerHTML.includes("🐌"))
+                                newTRObject[headerClassesArray[3]] = {"value": "Both-Dis-Snail", "color": "green"};
                         }
                     });
                 }
