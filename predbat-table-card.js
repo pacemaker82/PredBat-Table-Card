@@ -349,6 +349,17 @@ class PredbatTableCard extends HTMLElement {
             //newCell.style.backgroundColor = "#FFFFFF";
             newCell.style.height = "22px";
             
+            // set the PV or Load column to use the HTML debug 10% options if in the card YAML
+            if(column === "pv-column" || column === "load-column"){
+                if(this.config.debug_columns !== undefined) {// there are debug columns in the YAML
+                    if(this.config.debug_columns.indexOf(column) < 0)
+                        newContent = parseFloat(newContent).toFixed(2);
+                } else {
+                    newContent = parseFloat(newContent).toFixed(2);
+                }
+            }   
+            
+            
             if((theItem.value === "Both" || theItem.value === "Both-Idle" || theItem.value === "Both-Chg" || theItem.value === "Both-Dis") && column === "state-column"){
                 
                 newCell.style.minWidth = "186px";
@@ -441,10 +452,10 @@ class PredbatTableCard extends HTMLElement {
                         newCell.style.backgroundColor = "#FFFFFF";
                     
                     //console.log("PV Data: " + theItem.value);
-                    newContent = theItem.value.replace(/[☀]/g, '');
-                    //console.log("PV Data 1: " + newContent);
-                    newContent = parseFloat(newContent).toFixed(2);
-                    //console.log("PV Data 2: " + newContent);
+                    newContent = newContent.replace(/[☀]/g, '');
+                    
+                    // newContent = parseFloat(newContent).toFixed(2);
+                    
                     
                     let additionalIcon = "";
                     if(!this.isSmallScreen())
@@ -509,9 +520,10 @@ class PredbatTableCard extends HTMLElement {
                     }
                     if(column === "total-column")
                         newContent = this.adjustTotalCostField(newContent); 
-                    if(column === "load-column")
+/*                    if(column === "load-column"){
                         newContent = parseFloat(newContent).toFixed(2);
-                        
+                    }
+                        */
                     newCell.innerHTML = `<div class="iconContainer" title="${friendlyText}"><div style="margin: 0 2px;">${newContent}</div>${additionalArrow}</div>`;
                 }
             }
@@ -545,10 +557,20 @@ class PredbatTableCard extends HTMLElement {
 
     if(column === "load-column" || column === "pv-column" || column == "car") {
         
+            // set the PV or Load column to use the HTML debug 10% options if in the card YAML
+            newContent = theItem.value;
+            if(this.config.debug_columns !== undefined) {// there are debug columns in the YAML
+                if(this.config.debug_columns.indexOf(column) < 0)
+                    newContent = parseFloat(newContent).toFixed(2);
+            } else {
+                newContent = parseFloat(newContent).toFixed(2);
+            }
+                    
+        
             if(column === "pv-column"){
                 if(theItem.value.includes("☀") || theItem.value.length > 0) {
-                    newContent = theItem.value.replace(/[☀]/g, '');
-                    newContent = parseFloat(newContent).toFixed(2);
+                    newContent = newContent.replace(/[☀]/g, '');
+                    
                     let additionalIcon = "";
 
                     if(!this.isSmallScreen())
@@ -557,8 +579,7 @@ class PredbatTableCard extends HTMLElement {
                     newCell.innerHTML = `<div class="iconContainer">${additionalIcon} <div style="margin: 0 4px;">${newContent}</div></div>`;
                 }
             } else {
-                newContent = theItem.value;
-                newContent = parseFloat(newContent).toFixed(2);
+                
                 newCell.innerHTML = `<div class="iconContainer">${newContent}</div>`;
             }
 
