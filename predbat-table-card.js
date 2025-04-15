@@ -351,6 +351,15 @@ class PredbatTableCard extends HTMLElement {
             
             // set the PV or Load column to use the HTML debug 10% options if in the card YAML
             if(column === "pv-column" || column === "load-column"){
+                
+                //check for HTML Debug values
+                if(newContent.includes("(") && newContent.includes(")")){
+                    const match = theItem.value.match(/(\d+(?:\.\d+)?)\s*\((\d+(?:\.\d+)?)\)/);
+                    
+                    let newVals = parseFloat(match[1]).toFixed(2) + " (" + parseFloat(match[2]).toFixed(2) + ")";
+                    newContent = newVals;
+                }
+                
                 if(this.config.debug_columns !== undefined) {// there are debug columns in the YAML
                     if(this.config.debug_columns.indexOf(column) < 0)
                         newContent = parseFloat(newContent).toFixed(2);
@@ -470,6 +479,12 @@ class PredbatTableCard extends HTMLElement {
                 }
             } else {
                 
+                let snail = ``;
+                if(newContent.includes("🐌")){
+                    newContent = newContent.replace('Exp🐌', 'Export');
+                    snail = `<ha-icon icon="mdi:snail" title="Low Power Mode" style="--mdc-icon-size: 14px;"></ha-icon>`;
+                }
+               
                let friendlyText = "";
                if(column === "state-column") {
                 
@@ -477,6 +492,7 @@ class PredbatTableCard extends HTMLElement {
                     
                     friendlyText = friendlyText.replace('Force Dischrg', 'Discharge');
                     friendlyText = friendlyText.replace('Force Charge', 'Charge');
+                    //friendlyText = friendlyText.replace('Exp🐌', 'Export');
                     
                     
                     if(theItem.value.includes("ⅎ")){
@@ -510,8 +526,6 @@ class PredbatTableCard extends HTMLElement {
                         newContent = friendlyText;
                     }
                }
-               
-
                 
                 newCell.style.backgroundColor = theItem.color;
                 if(theItem.value.replace(/\s/g, '').length === 0 || theItem.value === "0") {
@@ -529,7 +543,7 @@ class PredbatTableCard extends HTMLElement {
                         newContent = parseFloat(newContent).toFixed(2);
                     }
                         */
-                    newCell.innerHTML = `<div class="iconContainer" title="${friendlyText}"><div style="margin: 0 2px;">${newContent}</div>${additionalArrow}</div>`;
+                    newCell.innerHTML = `<div class="iconContainer" title="${friendlyText}"><div style="margin: 0 2px;">${newContent}</div>${additionalArrow}${snail}</div>`;
                 }
             }
             
@@ -564,6 +578,15 @@ class PredbatTableCard extends HTMLElement {
         
             // set the PV or Load column to use the HTML debug 10% options if in the card YAML
             newContent = theItem.value;
+
+            //check for HTML Debug values
+            if(newContent.includes("(") && newContent.includes(")")){
+                const match = theItem.value.match(/(\d+(?:\.\d+)?)\s*\((\d+(?:\.\d+)?)\)/);
+                
+                let newVals = parseFloat(match[1]).toFixed(2) + " (" + parseFloat(match[2]).toFixed(2) + ")";
+                newContent = newVals;
+            }
+            
             if(this.config.debug_columns !== undefined) {// there are debug columns in the YAML
                 if(this.config.debug_columns.indexOf(column) < 0)
                     newContent = parseFloat(newContent).toFixed(2);
@@ -643,12 +666,13 @@ class PredbatTableCard extends HTMLElement {
           newCell.innerHTML = `<div class="iconContainer"><div style="margin: 0 1px;">${newContent}</div>${additionalArrow}</div>`;
       
     } else if(column === "state-column"){
-        
-          // alert ⚠
-        //theItem.value = "⚠Chrg↗";
-            // Exp↘🐌
+
+        let snail = ``;
+        if(theItem.value.includes("🐌")){
+            snail = `<ha-icon icon="mdi:snail" title="Low Power Mode" style="--mdc-icon-size: 18px;"></ha-icon>`;
+        }
             
-        newContent = theItem.value.replace(/[↘↗→ⅎ]/g, '').trim();
+        newContent = theItem.value.replace(/[↘↗→ⅎ🐌]/g, '').trim();
         
           newContent = this.adjustStatusFields(newContent);
             
@@ -710,7 +734,7 @@ class PredbatTableCard extends HTMLElement {
                         additionalArrow += `<ha-icon icon="mdi:snail" title="Low Power Mode" style="--mdc-icon-size: 18px;"></ha-icon>`;
                 }
                 
-          newCell.innerHTML = `<div class="iconContainer">${additionalArrow}</div>`;
+          newCell.innerHTML = `<div class="iconContainer">${additionalArrow}${snail}</div>`;
           
     } else if(column === "limit-column"){
 
@@ -721,7 +745,7 @@ class PredbatTableCard extends HTMLElement {
             
             if (theItem.value.includes("(") || theItem.value.includes(")")) {
                 const match = theItem.value.match(/(\d+)\s*\((\d+(?:\.\d+)?)\)/);
-                console.log("match: " + match);
+                
                 // match[1]
                 if(match[1] != match[2]){
                     debugSVG = `<svg version="1.1" width="26" height="26" id="limitSVG">
