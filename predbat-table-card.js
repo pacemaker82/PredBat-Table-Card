@@ -501,7 +501,7 @@ class PredbatTableCard extends HTMLElement {
                 
                 let weatherAlert = ``;
                 if(newContent.includes("⚠"))
-                    weatherAlert = `<ha-icon icon="mdi:alert-outline" title="${tooltip}" style="--mdc-icon-size: 18px;"></ha-icon>`;
+                    weatherAlert = `<ha-icon icon="mdi:alert-outline" title="Weather Alert" style="--mdc-icon-size: 18px;"></ha-icon>`;
                 
                
                let friendlyText = "";
