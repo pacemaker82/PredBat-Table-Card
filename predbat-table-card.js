@@ -287,6 +287,20 @@ class PredbatTableCard extends HTMLElement {
     console.log('hello world');
   }
   
+  getCellTransformationRefactor(theItem, column, darkMode) {
+
+    let newCell = document.createElement('td');
+    let newContent = "";
+    
+    //override fill empty cells
+    let fillEmptyCells;
+    if(this.config.fill_empty_cells === undefined)
+        fillEmptyCells = true;
+    else 
+        fillEmptyCells = this.config.fill_empty_cells;    
+      
+  }
+  
   getCellTransformation(theItem, column, darkMode) {
     
     let newCell = document.createElement('td');
@@ -681,7 +695,7 @@ class PredbatTableCard extends HTMLElement {
         
         let weatherAlert = ``;
         if(theItem.value.includes("⚠"))
-            weatherAlert = `<ha-icon icon="mdi:alert-outline" title="${tooltip}" style="--mdc-icon-size: 18px;"></ha-icon>`;
+            weatherAlert = `<ha-icon icon="mdi:alert-outline" title="Weather Alert" style="--mdc-icon-size: 18px;"></ha-icon>`;
         
           newContent = this.adjustStatusFields(newContent);
             
