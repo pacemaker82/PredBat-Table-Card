@@ -484,6 +484,11 @@ class PredbatTableCard extends HTMLElement {
                     newContent = newContent.replace('Exp🐌', 'Export');
                     snail = `<ha-icon icon="mdi:snail" title="Low Power Mode" style="--mdc-icon-size: 14px;"></ha-icon>`;
                 }
+                
+                let weatherAlert = ``;
+                if(newContent.includes("⚠"))
+                    weatherAlert = `<ha-icon icon="mdi:alert-outline" title="${tooltip}" style="--mdc-icon-size: 18px;"></ha-icon>`;
+                
                
                let friendlyText = "";
                if(column === "state-column") {
@@ -543,7 +548,7 @@ class PredbatTableCard extends HTMLElement {
                         newContent = parseFloat(newContent).toFixed(2);
                     }
                         */
-                    newCell.innerHTML = `<div class="iconContainer" title="${friendlyText}"><div style="margin: 0 2px;">${newContent}</div>${additionalArrow}${snail}</div>`;
+                    newCell.innerHTML = `<div class="iconContainer" title="${friendlyText}"><div style="margin: 0 2px;">${weatherAlert}${newContent}</div>${additionalArrow}${snail}</div>`;
                 }
             }
             
@@ -672,7 +677,11 @@ class PredbatTableCard extends HTMLElement {
             snail = `<ha-icon icon="mdi:snail" title="Low Power Mode" style="--mdc-icon-size: 18px;"></ha-icon>`;
         }
             
-        newContent = theItem.value.replace(/[↘↗→ⅎ🐌]/g, '').trim();
+        newContent = theItem.value.replace(/[↘↗→ⅎ🐌⚠]/g, '').trim();
+        
+        let weatherAlert = ``;
+        if(theItem.value.includes("⚠"))
+            weatherAlert = `<ha-icon icon="mdi:alert-outline" title="${tooltip}" style="--mdc-icon-size: 18px;"></ha-icon>`;
         
           newContent = this.adjustStatusFields(newContent);
             
@@ -716,8 +725,8 @@ class PredbatTableCard extends HTMLElement {
                         tooltip = "Manual Forced Charge";
                     
                     additionalArrow = `<ha-icon icon="mdi:battery-charging-100" title="${tooltip}" style="--mdc-icon-size: 22px;"></ha-icon>`;
-                    if(theItem.value.includes("⚠"))
-                        additionalArrow += `<ha-icon icon="mdi:alert-outline" title="${tooltip}" style="--mdc-icon-size: 18px;"></ha-icon>`;
+                    //if(theItem.value.includes("⚠"))
+                    //    additionalArrow += `<ha-icon icon="mdi:alert-outline" title="${tooltip}" style="--mdc-icon-size: 18px;"></ha-icon>`;
                     if(theItem.value.includes("ⅎ"))
                         additionalArrow += `<ha-icon icon="mdi:hand-back-right-outline" title="${tooltip}" style="--mdc-icon-size: 22px;"></ha-icon>`;
                     newCell.setAttribute('style', 'color: var(--energy-battery-in-color)');                    
@@ -734,7 +743,7 @@ class PredbatTableCard extends HTMLElement {
                         additionalArrow += `<ha-icon icon="mdi:snail" title="Low Power Mode" style="--mdc-icon-size: 18px;"></ha-icon>`;
                 }
                 
-          newCell.innerHTML = `<div class="iconContainer">${additionalArrow}${snail}</div>`;
+          newCell.innerHTML = `<div class="iconContainer">${weatherAlert}${additionalArrow}${snail}</div>`;
           
     } else if(column === "limit-column"){
 
