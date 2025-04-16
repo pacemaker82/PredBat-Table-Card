@@ -88,7 +88,6 @@ class PredbatTableCard extends HTMLElement {
     let columnsToReturn = this.config.columns;
     let rawHTML = hass.states[entityId].attributes.html;
     const dataArray = this.getArrayDataFromHTML(rawHTML, hass.themes.darkMode); 
-
     //filter out any columns not in the data
     columnsToReturn = columnsToReturn.filter(column => {
         return dataArray[0][column] !== undefined;
@@ -209,10 +208,10 @@ class PredbatTableCard extends HTMLElement {
             iBoostEmpty = true;
             
         dataArray.forEach((item, index) => {
-            if(item["car-column"] !== undefined && item["car-column"].value.length > 0 && !item["car-column"].value === "⚊")
+            if(item["car-column"] !== undefined && (item["car-column"].value.length > 0 || !item["car-column"].value === "⚊"))
                 carEmpty = false;
             
-            if(item["iboost-column"] !== undefined && item["iboost-column"].value.length > 0 && !item["iboost-column"].value === "⚊")
+            if(item["iboost-column"] !== undefined && (item["iboost-column"].value.length > 0 || !item["iboost-column"].value === "⚊"))
                 iBoostEmpty = false;                    
         });
         
@@ -1341,33 +1340,33 @@ class PredbatTableCard extends HTMLElement {
         trElements.forEach((trElement, index) => {
         
         const tdElements = trElement.querySelectorAll('td');
-            
+        const thElements = trElement.querySelectorAll('th');
+        
             if (index === firstRowData) {
 
                 //check for car column in the first row and add new car-column class to array in position 7
-                tdElements.forEach((tdElement, checkIndex) => {
+                thElements.forEach((tdElement, checkIndex) => {
                     let columnHeaderTitle = tdElement.innerHTML.toUpperCase();
                     if (columnHeaderTitle.includes("CAR")) {
-                        
-                        headerClassesArray.splice(checkIndex-1, 0, "car-column");
+                        headerClassesArray.splice(checkIndex, 0, "car-column");
                     }
                     if(columnHeaderTitle.includes("IBOOST")) {
-                        headerClassesArray.splice(checkIndex-1, 0, "iboost-column");
+                        headerClassesArray.splice(checkIndex, 0, "iboost-column");
                     }
                     
                     if(columnHeaderTitle.includes("CO2 G/KWH")) {
-                        headerClassesArray.splice(checkIndex-1, 0, "co2kwh-column");
+                        headerClassesArray.splice(checkIndex, 0, "co2kwh-column");
                     }  
                     
                     if(columnHeaderTitle.includes("CO2 KG")) {
-                        headerClassesArray.splice(checkIndex-1, 0, "co2kg-column");
+                        headerClassesArray.splice(checkIndex, 0, "co2kg-column");
                     }
 
                     if(columnHeaderTitle.includes("XLOAD")) {
-                        headerClassesArray.splice(checkIndex-1, 0, "xload-column");
+                        headerClassesArray.splice(checkIndex, 0, "xload-column");
                     }                    
                     if(columnHeaderTitle.includes("CLIP KWH")) {
-                        headerClassesArray.splice(checkIndex-1, 0, "clip-column");
+                        headerClassesArray.splice(checkIndex, 0, "clip-column");
                     }                       
                     /*
                     if(columnHeaderTitle.includes("PV KWH (10%)")) {
