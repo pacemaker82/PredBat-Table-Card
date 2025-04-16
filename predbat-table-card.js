@@ -207,10 +207,10 @@ class PredbatTableCard extends HTMLElement {
             iBoostEmpty = true;
             
         dataArray.forEach((item, index) => {
-            if(item["car-column"] !== undefined && item["car-column"].value.length > 0)
+            if(item["car-column"] !== undefined && item["car-column"].value.length > 0 && !item["car-column"].value === "⚊")
                 carEmpty = false;
             
-            if(item["iboost-column"] !== undefined && item["iboost-column"].value.length > 0)
+            if(item["iboost-column"] !== undefined && item["iboost-column"].value.length > 0 && !item["iboost-column"].value === "⚊")
                 iBoostEmpty = false;                    
         });
         
@@ -288,17 +288,137 @@ class PredbatTableCard extends HTMLElement {
   }
   
   getCellTransformationRefactor(theItem, column, darkMode) {
-
+      
+      //
+      // CELL TRANSFORMATION SETUP
+      //
+      
     let newCell = document.createElement('td');
     let newContent = "";
+    
+    let tooltip = ``;
+    let cellAlert = ``;
+    let cellSun = ``;
+    let cellValue = ``;
+    let cellArrow = ``;
+    let cellSpecial = ``;
     
     //override fill empty cells
     let fillEmptyCells;
     if(this.config.fill_empty_cells === undefined)
         fillEmptyCells = true;
     else 
-        fillEmptyCells = this.config.fill_empty_cells;    
-      
+        fillEmptyCells = this.config.fill_empty_cells; 
+        
+    if(column === "time-column" && this.config.force_single_line === true)
+        newCell.style.whiteSpace = "nowrap"; 
+        
+    newContent = theItem.value.replace(/[↘↗→☀]/g, '');
+    newContent = this.adjustStatusFields(newContent);
+  
+    if(theItem.value.includes("↘")) {
+        // include a down arrow
+        cellArrow = `<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 0 0 -5px; opacity:0.75;"></ha-icon>`;
+        newCell.style.paddingRight = "0px";
+    } else if (theItem.value.includes("↗")) {
+        // include a up arrow
+        cellArrow = `<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 0 0 -5px; opacity:0.75;"></ha-icon>`;   
+        newCell.style.paddingRight = "0px";
+    } else if (theItem.value.includes("→")) {
+        cellArrow = `<ha-icon icon="mdi:arrow-right-thin" style="margin: 0 0 0 -5px; opacity: 0.75;"></ha-icon>`;                 
+        newCell.style.paddingRight = "0px";
+    }       
+    
+    //    
+    // END OF CELL TRANSFORMATION SETUP
+    //
+    
+    //
+    // OLD SKOOL COLUMN SETUP
+    //
+    
+    if(this.config.old_skool === true || this.config.old_skool_columns !== undefined){
+        if(this.config.old_skool === true || this.config.old_skool_columns.indexOf(column) >= 0){
+
+            if(this.config.old_skool === true) {
+                newCell.style.border = "1px solid white";
+                newCell.style.backgroundColor = "#FFFFFF";
+            }
+
+            newCell.style.height = "22px";
+            
+            if(this.config.old_skool_columns.indexOf(column) >= 0){
+                newCell.style.backgroundColor = theItem.color;
+                if(darkMode)
+                    newCell.style.color = "#000000";
+            }
+
+        }
+    }
+    
+    //
+    // END OF OLD SKOOL COLUMN SETUP
+    //
+    
+    //
+    // COLUMN SPECIFIC DATA SETUP
+    //
+    
+    if(column === "pv-column" || column === "load-column"){
+        
+        if(theItem.value.includes("☀"))
+            cellSun = `<ha-icon icon="mdi:white-balance-sunny" style="margin: 0; opacity: 0.5; --mdc-icon-size: 16px;"></ha-icon>`;
+        
+        //check for HTML Debug values
+        if(newContent.includes("(") && newContent.includes(")")){
+            const match = theItem.value.match(/(\d+(?:\.\d+)?)\s*\((\d+(?:\.\d+)?)\)/);
+            let newVals = parseFloat(match[1]).toFixed(2) + " (" + parseFloat(match[2]).toFixed(2) + ")";
+            newContent = newVals;
+        }
+        
+        
+        if(this.config.debug_columns !== undefined && newContent.length > 0) {// there are debug columns in the YAML
+            
+            if(!newContent.includes("(") && !newContent.includes(")")){ // there are debug columns in the YAML but HTML debug mode off
+                newContent = parseFloat(newContent).toFixed(2);
+            }
+        
+            if(this.config.debug_columns.indexOf(column) < 0) // the column isnt included
+                newContent = parseFloat(newContent).toFixed(2);
+        } else { // there are no debug columns in the YAML
+            if(newContent.length > 0)
+                newContent = parseFloat(newContent).toFixed(2);
+        }
+        
+    }
+    
+    //
+    // END OF COLUMN SPECIFIC DATA SETUP
+    //
+    
+    //
+    // COLUMN SPECIFIC DISPLAY SETUP    
+    //
+    
+    if((theItem.value === "Both" || theItem.value === "Both-Idle" || theItem.value === "Both-Chg" || theItem.value === "Both-Dis" || theItem.value === "Both-Dis-Snail") && column === "state-column"){
+        newCell.style.minWidth = "186px";
+        if(this.config.use_friendly_states === true)
+            newCell.style.minWidth = "276px";
+        newCell.style.paddingLeft = "0px";
+        newCell.style.paddingRight = "0px";
+    }    
+    
+    //
+    // END OF COLUMN SPECIFIC DISPLAY SETUP
+    //
+    
+    cellValue = newContent;
+    
+    if(fillEmptyCells && (theItem.value.length === 0 || theItem.value === "⚊"))
+        newCell.innerHTML = `<div class="iconContainer"><ha-icon icon="mdi:minus" style="margin: 0 2px; opacity: 0.25;"></ha-icon></div>`;
+    else 
+        newCell.innerHTML = `<div class="iconContainer" title="${tooltip}"><div style="margin: 0 2px;">${cellAlert}${cellSun}${cellValue}</div>${cellArrow}${cellSpecial}</div>`;
+    return newCell;
   }
   
   getCellTransformation(theItem, column, darkMode) {
@@ -472,9 +592,10 @@ class PredbatTableCard extends HTMLElement {
                 newCell.innerHTML = newContent;
                 
             } else if(column === "pv-column") {
+                console.log(theItem);
                 newCell.style.backgroundColor = theItem.color;
                 
-                if(theItem.value.includes("☀") || theItem.value.length > 0) {
+                if((theItem.value.includes("☀") || theItem.value.length > 0) && !theItem.value.includes("⚊")) {
                     
                     if (theItem.value.length > 0 && !theItem.value.includes("☀"))
                         newCell.style.backgroundColor = "#FFFFFF";
@@ -490,6 +611,10 @@ class PredbatTableCard extends HTMLElement {
                         additionalIcon = '<ha-icon icon="mdi:white-balance-sunny" style="margin: 0; opacity: 0.5; --mdc-icon-size: 16px; display: flex; align-items: center; justify-content: center;"></ha-icon>';
                     
                     newCell.innerHTML = `<div class="iconContainer">${additionalIcon} <div style="margin: 0 4px;">${newContent}</div></div>`;
+                } else {
+                if(fillEmptyCells)
+                        newCell.innerHTML = `<div class="iconContainer"><ha-icon icon="mdi:minus" style="margin: 0 2px; opacity: 0.25;"></ha-icon></div>`;
+                    
                 }
             } else {
                 
@@ -547,7 +672,9 @@ class PredbatTableCard extends HTMLElement {
                }
                 
                 newCell.style.backgroundColor = theItem.color;
-                if(theItem.value.replace(/\s/g, '').length === 0 || theItem.value === "0") {
+                if(column === "pv-column")
+                    console.log("--" + theItem.value + "--");
+                if(theItem.value.replace(/\s/g, '').length === 0 || theItem.value === "0" || theItem.value === "⚊") {
                     
                     if(fillEmptyCells)
                         newCell.innerHTML = `<div class="iconContainer"><ha-icon icon="mdi:minus" style="margin: 0 2px; opacity: 0.25;"></ha-icon></div>`;
@@ -584,7 +711,7 @@ class PredbatTableCard extends HTMLElement {
         
     if(column !== "import-export-column"){
         newCell.style.color = theItem.color;
-        if(theItem.value.replace(/\s/g, '').length === 0 || theItem.value === "0") {
+        if(theItem.value.replace(/\s/g, '').length === 0 || theItem.value === "0" || theItem.value === "⚊") {
             if(fillEmptyCells)
                 newCell.innerHTML = `<div class="iconContainer"><ha-icon icon="mdi:minus" style="margin: 0 2px; opacity: 0.25;"></ha-icon></div>`;
         } else 
@@ -615,7 +742,7 @@ class PredbatTableCard extends HTMLElement {
                     
         
             if(column === "pv-column"){
-                if(theItem.value.includes("☀") || theItem.value.length > 0) {
+                if((theItem.value.includes("☀") || theItem.value.length > 0)  && !theItem.value.includes("⚊")) {
                     newContent = newContent.replace(/[☀]/g, '');
                     
                     let additionalIcon = "";
