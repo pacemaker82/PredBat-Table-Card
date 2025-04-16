@@ -33,7 +33,7 @@ The following YAML config items can or should be set on the card
 | `entity`   | YES    | `predbat.plan_html` or name of the entity holding the Predbat plan HTML    |
 | `columns`    | YES    | See [Column Options](#column-options) section for breakdown <br>Provide ***in any order*** you want <br>At least 1 column needs to be used|
 | `fill_empty_cells`    | NO    | `true` or `false`. Will add a "-" symbol where data isnt available to clear out empty space   |
-| `hide_last_update`    | NO    | `true` or `false`. Will determine if the last update time is shown at the top of the table   |
+| `hide_last_update`    | NO    | `true` or `false`. Will determine if the last update time is shown at the top of the table <BR> <B>Note: </B> No longer works since Predbat v 8.18.1+  |
 | `light_mode`    | NO    | Use `light`, `dark`, or `auto` - default is `auto` if you dont set it. Use this to force the mode you want   |
 | `debug_prices_only` | NO | `true` or `false`. If you have enabled Predbat's `HTML Plan debug`, set to `true` to only show the adjusted prices, rather than the default (actual and adjusted prices). **Important:** Only works if `HTML Plan debug` is enabled |
 | `stack_pills` | NO | `true` or `false`. Set to `false` if you want the price pills to only display on one line, `true` for on top of each other. Default is `true`|
