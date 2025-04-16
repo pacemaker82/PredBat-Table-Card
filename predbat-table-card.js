@@ -103,13 +103,15 @@ class PredbatTableCard extends HTMLElement {
     if(this.config.hide_last_update !== true) {
         
         const lastUpdated = this.getLastUpdatedFromHTML(rawHTML);
-        let lastUpdateHeaderRow = document.createElement('tr');
-        let lastUpdateCell = document.createElement('th');
-        lastUpdateCell.classList.add('lastUpdateRow');
-        lastUpdateCell.colSpan = columnsToReturn.length;
-        lastUpdateCell.innerHTML = `<b>Plan Last Updated:</b> ${lastUpdated}`;
-        lastUpdateHeaderRow.appendChild(lastUpdateCell);
-        newTableHead.appendChild(lastUpdateHeaderRow);
+        if (lastUpdated !== undefined){
+            let lastUpdateHeaderRow = document.createElement('tr');
+            let lastUpdateCell = document.createElement('th');
+            lastUpdateCell.classList.add('lastUpdateRow');
+            lastUpdateCell.colSpan = columnsToReturn.length;
+            lastUpdateCell.innerHTML = `<b>Plan Last Updated:</b> ${lastUpdated}`;
+            lastUpdateHeaderRow.appendChild(lastUpdateCell);
+            newTableHead.appendChild(lastUpdateHeaderRow);
+        }
     
     }
     
