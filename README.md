@@ -46,7 +46,7 @@ The following YAML config items can or should be set on the card
 | `odd_row_colour_light`    | NO    | Override Light Mode Odd Row Colour HEX value e.g. `#FFFFFF` otherwise default colour will be used   |
 | `even_row_colour_light`    | NO    | Override Light Mode Even Row Colour HEX value e.g. `#FFFFFF` otherwise default colour will be used   |
 | `use_friendly_states` | NO | Set to `true` if you want the Predbat `state-column` description to be more user friendly in terms of describing what is actually happening. [See here](#friendly-states) for more |
-| `show_table_meta` | NO | Set to `true` to show the metadata that appears at the top of the original Predbat table card on this card too |
+| `show_table_meta` | NO | Set to `true` to show the metadata that appears at the top of the original Predbat table card on this card too <BR> <B>Note: </B> No longer works since Predbat v 8.18.1+ |
 | `debug_columns` | NO | Like `columns`, use this setting to override specific columns to show the 10% values in HTML Debug mode. <br> Only works for `load-column` and `pv-column` <br> Default is OFF for these 10% values |
 
 You can use `import-export-column` to see both import and export prices in a single column
