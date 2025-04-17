@@ -208,11 +208,14 @@ class PredbatTableCard extends HTMLElement {
             iBoostEmpty = true;
             
         dataArray.forEach((item, index) => {
-            if(item["car-column"] !== undefined && (item["car-column"].value.length > 0 || !item["car-column"].value === "⚊"))
-                carEmpty = false;
             
-            if(item["iboost-column"] !== undefined && (item["iboost-column"].value.length > 0 || !item["iboost-column"].value === "⚊"))
-                iBoostEmpty = false;                    
+            if(item["car-column"] !== undefined)
+                if(item["car-column"].value.length > 0 && item["car-column"].value !== "⚊")
+                    carEmpty = false;
+            
+            if(item["iboost-column"] !== undefined)
+                if (item["iboost-column"].value.length > 0 && item["iboost-column"].value !== "⚊")
+                    iBoostEmpty = false;                    
         });
         
         //hide columns if empty
@@ -593,7 +596,7 @@ class PredbatTableCard extends HTMLElement {
                 newCell.innerHTML = newContent;
                 
             } else if(column === "pv-column") {
-                console.log(theItem);
+                
                 newCell.style.backgroundColor = theItem.color;
                 
                 if((theItem.value.includes("☀") || theItem.value.length > 0) && !theItem.value.includes("⚊")) {
@@ -673,8 +676,7 @@ class PredbatTableCard extends HTMLElement {
                }
                 
                 newCell.style.backgroundColor = theItem.color;
-                if(column === "pv-column")
-                    console.log("--" + theItem.value + "--");
+                
                 if(theItem.value.replace(/\s/g, '').length === 0 || theItem.value === "0" || theItem.value === "⚊") {
                     
                     if(fillEmptyCells)
@@ -1111,6 +1113,7 @@ class PredbatTableCard extends HTMLElement {
             let boldAttribute = "";
             let italicAttribute = "";
             let boldLozenge = "";
+            let strokeWidth = 1;
             
             let borderLozengeColor;
                 if(this.getLightMode(darkMode) === true)
@@ -1124,28 +1127,37 @@ class PredbatTableCard extends HTMLElement {
                 
                 if(hasBoldTags){
                     boldAttribute = ' font-weight="bold"';
-                    boldLozenge = ' stroke="'+ borderLozengeColor +'" stroke-width="2"';
+                    strokeWidth = 2;
+                    boldLozenge = ' stroke="'+ borderLozengeColor +'" stroke-width="' + strokeWidth + '"';
                 } 
                 
                 if(hasItalicTags){
                     italicAttribute = ' font-style="italic"';
-                    boldLozenge = ' stroke="'+ borderLozengeColor +'" stroke-width="1"';
+                    strokeWidth = 1;
+                    boldLozenge = ' stroke="'+ borderLozengeColor +'" stroke-width="' + strokeWidth + '"';
                 }
                 
-                if(hasItalicTags && hasBoldTags)
-                    boldLozenge = ' stroke="'+ borderLozengeColor +'" stroke-width="2"';
+                if(hasItalicTags && hasBoldTags){
+                    strokeWidth = 2;
+                    boldLozenge = ' stroke="'+ borderLozengeColor +'" stroke-width="' + strokeWidth + '"';
+                }
                 
             } else {
+                strokeWidth = 1;
                 contentWithoutTags = theItem.value;
-                boldLozenge = ' stroke="'+ borderLozengeColor +'" stroke-width="1"';
+                boldLozenge = ' stroke="'+ borderLozengeColor +'" stroke-width="' + strokeWidth + '"';
             }
             
             // Measure the width of the text in pixels
             
             let textWidth = contentWithoutTags.length * 8.5;// Adjust the factor based on your font and size
-            if(textWidth < 65){
-                textWidth = 65;
+            if(textWidth < 70){
+                textWidth = 70;
             }
+            
+            //textWidth = 70;
+            
+            //console.log("TW: " + textWidth);
             
             let textColor;
             let pillColor = theItem.color;
@@ -1350,8 +1362,6 @@ class PredbatTableCard extends HTMLElement {
                     headerElements = trElement.querySelectorAll('td');
                     headerCountback = 1;
                 }
-
-                console.log("Header: " + headerElements);
 
                 //check for car column in the first row and add new car-column class to array in position 7
                 headerElements.forEach((tdElement, checkIndex) => {
