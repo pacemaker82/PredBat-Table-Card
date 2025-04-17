@@ -1343,30 +1343,39 @@ class PredbatTableCard extends HTMLElement {
         const thElements = trElement.querySelectorAll('th');
         
             if (index === firstRowData) {
+                
+                let headerCountback = 0;
+                let headerElements = trElement.querySelectorAll('th');
+                if(tdElements.length > 0){
+                    headerElements = trElement.querySelectorAll('td');
+                    headerCountback = 1;
+                }
+
+                console.log("Header: " + headerElements);
 
                 //check for car column in the first row and add new car-column class to array in position 7
-                thElements.forEach((tdElement, checkIndex) => {
+                headerElements.forEach((tdElement, checkIndex) => {
                     let columnHeaderTitle = tdElement.innerHTML.toUpperCase();
                     if (columnHeaderTitle.includes("CAR")) {
-                        headerClassesArray.splice(checkIndex, 0, "car-column");
+                        headerClassesArray.splice(checkIndex-headerCountback, 0, "car-column");
                     }
                     if(columnHeaderTitle.includes("IBOOST")) {
-                        headerClassesArray.splice(checkIndex, 0, "iboost-column");
+                        headerClassesArray.splice(checkIndex-headerCountback, 0, "iboost-column");
                     }
                     
                     if(columnHeaderTitle.includes("CO2 G/KWH")) {
-                        headerClassesArray.splice(checkIndex, 0, "co2kwh-column");
+                        headerClassesArray.splice(checkIndex-headerCountback, 0, "co2kwh-column");
                     }  
                     
                     if(columnHeaderTitle.includes("CO2 KG")) {
-                        headerClassesArray.splice(checkIndex, 0, "co2kg-column");
+                        headerClassesArray.splice(checkIndex-headerCountback, 0, "co2kg-column");
                     }
 
                     if(columnHeaderTitle.includes("XLOAD")) {
-                        headerClassesArray.splice(checkIndex, 0, "xload-column");
+                        headerClassesArray.splice(checkIndex-headerCountback, 0, "xload-column");
                     }                    
                     if(columnHeaderTitle.includes("CLIP KWH")) {
-                        headerClassesArray.splice(checkIndex, 0, "clip-column");
+                        headerClassesArray.splice(checkIndex-headerCountback, 0, "clip-column");
                     }                       
                     /*
                     if(columnHeaderTitle.includes("PV KWH (10%)")) {
