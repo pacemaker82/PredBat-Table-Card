@@ -1401,7 +1401,7 @@ class PredbatTableCard extends HTMLElement {
                 
             }
             
-            if (index > firstRowData) {
+            if (index > firstRowData && index < (trElements.length -1)) {
 
                 // helps with the math when columns count and colspan at work
                 let countDifference = Object.keys(headerClassesArray).length - tdElements.length;
@@ -1413,8 +1413,12 @@ class PredbatTableCard extends HTMLElement {
                     
                     let bgColor = tdElement.getAttribute('bgcolor'); 
                     
-                    if(bgColor.toUpperCase() === "#FFFFFF" && tdIndex != 1 && tdIndex != 2 && (this.config.old_skool !== true) && this.getLightMode(hassDarkMode) !== true)
+                    if(bgColor !== null){
+                        if(bgColor.toUpperCase() === "#FFFFFF" && tdIndex != 1 && tdIndex != 2 && (this.config.old_skool !== true) && this.getLightMode(hassDarkMode) !== true)
                             bgColor = "var(--primary-text-color)";
+                    } else {
+                        bgColor = "#FFFFFF";
+                    }
                             
                     if(this.getLightMode(hassDarkMode) === false && this.config.old_skool !== true){
                         
@@ -1551,7 +1555,9 @@ class PredbatTableCard extends HTMLElement {
                 newDataObject.push(newTRObject);
             }
             
-            
+            if(index === (trElements.length -1)){
+                
+            }
             
         });
     
