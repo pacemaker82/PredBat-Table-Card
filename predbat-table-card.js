@@ -149,6 +149,17 @@ class PredbatTableCard extends HTMLElement {
     // set out the data rows
     let newTableBody = document.createElement('tbody');
     
+    let loadTotal = 0;
+    let pvTotal = 0;
+    let carTotal = 0;
+    let iboostTotal = 0;
+    let netTotal = 0;
+    let costTotal = 0;
+    let clipTotal = 0;
+    let co2kwhTotal = 0;
+    let co2kgTotal = 0;
+    let xloadTotal = 0;
+    
     // create the data rows
     dataArray.forEach((item, index) => {
         
@@ -162,7 +173,28 @@ class PredbatTableCard extends HTMLElement {
                     isMidnight = true;
                 let newColumn = this.getCellTransformation(item[column], column, hass.themes.darkMode);
     
-                newRow.appendChild(newColumn);                
+                newRow.appendChild(newColumn); 
+                
+                if(column === "load-column" && !item["load-column"].value.includes("⚊"))
+                    loadTotal = loadTotal + parseFloat(item["load-column"].value);
+                if(column === "pv-column" && !item["pv-column"].value.includes("⚊"))
+                    pvTotal = pvTotal + parseFloat(item["pv-column"].value.replace(/[☀]/g, ''));
+                if(column === "car-column" && !item["car-column"].value.includes("⚊"))
+                    carTotal = carTotal + parseFloat(item["car-column"].value);
+                if(column === "net-power-column" && !item["net-power-column"].value.includes("⚊"))
+                    netTotal = netTotal + parseFloat(item["net-power-column"].value);                    
+                if(column === "cost-column" && !item["cost-column"].value.includes("→"))
+                    costTotal = costTotal + parseFloat(item["cost-column"].value.replace(/[↘↗→p]/g, ''));                    
+                if(column === "iboost-column" && !item["iboost-column"].value.includes("⚊"))
+                    iboostTotal = iboostTotal + parseFloat(item["iboost-column"].value);
+                if(column === "clip-column" && !item["clip-column"].value.includes("⚊"))
+                    clipTotal = clipTotal + parseFloat(item["clip-column"].value);
+                if(column === "xload-column" && !item["xload-column"].value.includes("⚊"))
+                    xloadTotal = xloadTotal + parseFloat(item["xload-column"].value);
+                if(column === "co2kwh-column" && !item["co2kwh-column"].value.includes("⚊"))
+                    co2kwhTotal = co2kwhTotal + parseFloat(item["co2kwh-column"].value);
+                if(column === "co2kg-column" && !item["co2kg-column"].value.includes("⚊"))
+                    co2kgTotal = co2kgTotal + parseFloat(item["co2kg-column"].value);                
             }
         });
         
@@ -193,6 +225,61 @@ class PredbatTableCard extends HTMLElement {
             }
         }
     });
+    
+    console.log("load total: " + loadTotal);
+    console.log("pv total: " + pvTotal);
+    console.log("car total: " + carTotal);
+    console.log("net total: " + netTotal);
+    console.log("cost total: " + costTotal);
+    
+    // Create an optional Last Updated Table Header Row
+    if(this.config.show_totals === true) {
+        
+        let totalsRow = document.createElement('tr');
+        totalsRow.classList.add('totalRow');
+        
+        columnsToReturn.forEach((column, index) => {
+            
+            let totalCell = document.createElement('td');
+    
+            if(column === 'pv-column')
+                totalCell.innerHTML = `<b>${pvTotal.toFixed(2)}</b>`;
+            
+            if(column === 'car-column')
+                totalCell.innerHTML = `<b>${carTotal.toFixed(2)}</b>`;
+            
+            if(column === 'load-column')
+                totalCell.innerHTML = `<b>${loadTotal.toFixed(2)}</b>`;
+                
+            if(column === 'net-power-column')
+                totalCell.innerHTML = `<b>${netTotal.toFixed(2)}</b>`; 
+                
+            let formattedCost = "";
+            
+            if (costTotal < 0) {
+              formattedCost = `-£${(Math.abs(costTotal) / 100).toFixed(2)}`;
+            } else {
+              formattedCost = `£${(costTotal / 100).toFixed(2)}`;
+            }                
+            
+            if(column === 'cost-column')
+                totalCell.innerHTML = `<b>${formattedCost}</b>`; 
+                
+            if(column === 'clip-column')
+                totalCell.innerHTML = `<b>${clipTotal.toFixed(2)}</b>`;
+            if(column === 'xload-column')
+                totalCell.innerHTML = `<b>${xloadTotal.toFixed(2)}</b>`;                 
+            if(column === 'co2kwh-column')
+                totalCell.innerHTML = `<b>${co2kwhTotal.toFixed(2)}</b>`;    
+            if(column === 'co2kg-column')
+                totalCell.innerHTML = `<b>${co2kgTotal.toFixed(2)}</b>`;                 
+            
+            totalsRow.appendChild(totalCell);
+        
+        });
+        
+        newTableBody.appendChild(totalsRow);
+    }      
     
     // This section of code is hiding the car and iboost columns if they have no value (and the user has set them as a column to return)
     
@@ -1693,6 +1780,13 @@ class PredbatTableCard extends HTMLElement {
         color: ${tableHeaderFontColour};
         text-align: center; !important
     }
+    
+    .totalRow {
+        background-color: ${tableHeaderColumnsBackgroundColour} !important; 
+        height: 24px;
+        color: ${tableHeaderFontColour};
+        text-align: center; !important
+    }    
     
     .card-content table thead tr .lastUpdateRow {
         height: 24px;
