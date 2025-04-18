@@ -607,7 +607,8 @@ class PredbatTableCard extends HTMLElement {
                     //console.log("PV Data: " + theItem.value);
                     newContent = newContent.replace(/[☀]/g, '');
                     
-                    // newContent = parseFloat(newContent).toFixed(2);
+                    if(!newContent.includes("(") && !newContent.includes(")"))
+                        newContent = parseFloat(newContent).toFixed(2);
                     
                     
                     let additionalIcon = "";
@@ -1656,12 +1657,19 @@ class PredbatTableCard extends HTMLElement {
 	if(this.config.old_skool === true)
 	    maxHeight = "28px";
 	    
+	let fontSize = "14";
+	//use yaml font size if exists
+	if(this.config.font_size !== undefined){
+	    fontSize = this.config.font_size;
+	}
+	    
 		return `
     .card-content table {
       /* Your styles for the table inside .card-content */
       border: 2px solid ${evenColour};
       width: ${tableWidth}%;
       border-spacing: 0px;
+      font-size: ${fontSize}px;
     }
     
     .card-content table tbody tr:nth-child(even) {
