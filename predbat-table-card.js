@@ -584,19 +584,31 @@ class PredbatTableCard extends HTMLElement {
             
             if(column === "pv-column" || column === "load-column" || column === 'import-column' || column === 'export-column'){
                 
+                const hasBoldTags = /<b>.*?<\/b>/.test(theItem.value);
+                
                 //check for HTML Debug values
                 if(newContent.includes("(") && newContent.includes(")")){
                     const match = theItem.value.match(/(\d+(?:\.\d+)?)\s*\((\d+(?:\.\d+)?)\)/);
-                    
-                    let newVals = parseFloat(match[1]).toFixed(2) + " (" + parseFloat(match[2]).toFixed(2) + ")";
-                    newContent = newVals;
+                    if(hasBoldTags)
+                        newContent = "<b>" + parseFloat(match[1]).toFixed(2) + " (" + parseFloat(match[2]).toFixed(2) + ")</b>";
+                    else
+                        newContent = parseFloat(match[1]).toFixed(2) + " (" + parseFloat(match[2]).toFixed(2) + ")";
                 }
                 
                 if(this.config.debug_columns !== undefined) {// there are debug columns in the YAML
                     if(this.config.debug_columns.indexOf(column) < 0)
-                        newContent = parseFloat(newContent).toFixed(2);
+                        if(hasBoldTags){
+                           let contentWithoutTags = theItem.value.replace(/<b>(.*?)<\/b>/g, '$1');
+                            newContent = `<b>` + parseFloat(contentWithoutTags).toFixed(2) + `</b>`;
+                        } else
+                            newContent = parseFloat(newContent).toFixed(2);
+                    
                 } else {
-                    newContent = parseFloat(newContent).toFixed(2);
+                    if(hasBoldTags){
+                       let contentWithoutTags = theItem.value.replace(/<b>(.*?)<\/b>/g, '$1');
+                        newContent = `<b>` + parseFloat(contentWithoutTags).toFixed(2) + `</b>`;
+                    } else
+                        newContent = parseFloat(newContent).toFixed(2);
                 }
             }   
             
