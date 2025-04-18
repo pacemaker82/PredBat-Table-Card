@@ -1015,7 +1015,8 @@ class PredbatTableCard extends HTMLElement {
         
         // manage debug price pills appropriately
         // debug_prices_only | true | false
-        if (theItem.value.includes("(") || theItem.value.includes(")")) {
+        
+        if ((theItem.value.includes("(") || theItem.value.includes(")")) && this.config.debug_columns.indexOf(column) > -1) {
             // if debug prices are present based on ( ) search
             
             let newPills = "";
@@ -1045,6 +1046,15 @@ class PredbatTableCard extends HTMLElement {
                     }
             }
             
+        } else if((theItem.value.includes("(") || theItem.value.includes(")")) && this.config.debug_columns.indexOf(column) === -1){
+
+            const hasBoldTags = /<b>.*?<\/b>/.test(theItem.value);
+            const hasItalicTags = /<i>.*?<\/i>/.test(theItem.value);
+           let contentWithoutTags = theItem.value.replace(/<b>(.*?)<\/b>/g, '$1');
+            contentWithoutTags = contentWithoutTags.replace(/<i>(.*?)<\/i>/g, '$1');
+           let priceStrings = this.getPricesFromPriceString(contentWithoutTags, hasBoldTags, hasItalicTags, true);
+           newCell.innerHTML = '<div class="iconContainer">' + this.getTransformedCostToPill({"value":priceStrings[0], "color":theItem.color}, darkMode) + '</div>';
+            
         } else {
 
             newCell.innerHTML = '<div class="iconContainer">' + this.getTransformedCostToPill(theItem, darkMode) + '</div>';
@@ -1070,6 +1080,10 @@ class PredbatTableCard extends HTMLElement {
                 newPillsNoContainer += this.getTransformedCostToPill({"value": priceStrings[1], "color": item.color}, darkMode);
 
             } else {
+                
+                let numberOfPrices = theItem.length;
+                
+                
                 newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill(item, darkMode) + '</div>';
                 newPillsNoContainer += this.getTransformedCostToPill(item, darkMode);
             }
