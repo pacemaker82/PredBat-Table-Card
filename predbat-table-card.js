@@ -98,6 +98,8 @@ class PredbatTableCard extends HTMLElement {
     theTable.setAttribute('cellpadding', '0px');
     let newTableHead = document.createElement('thead');
     
+    console.log(this.config.debug_columns);
+    
     // Create an optional Last Updated Table Header Row
     if(this.config.hide_last_update !== true) {
         
@@ -988,13 +990,12 @@ class PredbatTableCard extends HTMLElement {
             
             let debugSVG = ``;
             let debugString = theItem.value;
-            console.log(this.config.debug_columns.indexOf(column));
             if (theItem.value.includes("(") || theItem.value.includes(")")) {
                 const match = theItem.value.match(/(\d+)\s*\((\d+(?:\.\d+)?)\)/);
                 
                 // match[1]
                 
-                if(this.config.debug_columns.indexOf(column) > -1){
+                if(this.config.debug_columns !== undefined && this.config.debug_columns.indexOf(column) > -1){
                     if(match[1] != match[2]){
                         debugSVG = `<svg version="1.1" width="26" height="26" id="limitSVG">
                             <circle cx="13" cy="13" r="11" stroke="#2a3240" stroke-width="1" stroke-dasharray="5,3" fill="#e1e1e1"/>
@@ -1024,7 +1025,7 @@ class PredbatTableCard extends HTMLElement {
         // manage debug price pills appropriately
         // debug_prices_only | true | false
         
-        if ((theItem.value.includes("(") || theItem.value.includes(")")) && this.config.debug_columns.indexOf(column) > -1) {
+        if ((theItem.value.includes("(") || theItem.value.includes(")")) && this.config.debug_columns !== undefined && this.config.debug_columns.indexOf(column) > -1) {
             // if debug prices are present based on ( ) search
             
             let newPills = "";
@@ -1054,7 +1055,7 @@ class PredbatTableCard extends HTMLElement {
                     }
             }
             
-        } else if((theItem.value.includes("(") || theItem.value.includes(")")) && this.config.debug_columns.indexOf(column) === -1){
+        } else if((theItem.value.includes("(") || theItem.value.includes(")")) && this.config.debug_columns !== undefined && this.config.debug_columns.indexOf(column) === -1){
 
             const hasBoldTags = /<b>.*?<\/b>/.test(theItem.value);
             const hasItalicTags = /<i>.*?<\/i>/.test(theItem.value);
