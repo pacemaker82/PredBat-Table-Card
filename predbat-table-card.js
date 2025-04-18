@@ -575,7 +575,12 @@ class PredbatTableCard extends HTMLElement {
             newCell.style.height = "22px";
             
             // set the PV or Load column to use the HTML debug 10% options if in the card YAML
-            if(column === "pv-column" || column === "load-column"){
+            
+            if(column === 'import-column' || column === 'export-column'){
+                
+            }
+            
+            if(column === "pv-column" || column === "load-column" || column === 'import-column' || column === 'export-column'){
                 
                 //check for HTML Debug values
                 if(newContent.includes("(") && newContent.includes(")")){
