@@ -619,46 +619,6 @@ class PredbatTableCard extends HTMLElement {
                     }
                         
                 }
-                
-                /*
-                const hasBoldTags = /<b>.*?<\/b>/.test(theItem.value);
-                
-                //check for HTML Debug values
-                
-                if(theItem.value.includes("(") && theItem.value.includes(")") && !theItem.value.includes("?")){
-                    const match = theItem.value.match(/(\d+(?:\.\d+)?)\s*\((\d+(?:\.\d+)?)\)/);
-                    
-                    if(match !== null){
-                        if(hasBoldTags)
-                            newContent = "<b>" + parseFloat(match[1]).toFixed(2) + " (" + parseFloat(match[2]).toFixed(2) + ")</b>";
-                        else
-                            newContent = parseFloat(match[1]).toFixed(2) + " (" + parseFloat(match[2]).toFixed(2) + ")";
-                    }
-                }
-                
-                if(this.config.debug_columns !== undefined) {// there are debug columns in the YAML
-                    if(this.config.debug_columns.indexOf(column) < 0){
-                        if(hasBoldTags){
-                           let contentWithoutTags = theItem.value.replace(/<b>(.*?)<\/b>/g, '$1');
-                            newContent = `<b>` + parseFloat(contentWithoutTags).toFixed(2) + `</b>`;
-                        } else
-                            newContent = parseFloat(newContent).toFixed(2);
-                    }
-                    
-                } else {
-                    if(!theItem.value.includes("?")){
-                        if(hasBoldTags){
-                           let contentWithoutTags = theItem.value.replace(/<b>(.*?)<\/b>/g, '$1');
-                            newContent = `<b>` + parseFloat(contentWithoutTags).toFixed(2) + `</b>`;
-                        } else
-                            newContent = parseFloat(newContent).toFixed(2);
-                    } else {
-                        const testRegex = /(\d+\.\d+)\D+(\d+\.\d+)/;
-                        const testMatches = thePriceString.match(testRegex);
-                        newContent = testMatches[1];
-                    }
-                }
-                */
             }   
             
             
@@ -1088,6 +1048,9 @@ class PredbatTableCard extends HTMLElement {
         
         if ((theItem.value.includes("(") || theItem.value.includes(")")) && this.config.debug_columns !== undefined && this.config.debug_columns.indexOf(column) > -1) {
             // if debug prices are present based on ( ) search
+            // AND YAML config has debug_columns
+            // AND YAML config has specific column for debug_columns
+            // THEN SHOW THE DEBUG
             
             let newPills = "";
             const hasBoldTags = /<b>.*?<\/b>/.test(theItem.value);
@@ -1116,7 +1079,7 @@ class PredbatTableCard extends HTMLElement {
                     }
             }
             
-        } else if((theItem.value.includes("(") || theItem.value.includes(")")) && this.config.debug_columns !== undefined && this.config.debug_columns.indexOf(column) === -1){
+        } else if(theItem.value.includes("(") || theItem.value.includes(")")){
 
             const hasBoldTags = /<b>.*?<\/b>/.test(theItem.value);
             const hasItalicTags = /<i>.*?<\/i>/.test(theItem.value);
