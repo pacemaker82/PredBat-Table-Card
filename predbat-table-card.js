@@ -583,33 +583,82 @@ class PredbatTableCard extends HTMLElement {
             }
             
             if(column === "pv-column" || column === "load-column" || column === 'import-column' || column === 'export-column'){
+
+                const hasBoldTags = /<b>.*?<\/b>/.test(theItem.value);
+                const hasItalicTags = /<i>.*?<\/i>/.test(theItem.value);
+                let contentWithoutTags = theItem.value.replace(/<b>(.*?)<\/b>/g, '$1');
+                contentWithoutTags = contentWithoutTags.replace(/<i>(.*?)<\/i>/g, '$1');
+                let debugPrices = false;
+                if (theItem.value.includes("(") && theItem.value.includes(")"))
+                    debugPrices = true;
                 
+                if(this.config.debug_columns !== undefined) { // there are debug columns in the YAML
+                    if(this.config.debug_columns !== undefined && this.config.debug_columns.indexOf(column) > -1){ // the column is a debug column
+                    
+                        // SHOW THE DEBUG VALUE TOO!
+                        newContent = theItem.value;
+                    } else {
+                        // we need to remove the debug value from the string
+                        if(column === "pv-column" || column === "load-column")
+                            newContent = parseFloat(theItem.value).toFixed(2);
+                        else {
+                            if(debugPrices){
+                                let priceStrings = this.getPricesFromPriceString(contentWithoutTags, hasBoldTags, hasItalicTags, debugPrices);
+                                newContent = priceStrings[0];
+                            }                            
+                        }
+                    }
+                } else { // there are NO debug columns in the YAML, so dont show debug values even if HTML Debug is ON
+                    if(column === "pv-column" || column === "load-column")
+                        newContent = parseFloat(theItem.value).toFixed(2);
+                    else {
+                        if(debugPrices){
+                            let priceStrings = this.getPricesFromPriceString(contentWithoutTags, hasBoldTags, hasItalicTags, debugPrices);
+                            newContent = priceStrings[0];
+                        }
+                    }
+                        
+                }
+                
+                /*
                 const hasBoldTags = /<b>.*?<\/b>/.test(theItem.value);
                 
                 //check for HTML Debug values
-                if(newContent.includes("(") && newContent.includes(")")){
+                
+                if(theItem.value.includes("(") && theItem.value.includes(")") && !theItem.value.includes("?")){
                     const match = theItem.value.match(/(\d+(?:\.\d+)?)\s*\((\d+(?:\.\d+)?)\)/);
-                    if(hasBoldTags)
-                        newContent = "<b>" + parseFloat(match[1]).toFixed(2) + " (" + parseFloat(match[2]).toFixed(2) + ")</b>";
-                    else
-                        newContent = parseFloat(match[1]).toFixed(2) + " (" + parseFloat(match[2]).toFixed(2) + ")";
+                    
+                    if(match !== null){
+                        if(hasBoldTags)
+                            newContent = "<b>" + parseFloat(match[1]).toFixed(2) + " (" + parseFloat(match[2]).toFixed(2) + ")</b>";
+                        else
+                            newContent = parseFloat(match[1]).toFixed(2) + " (" + parseFloat(match[2]).toFixed(2) + ")";
+                    }
                 }
                 
                 if(this.config.debug_columns !== undefined) {// there are debug columns in the YAML
-                    if(this.config.debug_columns.indexOf(column) < 0)
+                    if(this.config.debug_columns.indexOf(column) < 0){
                         if(hasBoldTags){
                            let contentWithoutTags = theItem.value.replace(/<b>(.*?)<\/b>/g, '$1');
                             newContent = `<b>` + parseFloat(contentWithoutTags).toFixed(2) + `</b>`;
                         } else
                             newContent = parseFloat(newContent).toFixed(2);
+                    }
                     
                 } else {
-                    if(hasBoldTags){
-                       let contentWithoutTags = theItem.value.replace(/<b>(.*?)<\/b>/g, '$1');
-                        newContent = `<b>` + parseFloat(contentWithoutTags).toFixed(2) + `</b>`;
-                    } else
-                        newContent = parseFloat(newContent).toFixed(2);
+                    if(!theItem.value.includes("?")){
+                        if(hasBoldTags){
+                           let contentWithoutTags = theItem.value.replace(/<b>(.*?)<\/b>/g, '$1');
+                            newContent = `<b>` + parseFloat(contentWithoutTags).toFixed(2) + `</b>`;
+                        } else
+                            newContent = parseFloat(newContent).toFixed(2);
+                    } else {
+                        const testRegex = /(\d+\.\d+)\D+(\d+\.\d+)/;
+                        const testMatches = thePriceString.match(testRegex);
+                        newContent = testMatches[1];
+                    }
                 }
+                */
             }   
             
             
@@ -1928,6 +1977,8 @@ class PredbatTableCard extends HTMLElement {
     }	
 	
 	getDarkenHexColor(hexColor, percent) {
+	    
+	    
           // Ensure the percent is within the valid range
           percent = Math.max(0, Math.min(100, percent));
         
@@ -1948,6 +1999,8 @@ class PredbatTableCard extends HTMLElement {
           r = Math.min(255, Math.max(0, r));
           g = Math.min(255, Math.max(0, g));
           b = Math.min(255, Math.max(0, b));
+          
+          //console.log(r + " " + g + " " + b);
         
           // Convert RGB back to HEX
           const darkenedHexColor = `#${(1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1)}`;
