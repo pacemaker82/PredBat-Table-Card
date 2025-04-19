@@ -151,17 +151,9 @@ class PredbatTableCard extends HTMLElement {
     // set out the data rows
     let newTableBody = document.createElement('tbody');
     
-    let loadTotal = 0;
-    let pvTotal = 0;
-    let carTotal = 0;
-    let iboostTotal = 0;
-    let netTotal = 0;
-    let costTotal = 0;
-    let clipTotal = 0;
-    let co2kwhTotal = 0;
-    let co2kgTotal = 0;
-    let xloadTotal = 0;
-    
+    let loadTotal = 0, pvTotal = 0, carTotal = 0, iboostTotal = 0, netTotal = 0, costTotal = 0, clipTotal = 0, co2kwhTotal = 0, co2kgTotal = 0, xloadTotal = 0, 
+    loadDayTotal = 0, pvDayTotal = 0, carDayTotal = 0, iboostDayTotal = 0, netDayTotal = 0, costDayTotal = 0, clipDayTotal = 0, co2kwhDayTotal = 0, co2kgDayTotal = 0, xloadDayTotal = 0;
+
     // create the data rows
     dataArray.forEach((item, index) => {
         
@@ -177,6 +169,59 @@ class PredbatTableCard extends HTMLElement {
     
                 newRow.appendChild(newColumn); 
                 
+        if(column === "load-column" && !item["load-column"].value.includes("⚊")) {
+            let val = parseFloat(item["load-column"].value);
+            loadTotal += val;
+            loadDayTotal += val;
+        }
+        if(column === "pv-column" && !item["pv-column"].value.includes("⚊")) {
+            let val = parseFloat(item["pv-column"].value.replace(/[☀]/g, ''));
+            pvTotal += val;
+            pvDayTotal += val;
+        }
+        if(column === "car-column" && !item["car-column"].value.includes("⚊")) {
+            let val = parseFloat(item["car-column"].value);
+            carTotal += val;
+            carDayTotal += val;
+        }
+        if(column === "net-power-column" && !item["net-power-column"].value.includes("⚊")) {
+            let val = parseFloat(item["net-power-column"].value);
+            netTotal += val;
+            netDayTotal += val;
+        }
+        if(column === "cost-column" && !item["cost-column"].value.includes("→")) {
+            let val = parseFloat(item["cost-column"].value.replace(/[↘↗→p]/g, ''));
+            costTotal += val;
+            costDayTotal += val;
+        }
+        if(column === "iboost-column" && !item["iboost-column"].value.includes("⚊")) {
+            let val = parseFloat(item["iboost-column"].value);
+            iboostTotal += val;
+            iboostDayTotal += val;
+        }
+        if(column === "clip-column" && !item["clip-column"].value.includes("⚊")) {
+            let val = parseFloat(item["clip-column"].value);
+            clipTotal += val;
+            clipDayTotal += val;
+        }
+        if(column === "xload-column" && !item["xload-column"].value.includes("⚊")) {
+            let val = parseFloat(item["xload-column"].value);
+            xloadTotal += val;
+            xloadDayTotal += val;
+        }
+        if(column === "co2kwh-column" && !item["co2kwh-column"].value.includes("⚊")) {
+            let val = parseFloat(item["co2kwh-column"].value);
+            co2kwhTotal += val;
+            co2kwhDayTotal += val;
+        }
+        if(column === "co2kg-column" && !item["co2kg-column"].value.includes("⚊")) {
+            let val = parseFloat(item["co2kg-column"].value);
+            co2kgTotal += val;
+            co2kgDayTotal += val;
+        }
+                
+                
+                /*
                 if(column === "load-column" && !item["load-column"].value.includes("⚊"))
                     loadTotal = loadTotal + parseFloat(item["load-column"].value);
                 if(column === "pv-column" && !item["pv-column"].value.includes("⚊"))
@@ -196,7 +241,9 @@ class PredbatTableCard extends HTMLElement {
                 if(column === "co2kwh-column" && !item["co2kwh-column"].value.includes("⚊"))
                     co2kwhTotal = co2kwhTotal + parseFloat(item["co2kwh-column"].value);
                 if(column === "co2kg-column" && !item["co2kg-column"].value.includes("⚊"))
-                    co2kgTotal = co2kgTotal + parseFloat(item["co2kg-column"].value);                
+                    co2kgTotal = co2kgTotal + parseFloat(item["co2kg-column"].value);  
+                    
+                    */
             }
         });
         
@@ -204,26 +251,64 @@ class PredbatTableCard extends HTMLElement {
         
         if(isMidnight){
             
-            // add two rows because otherwise it messes with the alternate row scheme
             for (let i = 0; i < 2; i++) {
-                let dividerRow = document.createElement('tr');
-                dividerRow.classList.add('daySplitter');
-                    for(let j = 0; j < columnsToReturn.length; j++) {
-                        let newCell = document.createElement('td');
+                newTableBody.appendChild(this.createDividerRows(columnsToReturn.length, hass.themes.darkMode));
+            }
+            
+            if(this.config.show_day_totals === true) {
+            
+                // Now insert a row for the day total
+                let dayTotalsRow = document.createElement('tr');
+                dayTotalsRow.classList.add('dayTotalRow');
+                
+                columnsToReturn.forEach((column, index) => {
+                    
+                    let totalCell = document.createElement('td');
+                    
+                    if(column === "time-column" && index === 0)
+                        totalCell.innerHTML = `<b>TOTALS</b>`;                    
+            
+                    if(column === 'pv-column')
+                        totalCell.innerHTML = `<b>${pvDayTotal.toFixed(2)}</b>`;
+                    
+                    if(column === 'car-column')
+                        totalCell.innerHTML = `<b>${carDayTotal.toFixed(2)}</b>`;
+                    
+                    if(column === 'load-column')
+                        totalCell.innerHTML = `<b>${loadDayTotal.toFixed(2)}</b>`;
                         
-                        if(this.getLightMode(hass.themes.darkMode)){
-                            newCell.style.backgroundColor = "#e1e1e1"; 
-                            newCell.style.opacity = 0.4; 
-                        } else {
-                            // light mode
-                            newCell.style.backgroundColor = "#2a3240"; 
-                            newCell.style.opacity = 0.75; 
-                        }
+                    if(column === 'net-power-column')
+                        totalCell.innerHTML = `<b>${netDayTotal.toFixed(2)}</b>`; 
                         
-                        newCell.style.height = "1px";
-                        dividerRow.appendChild(newCell);
-                    }
-                newTableBody.appendChild(dividerRow);
+                    let formattedCost = "";
+                    
+                    if (costDayTotal < 0) {
+                      formattedCost = `-£${(Math.abs(costDayTotal) / 100).toFixed(2)}`;
+                    } else {
+                      formattedCost = `£${(costDayTotal / 100).toFixed(2)}`;
+                    }                
+                    
+                    if(column === 'cost-column')
+                        totalCell.innerHTML = `<b>${formattedCost}</b>`; 
+                        
+                    if(column === 'clip-column')
+                        totalCell.innerHTML = `<b>${clipDayTotal.toFixed(2)}</b>`;
+                    if(column === 'xload-column')
+                        totalCell.innerHTML = `<b>${xloadDayTotal.toFixed(2)}</b>`;                 
+                    if(column === 'co2kwh-column')
+                        totalCell.innerHTML = `<b>${co2kwhDayTotal.toFixed(2)}</b>`;    
+                    if(column === 'co2kg-column')
+                        totalCell.innerHTML = `<b>${co2kgDayTotal.toFixed(2)}</b>`;                 
+                    
+                    dayTotalsRow.appendChild(totalCell);
+                
+                });
+                
+                newTableBody.appendChild(dayTotalsRow);            
+                loadDayTotal = 0, pvDayTotal = 0, carDayTotal = 0, iboostDayTotal = 0, netDayTotal = 0, costDayTotal = 0, clipDayTotal = 0, co2kwhDayTotal = 0, co2kgDayTotal = 0, xloadDayTotal = 0;
+                for (let i = 0; i < 2; i++) {
+                    newTableBody.appendChild(this.createDividerRows(columnsToReturn.length, hass.themes.darkMode));
+                }   
             }
         }
     });
@@ -243,6 +328,9 @@ class PredbatTableCard extends HTMLElement {
         columnsToReturn.forEach((column, index) => {
             
             let totalCell = document.createElement('td');
+            
+            if(column === "time-column" && index === 0)
+                totalCell.innerHTML = `<b>PLAN TOTALS</b>`;
     
             if(column === 'pv-column')
                 totalCell.innerHTML = `<b>${pvTotal.toFixed(2)}</b>`;
@@ -346,6 +434,29 @@ class PredbatTableCard extends HTMLElement {
     const styleTag = document.createElement('style');
 	styleTag.innerHTML = this.getStyles(this.getLightMode(hass.themes.darkMode));
 	this.content.appendChild(styleTag);      
+  }
+  
+  createDividerRows(columnLength, darkMode){
+
+    let dividerRow = document.createElement('tr');
+    dividerRow.classList.add('daySplitter');
+        for(let j = 0; j < columnLength; j++) {
+            let newCell = document.createElement('td');
+            
+            if(this.getLightMode(darkMode)){
+                newCell.style.backgroundColor = "#e1e1e1"; 
+                newCell.style.opacity = 0.4; 
+            } else {
+                // light mode
+                newCell.style.backgroundColor = "var(--primary-color)"; 
+                newCell.style.opacity = 1.00; 
+            }
+            
+            newCell.style.height = "1px";
+            dividerRow.appendChild(newCell);
+        }
+    return dividerRow;
+     
   }
   
   getLightMode(hassDarkMode){
@@ -1744,7 +1855,7 @@ class PredbatTableCard extends HTMLElement {
 	let tableHeaderFontColour;
 	let tableHeaderBackgroundColour;
 	let tableHeaderColumnsBackgroundColour;
-	let boldTextDisplay;
+	let boldTextDisplay, dayTotalFontColour, dayTotalBackgroundColour, totalBackgroundColour, dividerColour;
 	
 	if(isDarkMode){
 	    oddColour = "#181f2a";
@@ -1762,6 +1873,9 @@ class PredbatTableCard extends HTMLElement {
     	tableHeaderFontColour = "#8a919e";
     	tableHeaderBackgroundColour = "transparent";
     	boldTextDisplay = "font-weight: normal;";
+    	dayTotalFontColour = "#FFFFFF";
+    	dayTotalBackgroundColour = evenColour;
+    	totalBackgroundColour = oddColour;
     	
 	} else {
 	    // Light Theme
@@ -1782,6 +1896,10 @@ class PredbatTableCard extends HTMLElement {
     	tableHeaderBackgroundColour = "var(--primary-color)";
     	tableHeaderColumnsBackgroundColour = "var(--primary-color)";
     	boldTextDisplay = "font-weight: bold;";
+    	dayTotalFontColour = "#000000";
+ 	    dayTotalBackgroundColour = "var(--light-primary-color)";
+    	totalBackgroundColour = tableHeaderBackgroundColour; 
+    	dividerColour = "var(--primary-color)";
 	}
 	
 	//use yaml width if exists
@@ -1829,11 +1947,18 @@ class PredbatTableCard extends HTMLElement {
     }
     
     .totalRow {
-        background-color: ${tableHeaderColumnsBackgroundColour} !important; 
+        background-color: ${totalBackgroundColour} !important; 
         height: 24px;
         color: ${tableHeaderFontColour};
         text-align: center; !important
     }    
+    
+    .dayTotalRow {
+        background-color: ${dayTotalBackgroundColour} !important; 
+        height: 24px;
+        color: ${dayTotalFontColour};
+        text-align: center !important;
+    }        
     
     .card-content table thead tr .lastUpdateRow {
         height: 24px;
@@ -1849,7 +1974,7 @@ class PredbatTableCard extends HTMLElement {
     
     .daySplitter {
         height: 1px;
-        background-color: #e1e1e1;
+        background-color: ${dividerColour};
     }    
     
     .card-content table tbody tr td {
