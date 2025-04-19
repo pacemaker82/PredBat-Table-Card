@@ -320,7 +320,7 @@ class PredbatTableCard extends HTMLElement {
     console.log("cost total: " + costTotal);
     
     // Create an optional Last Updated Table Header Row
-    if(this.config.show_totals === true) {
+    if(this.config.show_totals === true || this.config.show_plan_totals === true) {
         
         let totalsRow = document.createElement('tr');
         totalsRow.classList.add('totalRow');
