@@ -693,7 +693,7 @@ class PredbatTableCard extends HTMLElement {
                 
             }
             
-            if(column === "pv-column" || column === "load-column" || column === 'import-column' || column === 'export-column'){
+            if(column === "pv-column" || column === "load-column" || column === 'import-column' || column === 'export-column' || column === "limit-column"){
 
                 const hasBoldTags = /<b>.*?<\/b>/.test(theItem.value);
                 const hasItalicTags = /<i>.*?<\/i>/.test(theItem.value);
@@ -710,8 +710,11 @@ class PredbatTableCard extends HTMLElement {
                         newContent = theItem.value;
                     } else {
                         // we need to remove the debug value from the string
-                        if(column === "pv-column" || column === "load-column")
-                            newContent = parseFloat(theItem.value).toFixed(2);
+                        if(column === "pv-column" || column === "load-column" || column === "limit-column")
+                            if(column === "pv-column" || column === "load-column")
+                                newContent = parseFloat(theItem.value).toFixed(2);
+                            else 
+                                newContent = parseFloat(theItem.value).toFixed(0);
                         else {
                             if(debugPrices){
                                 let priceStrings = this.getPricesFromPriceString(contentWithoutTags, hasBoldTags, hasItalicTags, debugPrices);
@@ -720,8 +723,11 @@ class PredbatTableCard extends HTMLElement {
                         }
                     }
                 } else { // there are NO debug columns in the YAML, so dont show debug values even if HTML Debug is ON
-                    if(column === "pv-column" || column === "load-column")
-                        newContent = parseFloat(theItem.value).toFixed(2);
+                    if(column === "pv-column" || column === "load-column" || column === "limit-column")
+                        if(column === "pv-column" || column === "load-column")
+                            newContent = parseFloat(theItem.value).toFixed(2);
+                        else 
+                            newContent = parseFloat(theItem.value).toFixed(0);
                     else {
                         if(debugPrices){
                             let priceStrings = this.getPricesFromPriceString(contentWithoutTags, hasBoldTags, hasItalicTags, debugPrices);
