@@ -83,8 +83,14 @@ class PredbatTableCard extends HTMLElement {
       
 
     const entityId = this.config.entity;
+    
     const state = hass.states[entityId];
     const stateStr = state ? state.state : "unavailable";
+    
+    if (stateStr === "unavailable") {
+      throw new Error("Predbat HTML entity is not currently available");
+    }
+    
     let columnsToReturn = this.config.columns;
     let rawHTML = hass.states[entityId].attributes.html;
     const dataArray = this.getArrayDataFromHTML(rawHTML, hass.themes.darkMode); 
