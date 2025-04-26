@@ -86,7 +86,7 @@ class PredbatTableCard extends HTMLElement {
     
     const state = hass.states[entityId];
     const stateStr = state ? state.state : "unavailable";
-    
+    console.log(state);
     if (stateStr === "unavailable") {
       throw new Error("Predbat HTML entity is not currently available");
     }
@@ -109,18 +109,23 @@ class PredbatTableCard extends HTMLElement {
     // Create an optional Last Updated Table Header Row
     if(this.config.hide_last_update !== true) {
         
-        const lastUpdated = this.getLastUpdatedFromHTML(rawHTML);
-        if (lastUpdated !== undefined){
+        const lastUpdated = state ? state.last_updated : "Unavailable";
+        const time = this.getLastUpdatedFromHTML(lastUpdated);
+
+
+        if (time !== undefined){
             let lastUpdateHeaderRow = document.createElement('tr');
             let lastUpdateCell = document.createElement('th');
             lastUpdateCell.classList.add('lastUpdateRow');
             lastUpdateCell.colSpan = columnsToReturn.length;
-            lastUpdateCell.innerHTML = `<b>Plan Last Updated:</b> ${lastUpdated}`;
+            lastUpdateCell.innerHTML = `<b>Plan Last Updated:</b> ${time}`;
             lastUpdateHeaderRow.appendChild(lastUpdateCell);
             newTableHead.appendChild(lastUpdateHeaderRow);
         }
     
     }
+    
+    /*
     
     if(this.config.show_table_meta === true) {
         const metaArray = this.getMetadataFromHTML(rawHTML);
@@ -138,6 +143,7 @@ class PredbatTableCard extends HTMLElement {
             }
         }         
     }
+    */
     
     let newHeaderRow = document.createElement('tr');
     newTableHead.classList.add('topHeader');   
@@ -1464,41 +1470,23 @@ class PredbatTableCard extends HTMLElement {
       
   }
   
-  getLastUpdatedFromHTML(html) {
+  getLastUpdatedFromHTML(timestamp) {
       
-    // Create a dummy element to manipulate the HTML
-      const dummyElement = document.createElement('div');
-      dummyElement.innerHTML = html;
-      const trElements = dummyElement.querySelectorAll('tbody tr');
-      
-      let lastUpdate;
-      trElements.forEach((trElement, index) => {
-          if(index === 0){
-              const tdElements = trElement.querySelectorAll('td');
-              tdElements.forEach(tdElement => {
-                    //console.log("table update: " + tdElement.innerHTML);
-                    const dateTimeString = tdElement.innerHTML.match(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2})/g)[0];
-
-                    // Create a JavaScript Date object from the extracted date/time string
-                    const date = new Date(dateTimeString);
-                    const today = new Date();
-
-                    const options = { hour: 'numeric', minute: '2-digit', hour12: true };
-                    const timeString = date.toLocaleTimeString('en-US', options);
-                
-                    if (date.toDateString() === today.toDateString()) {
-                        lastUpdate = `Today at ${timeString}`;
-                    } else {
-                        // Format for other days if needed
-                        lastUpdate = date.toDateString(); // Example format
-                    }
-                    
-              });
-          }
-      });
-      return lastUpdate;
-      
-      
+    const date = new Date(timestamp);
+    const now = new Date();
+    
+    // Check if same year, month, day
+    const isToday = date.getDate() === now.getDate() &&
+                    date.getMonth() === now.getMonth() &&
+                    date.getFullYear() === now.getFullYear();
+    
+    // Format time
+    const time = date.toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', hour12: true });
+    
+    // Build final string
+    const timeStr = isToday ? `Today at ${time}` : `${date.toLocaleDateString('en-GB')} at ${time}`;
+    
+    return timeStr;
   }
   
   isSmallScreen() {
