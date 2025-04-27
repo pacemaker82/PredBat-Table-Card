@@ -86,7 +86,7 @@ class PredbatTableCard extends HTMLElement {
     
     const state = hass.states[entityId];
     const stateStr = state ? state.state : "unavailable";
-    console.log(state);
+
     if (stateStr === "unavailable") {
       throw new Error("Predbat HTML entity is not currently available");
     }
@@ -104,14 +104,11 @@ class PredbatTableCard extends HTMLElement {
     theTable.setAttribute('cellpadding', '0px');
     let newTableHead = document.createElement('thead');
     
-    console.log(this.config.debug_columns);
-    
     // Create an optional Last Updated Table Header Row
     if(this.config.hide_last_update !== true) {
         
         const lastUpdated = state ? state.last_updated : "Unavailable";
         const time = this.getLastUpdatedFromHTML(lastUpdated);
-
 
         if (time !== undefined){
             let lastUpdateHeaderRow = document.createElement('tr');
@@ -1019,30 +1016,60 @@ class PredbatTableCard extends HTMLElement {
         
     } else if(column === "soc-column" || column === "cost-column"){
 
-          newContent = theItem.value.replace(/[↘↗→]/g, '');
-          newContent = newContent.replace(' ', '');
-          newContent = newContent.trim();
+        newContent = theItem.value.replace(/[↘↗→]/g, '');
+        newContent = newContent.replace(' ', '');
+        newContent = newContent.trim();
+        let batteryPercent = newContent;
           
-            let additionalArrow = "";
+        let additionalArrow = "";
+        let batteryArrow = "";
+        
+        if(theItem.value.includes("↘")) {
+            // include a down arrow
+            additionalArrow = '<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 0 0 -5px;"></ha-icon>';
+            newCell.style.paddingRight = "0px";
+            batteryArrow = '<ha-icon icon="mdi:arrow-down-thin" style="--mdc-icon-size: 16px; margin: 0 -5px 0 -5px;"></ha-icon>';
+        } else if (theItem.value.includes("↗")) {
+            // include a down arrow
+            additionalArrow = '<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 0 0 -5px;"></ha-icon>';                    
+            newCell.style.paddingRight = "0px";
+            batteryArrow = '<ha-icon icon="mdi:arrow-up-thin" style="--mdc-icon-size: 16px; margin: 0 -5px 0 -5px;"></ha-icon>';
+        } else {
+            batteryArrow = '<ha-icon icon="mdi:arrow-right-thin" style="--mdc-icon-size: 16px; margin: 0 -5px 0 -5px;"></ha-icon>';
+            if(fillEmptyCells && column === "cost-column")
+                additionalArrow = '<ha-icon icon="mdi:minus" style="margin: 0 0 0 -5px; opacity: 0.25;"></ha-icon>';                 
+        }
+        let battery;
+        if(column === "soc-column") {
+            newContent += "%";
+            const roundedPercent = Math.round(parseInt(batteryPercent, 10) / 10) * 10;
+            let batteryIcon;
+            if(roundedPercent === 100){
+                batteryIcon = "battery";
+            }
+            else if (roundedPercent < 5){
+                batteryIcon = `battery-outline`;
+            } else {
+                batteryIcon = `battery-${roundedPercent}`;
+            }
 
-                if(theItem.value.includes("↘")) {
-                    // include a down arrow
-                    additionalArrow = '<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 0 0 -5px;"></ha-icon>';
-                    newCell.style.paddingRight = "0px";
-                } else if (theItem.value.includes("↗")) {
-                    // include a down arrow
-                    additionalArrow = '<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 0 0 -5px;"></ha-icon>';                    
-                    newCell.style.paddingRight = "0px";
-                } else {
-                    if(fillEmptyCells && column === "cost-column")
-                        additionalArrow = '<ha-icon icon="mdi:minus" style="margin: 0 0 0 -5px; opacity: 0.25;"></ha-icon>';                 
-                }
-                
-                if(column === "soc-column") {
-                    newContent += "%";
-                }
+            battery = `<ha-icon icon="mdi:${batteryIcon}" style="--mdc-icon-size: 20px;"></ha-icon>${batteryArrow}`;
+            
+            newCell.style.display = "flex";
+            newCell.style.paddingLeft = "4px";
+            
+            newCell.style.minWidth = "70px";
+            
+            newCell.style.alignItems = "center";
+        }
+        
 
-          newCell.innerHTML = `<div class="iconContainer"><div style="margin: 0 1px;">${newContent}</div>${additionalArrow}</div>`;
+        
+        if(column === "soc-column"){
+            newCell.innerHTML = `<div style="width: 70px; align-items: center; display: flex; justify-content: center; margin: 0 auto;"><div class="iconContainerSOC">${battery}</div><div style="margin-left: 5px; margin-top: 2px;">${newContent}</div></div>`;                
+        } else {
+            newCell.innerHTML = `<div class="iconContainer"><div style="margin: 0 1px;">${newContent}</div>${additionalArrow}</div>`;
+        }
 
     } else if(column === "net-power-column"){
 
@@ -1984,11 +2011,10 @@ class PredbatTableCard extends HTMLElement {
         height: ${maxHeight};
         vertical-align: middle;
         align-items: center;
-       -- width: 60px;
         border: 0;
         text-align: center;
         white-space: nowrap;
-        */text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.7);*/
+
     }
     
     .card-content table tbody tr td .pill {
@@ -2016,6 +2042,11 @@ class PredbatTableCard extends HTMLElement {
       height: 100%; /* Set height of table cell */
       --font-weight: bold;
     }
+    
+    .iconContainerSOC {
+      display: flex;
+      align-items: center; /* Center content vertically */
+    }    
     
     .multiPillContainer {
       align-items: center; /* Center content vertically */
