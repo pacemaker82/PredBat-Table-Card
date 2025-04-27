@@ -32,6 +32,7 @@ The following YAML config items can or should be set on the card
 | `type`   | YES    | `predbat-table-card`    |
 | `entity`   | YES    | `predbat.plan_html` or name of the entity holding the Predbat plan HTML    |
 | `columns`    | YES    | See [Column Options](#column-options) section for breakdown <br>Provide ***in any order*** you want <br>At least 1 column needs to be used|
+| `version_entity`   | NO    | Set to `update.predbat_version` or whiever entity holds the predbat version. Setting this will show you the version on the table card and display if an update is available.    |
 | `fill_empty_cells`    | NO    | `true` or `false`. Will add a "-" symbol where data isnt available to clear out empty space   |
 | `hide_last_update`    | NO    | `true` or `false`. Will determine if the last update time is shown at the top of the table  |
 | `light_mode`    | NO    | Use `light`, `dark`, or `auto` - default is `auto` if you dont set it. Use this to force the mode you want   |
