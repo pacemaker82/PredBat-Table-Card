@@ -91,6 +91,13 @@ class PredbatTableCard extends HTMLElement {
       throw new Error("Predbat HTML entity is not currently available");
     }
     
+    
+    
+    // Predbat Version entity
+    const versionEntity = this.config.version_entity;
+    if(versionEntity !== undefined)
+        console.log(hass.states[this.config.version_entity]);
+        
     let columnsToReturn = this.config.columns;
     let rawHTML = hass.states[entityId].attributes.html;
     const dataArray = this.getArrayDataFromHTML(rawHTML, hass.themes.darkMode); 
@@ -119,7 +126,6 @@ class PredbatTableCard extends HTMLElement {
             lastUpdateHeaderRow.appendChild(lastUpdateCell);
             newTableHead.appendChild(lastUpdateHeaderRow);
         }
-    
     }
     
     /*
@@ -378,6 +384,36 @@ class PredbatTableCard extends HTMLElement {
         });
         
         newTableBody.appendChild(totalsRow);
+    }      
+    
+    if (versionEntity !== undefined){
+        const predbatVersion = hass.states[versionEntity].attributes.installed_version;
+        const latestPredbatVersion = hass.states[versionEntity].attributes.latest_version;
+        let lastUpdateHeaderRow = document.createElement('tr');
+        let lastUpdateCell = document.createElement('td');
+        lastUpdateCell.classList.add('versionRow');
+        lastUpdateCell.colSpan = columnsToReturn.length;
+        let updateIcon = ``;
+        if(predbatVersion !== latestPredbatVersion)
+            updateIcon = `<ha-icon icon="mdi:download-circle-outline" style="--mdc-icon-size: 18px; margin-left: 4px;" title="Predbat version ${latestPredbatVersion} available"></ha-icon>`;
+        lastUpdateCell.innerHTML = `Predbat Version: ${predbatVersion}${updateIcon}`;
+        lastUpdateHeaderRow.appendChild(lastUpdateCell);
+        newTableBody.appendChild(lastUpdateHeaderRow);
+    }  
+    
+    if(this.config.show_tablecard_version === true){
+        const version = hass.states["update.predbat_table_card_update"].attributes.installed_version;
+        const latestVersion = hass.states["update.predbat_table_card_update"].attributes.latest_version;
+        let lastUpdateHeaderRow = document.createElement('tr');
+        let lastUpdateCell = document.createElement('td');
+        lastUpdateCell.classList.add('versionRow');
+        lastUpdateCell.colSpan = columnsToReturn.length;
+        let updateIcon = ``;
+        if(version !== latestVersion)
+            updateIcon = `<ha-icon icon="mdi:download-circle-outline" style="--mdc-icon-size: 18px; margin-left: 4px;" title="Predbat Table Card version ${latestVersion} available"></ha-icon>`;
+        lastUpdateCell.innerHTML = `Predbat Table Card Version: ${version}${updateIcon}`;
+        lastUpdateHeaderRow.appendChild(lastUpdateCell);
+        newTableBody.appendChild(lastUpdateHeaderRow);        
     }      
     
     // This section of code is hiding the car and iboost columns if they have no value (and the user has set them as a column to return)
@@ -1040,6 +1076,7 @@ class PredbatTableCard extends HTMLElement {
                 additionalArrow = '<ha-icon icon="mdi:minus" style="margin: 0 0 0 -5px; opacity: 0.25;"></ha-icon>';                 
         }
         let battery;
+        
         if(column === "soc-column") {
             newContent += "%";
             const roundedPercent = Math.round(parseInt(batteryPercent, 10) / 10) * 10;
@@ -1061,11 +1098,7 @@ class PredbatTableCard extends HTMLElement {
             newCell.style.minWidth = "70px";
             
             newCell.style.alignItems = "center";
-        }
-        
-
-        
-        if(column === "soc-column"){
+            
             newCell.innerHTML = `<div style="width: 70px; align-items: center; display: flex; justify-content: center; margin: 0 auto;"><div class="iconContainerSOC">${battery}</div><div style="margin-left: 5px; margin-top: 2px;">${newContent}</div></div>`;                
         } else {
             newCell.innerHTML = `<div class="iconContainer"><div style="margin: 0 1px;">${newContent}</div>${additionalArrow}</div>`;
@@ -1991,6 +2024,13 @@ class PredbatTableCard extends HTMLElement {
         height: 24px;
         font-weight: normal;
         background-color: ${tableHeaderBackgroundColour};
+    }
+    
+    .versionRow {
+        height: 24px;
+        font-weight: normal;
+        background-color: ${tableHeaderBackgroundColour}; 
+        color: ${tableHeaderFontColour};
     }
     
     
