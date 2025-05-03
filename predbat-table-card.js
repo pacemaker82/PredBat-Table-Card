@@ -8,6 +8,8 @@ class PredbatTableCard extends HTMLElement {
     }
     if (!config.columns) {
       throw new Error("You need to define a list of columns (see docs)");
+    } else if(config.columns.includes("weather-column") && !config.weather_entity) {
+        throw new Error("To use weather-column you need to include a weather_entity in your YAML");
     }
     
     this.config = config;
@@ -49,6 +51,13 @@ class PredbatTableCard extends HTMLElement {
         };
     }
     
+  constructor() {
+    super();
+    //this.attachShadow({ mode: 'open' });
+    this.forecast = [];
+    this.unsubscribe = null;
+  }    
+    
   set hass(hass) {
     // Initialize the content if it's not there yet.
     if (!this.content) {
@@ -67,37 +76,84 @@ class PredbatTableCard extends HTMLElement {
     
     if(oldHass === undefined){
         // Render html on the first load
+        if (!this.initialized && this.config.weather_entity) {
+            
+            this.weatherEntityId = this.config.weather_entity;
+            
+            const state = hass.states[this.weatherEntityId];
+            const stateStr = state ? state.state : "unavailable";
+        
+            if (stateStr === "unavailable") {
+              throw new Error("Weather entity seems to be incorrect or not available");
+            } else {           
+            
+                this.subscribeForecast();
+                this.initialized = true;
+            }
+        }        
         this.processAndRender(hass);
     } else {
         const oldEntityUpdateTime = oldHass.states[entityId].last_updated;
         const newEntityUpdateTime = hass.states[entityId].last_updated;
         
         //only render new HTML if the entity actually changed
-        if(oldEntityUpdateTime !== newEntityUpdateTime)
+        if(oldEntityUpdateTime !== newEntityUpdateTime){
             this.processAndRender(hass);        
+        }
     }
 
   }
   
-  processAndRender(hass){
-      
+  async subscribeForecast() {
+    if (this.unsubscribe || !this._hass) return;
 
+    try {
+      this.unsubscribe = await this._hass.connection.subscribeMessage(
+        (event) => {
+          this.forecast = event.forecast || [];
+          console.log(`[${new Date().toLocaleTimeString()}] FORECAST READY FOR RENDER`);
+          this.processAndRender(this._hass);
+        },
+        {
+          type: 'weather/subscribe_forecast',
+          entity_id: this.weatherEntityId,
+          forecast_type: 'hourly' // or 'hourly'
+        }
+      );
+    } catch (e) {
+      console.error('Failed to subscribe to forecast:', e);
+    }
+  }  
+
+  async disconnectedCallback() {
+    if (this.unsubscribe) {
+      await this.unsubscribe();
+      this.unsubscribe = null;
+    }
+  }
+  
+  processAndRender(hass){
+     
+    console.log(`[${new Date().toLocaleTimeString()}] PROCESS AND RENDER TABLE`);
+    /*  
+    this.hass.callWS({
+        type: "weather/forecast",
+        entity_id: "weather.forecast_stone_cottage",
+        forecast_type: "daily" // or "hourly"
+    }); */
+      
     const entityId = this.config.entity;
     
     const state = hass.states[entityId];
     const stateStr = state ? state.state : "unavailable";
 
     if (stateStr === "unavailable") {
-      throw new Error("Predbat HTML entity is not currently available");
+      throw new Error("Predbat HTML entity is not currently available. Hit REFRESH when it is...");
     }
-    
-    
     
     // Predbat Version entity
     const versionEntity = this.config.version_entity;
-    if(versionEntity !== undefined)
-        console.log(hass.states[this.config.version_entity]);
-        
+
     let columnsToReturn = this.config.columns;
     let rawHTML = hass.states[entityId].attributes.html;
     const dataArray = this.getArrayDataFromHTML(rawHTML, hass.themes.darkMode); 
@@ -128,41 +184,6 @@ class PredbatTableCard extends HTMLElement {
         }
     }
     
-    /*
-    
-    if(this.config.show_table_meta === true) {
-        const metaArray = this.getMetadataFromHTML(rawHTML);
-        
-        if(metaArray.length > 0){
-            
-            for (let i = 0; i < metaArray.length; i++) {
-                let metaHeaderRow = document.createElement('tr');
-                let metaCell = document.createElement('th');
-                metaCell.classList.add('lastUpdateRow');
-                metaCell.colSpan = columnsToReturn.length;
-                metaCell.innerHTML = `${metaArray[i]}`;
-                metaHeaderRow.appendChild(metaCell);
-                newTableHead.appendChild(metaHeaderRow); 
-            }
-        }         
-    }
-    */
-    
-    let newHeaderRow = document.createElement('tr');
-    newTableHead.classList.add('topHeader');   
-        
-    //create the header rows
-    columnsToReturn.forEach((column, index) => {
-        //console.log(column + " - " + dataArray[0][column])
-    
-           let newColumn = document.createElement('th');
-            newColumn.innerHTML = this.getColumnDescription(column);
-            newHeaderRow.appendChild(newColumn);        
-
-    });
-        
-    newTableHead.appendChild(newHeaderRow);
-        
     // set out the data rows
     let newTableBody = document.createElement('tbody');
     
@@ -180,85 +201,62 @@ class PredbatTableCard extends HTMLElement {
                 //console.log(column + " " + item[column]);
                 if(item["time-column"].value.includes("23:30"))
                     isMidnight = true;
+                
                 let newColumn = this.getCellTransformation(item[column], column, hass.themes.darkMode);
     
                 newRow.appendChild(newColumn); 
                 
-        if(column === "load-column" && !item["load-column"].value.includes("⚊")) {
-            let val = parseFloat(item["load-column"].value);
-            loadTotal += val;
-            loadDayTotal += val;
-        }
-        if(column === "pv-column" && !item["pv-column"].value.includes("⚊")) {
-            let val = parseFloat(item["pv-column"].value.replace(/[☀]/g, ''));
-            pvTotal += val;
-            pvDayTotal += val;
-        }
-        if(column === "car-column" && !item["car-column"].value.includes("⚊")) {
-            let val = parseFloat(item["car-column"].value);
-            carTotal += val;
-            carDayTotal += val;
-        }
-        if(column === "net-power-column" && !item["net-power-column"].value.includes("⚊")) {
-            let val = parseFloat(item["net-power-column"].value);
-            netTotal += val;
-            netDayTotal += val;
-        }
-        if(column === "cost-column" && !item["cost-column"].value.includes("→")) {
-            let val = parseFloat(item["cost-column"].value.replace(/[↘↗→p]/g, ''));
-            costTotal += val;
-            costDayTotal += val;
-        }
-        if(column === "iboost-column" && !item["iboost-column"].value.includes("⚊")) {
-            let val = parseFloat(item["iboost-column"].value);
-            iboostTotal += val;
-            iboostDayTotal += val;
-        }
-        if(column === "clip-column" && !item["clip-column"].value.includes("⚊")) {
-            let val = parseFloat(item["clip-column"].value);
-            clipTotal += val;
-            clipDayTotal += val;
-        }
-        if(column === "xload-column" && !item["xload-column"].value.includes("⚊")) {
-            let val = parseFloat(item["xload-column"].value);
-            xloadTotal += val;
-            xloadDayTotal += val;
-        }
-        if(column === "co2kwh-column" && !item["co2kwh-column"].value.includes("⚊")) {
-            let val = parseFloat(item["co2kwh-column"].value);
-            co2kwhTotal += val;
-            co2kwhDayTotal += val;
-        }
-        if(column === "co2kg-column" && !item["co2kg-column"].value.includes("⚊")) {
-            let val = parseFloat(item["co2kg-column"].value);
-            co2kgTotal += val;
-            co2kgDayTotal += val;
-        }
+                if(column === "load-column" && !item["load-column"].value.includes("⚊")) {
+                    let val = parseFloat(item["load-column"].value);
+                    loadTotal += val;
+                    loadDayTotal += val;
+                }
+                if(column === "pv-column" && !item["pv-column"].value.includes("⚊")) {
+                    let val = parseFloat(item["pv-column"].value.replace(/[☀]/g, ''));
+                    pvTotal += val;
+                    pvDayTotal += val;
+                }
+                if(column === "car-column" && !item["car-column"].value.includes("⚊")) {
+                    let val = parseFloat(item["car-column"].value);
+                    carTotal += val;
+                    carDayTotal += val;
+                }
+                if(column === "net-power-column" && !item["net-power-column"].value.includes("⚊")) {
+                    let val = parseFloat(item["net-power-column"].value);
+                    netTotal += val;
+                    netDayTotal += val;
+                }
+                if(column === "cost-column" && !item["cost-column"].value.includes("→")) {
+                    let val = parseFloat(item["cost-column"].value.replace(/[↘↗→p]/g, ''));
+                    costTotal += val;
+                    costDayTotal += val;
+                }
+                if(column === "iboost-column" && !item["iboost-column"].value.includes("⚊")) {
+                    let val = parseFloat(item["iboost-column"].value);
+                    iboostTotal += val;
+                    iboostDayTotal += val;
+                }
+                if(column === "clip-column" && !item["clip-column"].value.includes("⚊")) {
+                    let val = parseFloat(item["clip-column"].value);
+                    clipTotal += val;
+                    clipDayTotal += val;
+                }
+                if(column === "xload-column" && !item["xload-column"].value.includes("⚊")) {
+                    let val = parseFloat(item["xload-column"].value);
+                    xloadTotal += val;
+                    xloadDayTotal += val;
+                }
+                if(column === "co2kwh-column" && !item["co2kwh-column"].value.includes("⚊")) {
+                    let val = parseFloat(item["co2kwh-column"].value);
+                    co2kwhTotal += val;
+                    co2kwhDayTotal += val;
+                }
+                if(column === "co2kg-column" && !item["co2kg-column"].value.includes("⚊")) {
+                    let val = parseFloat(item["co2kg-column"].value);
+                    co2kgTotal += val;
+                    co2kgDayTotal += val;
+                }
                 
-                
-                /*
-                if(column === "load-column" && !item["load-column"].value.includes("⚊"))
-                    loadTotal = loadTotal + parseFloat(item["load-column"].value);
-                if(column === "pv-column" && !item["pv-column"].value.includes("⚊"))
-                    pvTotal = pvTotal + parseFloat(item["pv-column"].value.replace(/[☀]/g, ''));
-                if(column === "car-column" && !item["car-column"].value.includes("⚊"))
-                    carTotal = carTotal + parseFloat(item["car-column"].value);
-                if(column === "net-power-column" && !item["net-power-column"].value.includes("⚊"))
-                    netTotal = netTotal + parseFloat(item["net-power-column"].value);                    
-                if(column === "cost-column" && !item["cost-column"].value.includes("→"))
-                    costTotal = costTotal + parseFloat(item["cost-column"].value.replace(/[↘↗→p]/g, ''));                    
-                if(column === "iboost-column" && !item["iboost-column"].value.includes("⚊"))
-                    iboostTotal = iboostTotal + parseFloat(item["iboost-column"].value);
-                if(column === "clip-column" && !item["clip-column"].value.includes("⚊"))
-                    clipTotal = clipTotal + parseFloat(item["clip-column"].value);
-                if(column === "xload-column" && !item["xload-column"].value.includes("⚊"))
-                    xloadTotal = xloadTotal + parseFloat(item["xload-column"].value);
-                if(column === "co2kwh-column" && !item["co2kwh-column"].value.includes("⚊"))
-                    co2kwhTotal = co2kwhTotal + parseFloat(item["co2kwh-column"].value);
-                if(column === "co2kg-column" && !item["co2kg-column"].value.includes("⚊"))
-                    co2kgTotal = co2kgTotal + parseFloat(item["co2kg-column"].value);  
-                    
-                    */
             }
         });
         
@@ -328,12 +326,6 @@ class PredbatTableCard extends HTMLElement {
         }
     });
     
-    console.log("load total: " + loadTotal);
-    console.log("pv total: " + pvTotal);
-    console.log("car total: " + carTotal);
-    console.log("net total: " + netTotal);
-    console.log("cost total: " + costTotal);
-    
     // Create an optional Last Updated Table Header Row
     if(this.config.show_totals === true || this.config.show_plan_totals === true) {
         
@@ -384,13 +376,18 @@ class PredbatTableCard extends HTMLElement {
         });
         
         newTableBody.appendChild(totalsRow);
-    }      
+    }   
+    
+    let headOrFoot = "td";
+    if(this.config.show_versions_top === true)
+        headOrFoot = "th";    
     
     if (versionEntity !== undefined){
+
         const predbatVersion = hass.states[versionEntity].attributes.installed_version;
         const latestPredbatVersion = hass.states[versionEntity].attributes.latest_version;
         let lastUpdateHeaderRow = document.createElement('tr');
-        let lastUpdateCell = document.createElement('td');
+        let lastUpdateCell = document.createElement(headOrFoot);
         lastUpdateCell.classList.add('versionRow');
         lastUpdateCell.colSpan = columnsToReturn.length;
         let updateIcon = ``;
@@ -398,14 +395,18 @@ class PredbatTableCard extends HTMLElement {
             updateIcon = `<ha-icon icon="mdi:download-circle-outline" style="--mdc-icon-size: 18px; margin-left: 4px;" title="Predbat version ${latestPredbatVersion} available"></ha-icon>`;
         lastUpdateCell.innerHTML = `Predbat Version: ${predbatVersion}${updateIcon}`;
         lastUpdateHeaderRow.appendChild(lastUpdateCell);
-        newTableBody.appendChild(lastUpdateHeaderRow);
+        
+        if(this.config.show_versions_top === true)
+            newTableHead.appendChild(lastUpdateHeaderRow);
+        else
+            newTableBody.appendChild(lastUpdateHeaderRow);
     }  
     
     if(this.config.show_tablecard_version === true){
         const version = hass.states["update.predbat_table_card_update"].attributes.installed_version;
         const latestVersion = hass.states["update.predbat_table_card_update"].attributes.latest_version;
         let lastUpdateHeaderRow = document.createElement('tr');
-        let lastUpdateCell = document.createElement('td');
+        let lastUpdateCell = document.createElement(headOrFoot);
         lastUpdateCell.classList.add('versionRow');
         lastUpdateCell.colSpan = columnsToReturn.length;
         let updateIcon = ``;
@@ -413,8 +414,27 @@ class PredbatTableCard extends HTMLElement {
             updateIcon = `<ha-icon icon="mdi:download-circle-outline" style="--mdc-icon-size: 18px; margin-left: 4px;" title="Predbat Table Card version ${latestVersion} available"></ha-icon>`;
         lastUpdateCell.innerHTML = `Predbat Table Card Version: ${version}${updateIcon}`;
         lastUpdateHeaderRow.appendChild(lastUpdateCell);
-        newTableBody.appendChild(lastUpdateHeaderRow);        
+        newTableBody.appendChild(lastUpdateHeaderRow);
+        if(this.config.show_versions_top === true)
+            newTableHead.appendChild(lastUpdateHeaderRow);
+        else
+            newTableBody.appendChild(lastUpdateHeaderRow);        
     }      
+    
+    let newHeaderRow = document.createElement('tr');
+    newTableHead.classList.add('topHeader');   
+        
+    //create the header rows
+    columnsToReturn.forEach((column, index) => {
+        //console.log(column + " - " + dataArray[0][column])
+    
+           let newColumn = document.createElement('th');
+            newColumn.innerHTML = this.getColumnDescription(column);
+            newHeaderRow.appendChild(newColumn);        
+
+    });
+        
+    newTableHead.appendChild(newHeaderRow);    
     
     // This section of code is hiding the car and iboost columns if they have no value (and the user has set them as a column to return)
     
@@ -688,18 +708,11 @@ class PredbatTableCard extends HTMLElement {
     //Set the table up for people that like the Trefor style
     //
     
-
-    if(column !== "import-export-column"){
-    
-        if(theItem.value.replace(/\s/g, '').length === 0) {
-            
-        }
-    }
     
     if(column === "time-column" && this.config.force_single_line === true)
         newCell.style.whiteSpace = "nowrap";
         
-    if(this.config.old_skool === true || this.config.old_skool_columns !== undefined){
+    if(this.config.old_skool === true || this.config.old_skool_columns !== undefined && column !== "weather-column"){ // weather not supported in old skool
         
         if(this.config.old_skool === true || this.config.old_skool_columns.indexOf(column) >= 0){
         
@@ -990,7 +1003,7 @@ class PredbatTableCard extends HTMLElement {
     }    
 
         
-    if(column !== "import-export-column"){
+    if(column !== "import-export-column" && column !== "weather-column"){
         newCell.style.color = theItem.color;
         if(theItem.value.replace(/\s/g, '').length === 0 || theItem.value === "0" || theItem.value === "⚊") {
             if(fillEmptyCells)
@@ -999,7 +1012,27 @@ class PredbatTableCard extends HTMLElement {
             newCell.innerHTML = `<div class="iconContainer">${theItem.value}</div>`;
     }
     
+    if(column === "weather-column") {
+        //console.log("Weather: ", theItem.value.datetime);
+        
+        //newCell.style.color = "var(--primary-color)";
+        
+        if(theItem.value !== undefined && theItem.value !== null){
+           
+            let condition = theItem.value.condition;
+            if(condition === "partlycloudynight")
+                condition = "partlycloudy";
+            const lang = this._hass.language;
+            const key = `component.weather.entity_component._.state.${condition}`;
+            
+            const readableCondition = this._hass.resources[lang]?.[key] || condition;            
+            
+            let weatherIcon = this.convertConditionToIcon(theItem.value.condition);
+            //const readableCondition = this._hass.localize(`component.weather.state._.${theItem.value.condition}`);
 
+            newCell.innerHTML = `<div class="iconContainer"><ha-icon icon="mdi:${weatherIcon}" title="${readableCondition}, ${theItem.value.temperature}${this._hass.config.unit_system.temperature}"></ha-icon></div>`;
+        }
+    }
 
     if(column === "load-column" || column === "pv-column" || column == "car") {
         
@@ -1043,6 +1076,8 @@ class PredbatTableCard extends HTMLElement {
           
         newCell.style.color = theItem.color;
         newCell.style.textShadow = "none";
+        if(column === "time-column")
+            newCell.style.width = "70px";
         
         let content = theItem.value;
         if(column === "total-column")
@@ -1326,6 +1361,43 @@ class PredbatTableCard extends HTMLElement {
       return newCell;
   }
   
+  convertConditionToIcon(condition) {
+      let icon = "cloud-question";
+      if(condition === "partlycloudy")
+        icon = "weather-partly-cloudy";
+      if(condition === "partlycloudynight")
+        icon = "weather-night-partly-cloudy";
+      if(condition === "clear-night")
+        icon = "weather-night";
+      if(condition === "sunny")
+        icon = "weather-sunny";
+      if(condition === "cloudy")
+        icon = "weather-cloudy";
+      if(condition === "exceptional")
+        icon = "alert-outline";
+      if(condition === "fog")
+        icon = "weather-fog";
+      if(condition === "hail")
+        icon = "weather-hail";
+      if(condition === "lightning")
+        icon = "weather-lightning";
+      if(condition === "lightning-rainy")
+        icon = "weather-lightning-rainy";
+      if(condition === "pouring")
+        icon = "weather-pouring";
+      if(condition === "snowy")
+        icon = "weather-snowy";
+      if(condition === "snowy-rainy")
+        icon = "weather-snowy-rainy";
+      if(condition === "windy")
+        icon = "weather-windy";
+      if(condition === "windy-variant")
+        icon = "weather-windy-variant";        
+    
+        
+    return icon;
+  }
+  
   adjustStatusFields(status){
       
       //console.log(status);
@@ -1558,6 +1630,70 @@ class PredbatTableCard extends HTMLElement {
     }
   }
   
+    isLabelDuringNight(label, hass) {
+  const sun = hass.states['sun.sun'];
+  if (!sun) return false;
+
+  const sunrise = new Date(sun.attributes.next_rising);
+  const sunset = new Date(sun.attributes.next_setting);
+
+  // Extract only the time parts (local time)
+  const sunriseHour = sunrise.getHours();
+  const sunriseMinute = sunrise.getMinutes();
+  const sunsetHour = sunset.getHours();
+  const sunsetMinute = sunset.getMinutes();
+
+  // Parse label
+  const [labelDayStr, labelTimeStr] = label.split(' ');
+  const [labelHour, labelMinute] = labelTimeStr.split(':').map(Number);
+
+  // Compare to assumed sunrise/sunset time
+  const labelMinutes = labelHour * 60 + labelMinute;
+  const sunriseMinutes = sunriseHour * 60 + sunriseMinute;
+  const sunsetMinutes = sunsetHour * 60 + sunsetMinute;
+
+  return labelMinutes < sunriseMinutes || labelMinutes >= sunsetMinutes;
+}
+
+    findForecastForLabel(label, forecastArray) {
+      const [labelDayStr, labelTimeStr] = label.split(' ');
+      const [labelHour, labelMinute] = labelTimeStr.split(':').map(Number);
+    
+      const weekdayMap = {
+        Sun: 0,
+        Mon: 1,
+        Tue: 2,
+        Wed: 3,
+        Thu: 4,
+        Fri: 5,
+        Sat: 6,
+      };
+      const targetDay = weekdayMap[labelDayStr];
+    
+      const now = new Date();
+      const todayDay = now.getDay();
+    
+      const labelDate = new Date(now);
+      labelDate.setHours(labelHour, labelMinute, 0, 0);
+      const dayDiff = (targetDay - todayDay + 7) % 7;
+      labelDate.setDate(now.getDate() + dayDiff);
+    
+      let bestMatch = null;
+      let smallestDiff = Infinity;
+    
+      for (const f of forecastArray) {
+        const forecastDate = new Date(f.datetime); // interpreted as local time
+        const diff = Math.abs(forecastDate.getTime() - labelDate.getTime());
+    
+        if (diff < smallestDiff) {
+          bestMatch = f;
+          smallestDiff = diff;
+        }
+      }
+    
+      return bestMatch;
+  }  
+  
   getColumnDescription(column) {
         const headerClassesObject = {
           'time-column': { description: "Time", smallDescription: "Time"},
@@ -1577,7 +1713,8 @@ class PredbatTableCard extends HTMLElement {
           'total-column': { description: "Total Cost", smallDescription: "Total <br>Cost" },
           'xload-column': { description: "XLoad kWh", smallDescription: "XLoad kWh" },
           'import-export-column': {description: "Import / Export", smallDescription: "Import / <br>Export" },
-          'net-power-column': {description: "Net kWh", smallDescription: "Net <br>kWh" }
+          'net-power-column': {description: "Net kWh", smallDescription: "Net <br>kWh" }, 
+          'weather-column': {description: "Weather", smallDescription: "Weather" }
         };
         
         if (headerClassesObject.hasOwnProperty(column)) {
@@ -1798,6 +1935,20 @@ class PredbatTableCard extends HTMLElement {
                 }
                 
                 newTRObject["import-export-column"] = [newTRObject[headerClassesArray[1]], newTRObject[headerClassesArray[2]]];
+                
+                // weather forecast
+                if(this.forecast){
+                    const match = this.findForecastForLabel(newTRObject["time-column"].value, this.forecast);
+                    if(match !== undefined && match !== null){
+                        let matchStore = match;
+                        
+                        if(this.isLabelDuringNight(newTRObject["time-column"].value, this._hass) && match.condition === "partlycloudy")
+                            matchStore.condition = "partlycloudynight";
+                        newTRObject["weather-column"] = {"value": matchStore, "color": null};
+                    }
+                    //    console.log("Label: " + newTRObject["time-column"].value + " - Forecast Time: " + match.datetime);
+                    
+                }
 
                 // net-power-column
 
