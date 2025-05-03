@@ -13,6 +13,7 @@ This is a custom [Predbat](https://github.com/springfall2008/batpred) table card
 4. [Custom Card Setup Example](#custom-setup-example)
 5. [Managing table width for different devices](#managing-table-width-for-different-devices)
 6. [Friendly States](#friendly-states)
+7. [Showing the weather forecast](#showing-the-weather-forecast)
 
 ## Installation
 
@@ -53,6 +54,7 @@ The following YAML config items can or should be set on the card
 | `debug_columns` | NO | Like `columns`, use this setting to override specific columns to show the 10% values in HTML Debug mode. <br> Only works for `import-column`, `export-column`, `load-column`, `limit-column` and `pv-column` <br> Default is OFF for these 10% values |
 | `show_day_totals`    | NO    | Displays a day "Totals" row at midnight of the plan for any columns that can be calculated   |
 | `show_plan_totals`    | NO    | Displays a "Totals" row at the <b>bottom</b> of the plan for any columns that can be calculated   |
+| `weather_entity`    | NO    | Add a weather forecast entity to see the weather for each time slot. Must add `weather-column` to `columns`   |
 
 You can use `import-export-column` to see both import and export prices in a single column
 
@@ -78,6 +80,8 @@ You can use `import-export-column` to see both import and export prices in a sin
 | XLoad   | `xload-column`    | Displays the predicted load if also using Predheat ** ***  |
 | Clipping   | `clip-column`    | Displays the predicted PV clipping for that time period ** ***   |
 | Net Power   | `net-power-column`    | Displays the predicted net power when calculating available PV,<br> minus house load, car and iBoost loads for that time period   |
+| Weather   | `weather-column`    | Displays a weather icon based on the forecast for that timeslot   |
+
 
 
 ** Indicates if configured in Predbat<br>
@@ -214,3 +218,23 @@ Full explanations of the Predbat status's [can be found here](https://springfall
 The image below demonstrates the friendly states in action:
 <img width="658" alt="Screenshot 2024-11-27 at 10 36 22" src="https://github.com/user-attachments/assets/c5bf9b8e-c371-4d6d-bb9c-87dd6a76900d">
 
+## Showing the weather forecast
+
+By adding a weather forecast entity to your YAML using `weather_entity`, and adding `weather-column` to your `columns`, you can view the weather forecast for the specific time.
+
+IMPORTANT: Only works with valid weather forecast entities designed per the Home Assistant latest spec. See [here for some examples](https://community.home-assistant.io/t/definitive-guide-to-weather-integrations/736419)
+
+IMPORTANT: Sometimes your weather forecast might not cover the Predbat plan. In this case no weather icon will show.
+
+```
+weather_entity: weather.forecast_home
+columns:
+  - time-column
+  - weather-column
+  - import-column
+  - state-column
+```
+
+Mouse over the weather icon to see a description and temperature. 
+
+<img width="521" alt="Screenshot 2025-05-03 at 13 37 31" src="https://github.com/user-attachments/assets/58bd2140-00bb-4ce9-85e4-39692aca8172" />
