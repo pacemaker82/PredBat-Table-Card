@@ -112,6 +112,7 @@ class PredbatTableCard extends HTMLElement {
         (event) => {
           this.forecast = event.forecast || [];
           console.log(`[${new Date().toLocaleTimeString()}] FORECAST READY FOR RENDER`);
+          console.log(this.forecast);
           this.processAndRender(this._hass);
         },
         {
@@ -1013,9 +1014,9 @@ class PredbatTableCard extends HTMLElement {
     }
     
     if(column === "weather-column") {
-        //console.log("Weather: ", theItem.value.datetime);
+        //console.log("Weather: ", theItem.value);
         
-        //newCell.style.color = "var(--primary-color)";
+        newCell.style.color = theItem.color;
         
         if(theItem.value !== undefined && theItem.value !== null){
            
@@ -1029,8 +1030,11 @@ class PredbatTableCard extends HTMLElement {
             
             let weatherIcon = this.convertConditionToIcon(theItem.value.condition);
             //const readableCondition = this._hass.localize(`component.weather.state._.${theItem.value.condition}`);
+            
+            const weatherEntity = this._hass.states[this.config.weather_entity];
+            const tempUnit = weatherEntity?.attributes?.temperature_unit || this._hass.config.unit_system.temperature;
 
-            newCell.innerHTML = `<div class="iconContainer"><ha-icon icon="mdi:${weatherIcon}" title="${readableCondition}, ${theItem.value.temperature}${this._hass.config.unit_system.temperature}"></ha-icon></div>`;
+            newCell.innerHTML = `<div class="iconContainer"><ha-icon icon="mdi:${weatherIcon}" title="${readableCondition}, ${theItem.value.temperature}${tempUnit}"></ha-icon></div>`;
         }
     }
 
@@ -1630,7 +1634,7 @@ class PredbatTableCard extends HTMLElement {
     }
   }
   
-    isLabelDuringNight(label, hass) {
+isLabelDuringNight(label, hass) {
   const sun = hass.states['sun.sun'];
   if (!sun) return false;
 
@@ -1655,44 +1659,53 @@ class PredbatTableCard extends HTMLElement {
   return labelMinutes < sunriseMinutes || labelMinutes >= sunsetMinutes;
 }
 
-    findForecastForLabel(label, forecastArray) {
-      const [labelDayStr, labelTimeStr] = label.split(' ');
-      const [labelHour, labelMinute] = labelTimeStr.split(':').map(Number);
-    
-      const weekdayMap = {
-        Sun: 0,
-        Mon: 1,
-        Tue: 2,
-        Wed: 3,
-        Thu: 4,
-        Fri: 5,
-        Sat: 6,
-      };
-      const targetDay = weekdayMap[labelDayStr];
-    
-      const now = new Date();
-      const todayDay = now.getDay();
-    
-      const labelDate = new Date(now);
-      labelDate.setHours(labelHour, labelMinute, 0, 0);
-      const dayDiff = (targetDay - todayDay + 7) % 7;
-      labelDate.setDate(now.getDate() + dayDiff);
-    
-      let bestMatch = null;
-      let smallestDiff = Infinity;
-    
-      for (const f of forecastArray) {
-        const forecastDate = new Date(f.datetime); // interpreted as local time
-        const diff = Math.abs(forecastDate.getTime() - labelDate.getTime());
-    
-        if (diff < smallestDiff) {
-          bestMatch = f;
-          smallestDiff = diff;
-        }
-      }
-    
-      return bestMatch;
-  }  
+findForecastForLabel(label, forecastArray) {
+  if (!label || !forecastArray?.length) return null;
+
+  const [labelDayStr, labelTimeStr] = label.split(' ');
+  const [labelHour, labelMinute] = labelTimeStr.split(':').map(Number);
+
+  const weekdayMap = {
+    Sun: 0,
+    Mon: 1,
+    Tue: 2,
+    Wed: 3,
+    Thu: 4,
+    Fri: 5,
+    Sat: 6,
+  };
+
+  const targetWeekday = weekdayMap[labelDayStr];
+  const now = new Date();
+  const todayWeekday = now.getDay();
+  const dayOffset = (targetWeekday - todayWeekday + 7) % 7;
+
+  // Create label Date (local time)
+  const labelDate = new Date(now);
+  labelDate.setDate(now.getDate() + dayOffset);
+  labelDate.setHours(labelHour, labelMinute, 0, 0);
+
+  // Find the forecast whose datetime (converted to local) is the same hour as labelDate
+  let bestMatch = null;
+  let smallestDiff = Infinity;
+
+  for (const forecast of forecastArray) {
+    const forecastDate = new Date(forecast.datetime); // forecast datetime in UTC → Date() converts to local time
+
+    // Compare rounded-down forecast time to label time
+    const diffMs = Math.abs(forecastDate.getTime() - labelDate.getTime());
+    const diffMinutes = diffMs / (1000 * 60);
+
+    // Only match within ±30 minutes of the forecast hour block
+    if (diffMinutes <= 30 && diffMinutes < smallestDiff) {
+      bestMatch = forecast;
+      smallestDiff = diffMinutes;
+    }
+  }
+
+  return bestMatch || null;
+}
+
   
   getColumnDescription(column) {
         const headerClassesObject = {
@@ -1938,15 +1951,33 @@ class PredbatTableCard extends HTMLElement {
                 
                 // weather forecast
                 if(this.forecast){
+                    let weatherColor = "var(--primary-text-color)"; // #F18261
                     const match = this.findForecastForLabel(newTRObject["time-column"].value, this.forecast);
                     if(match !== undefined && match !== null){
                         let matchStore = match;
                         
                         if(this.isLabelDuringNight(newTRObject["time-column"].value, this._hass) && match.condition === "partlycloudy")
                             matchStore.condition = "partlycloudynight";
-                        newTRObject["weather-column"] = {"value": matchStore, "color": null};
-                    }
-                    //    console.log("Label: " + newTRObject["time-column"].value + " - Forecast Time: " + match.datetime);
+                        
+                        const weatherEntity = this._hass.states[this.config.weather_entity];
+                        const tempUnit = weatherEntity?.attributes?.temperature_unit || this._hass.config.unit_system.temperature;
+                        
+                        if(tempUnit === "°F" && match.temperature >= 77)
+                            weatherColor = "rgb(220, 67, 20)";
+                        
+                        if(tempUnit === "°C" && match.temperature >= 25)
+                            weatherColor = "rgb(220, 67, 20)";
+                            
+                        if(tempUnit === "°C" && match.temperature <= 0)
+                            weatherColor = "rgb(31, 136, 207)";
+                            
+                        if(tempUnit === "°F" && match.temperature <= 32)
+                            weatherColor = "rgb(31, 136, 207)";
+                        
+                        newTRObject["weather-column"] = {"value": matchStore, "color": weatherColor};
+                    } else 
+                        newTRObject["weather-column"] = {"value": null, "color": null};
+                    //console.log("Label: " + newTRObject["time-column"].value + " - Forecast Time: " + match.datetime);
                     
                 }
 
