@@ -222,6 +222,9 @@ The image below demonstrates the friendly states in action:
 
 By adding a weather forecast entity to your YAML using `weather_entity`, and adding `weather-column` to your `columns`, you can view the weather forecast for the specific time.
 
+- Weather iconography shows RED if temperature is higher than 25C (77F), indicating _solar panel efficiency impact_
+- Weather iconography shows BLUE if temperature is below than 0C (32F), indicating _battery efficiency impact_
+
 **IMPORTANT:** Only works with valid weather forecast entities designed per the Home Assistant latest spec. See [here for some examples](https://community.home-assistant.io/t/definitive-guide-to-weather-integrations/736419) Tested with [met.no](https://www.home-assistant.io/integrations/met) and [WeatherFlow Forecast](https://github.com/briis/weatherflow_forecast) integrations.
 
 **IMPORTANT:** Sometimes your weather forecast might not cover the Predbat plan. In this case no weather icon will show.
