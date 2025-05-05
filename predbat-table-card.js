@@ -1396,7 +1396,9 @@ class PredbatTableCard extends HTMLElement {
       if(condition === "windy")
         icon = "weather-windy";
       if(condition === "windy-variant")
-        icon = "weather-windy-variant";        
+        icon = "weather-windy-variant"; 
+      if(condition === "rainy")
+        icon = "weather-pouring";
     
         
     return icon;
