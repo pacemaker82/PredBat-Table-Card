@@ -1662,6 +1662,70 @@ isLabelDuringNight(label, hass) {
 }
 
 findForecastForLabel(label, forecastArray) {
+  if (!label || !forecastArray?.length || !this._hass || !this.config?.weather_entity) {
+    return null;
+  }
+
+  const [labelDayStr, labelTimeStr] = label.split(' ');
+  const [labelHour, labelMinute] = labelTimeStr.split(':').map(Number);
+
+  const weekdayMap = {
+    Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6,
+  };
+
+  const targetWeekday = weekdayMap[labelDayStr];
+  const now = new Date();
+  const todayWeekday = now.getDay();
+  const dayOffset = (targetWeekday - todayWeekday + 7) % 7;
+
+  const labelDate = new Date(now);
+  labelDate.setDate(now.getDate() + dayOffset);
+  labelDate.setHours(labelHour, labelMinute, 0, 0);
+
+  let bestMatch = null;
+  let smallestDiff = Infinity;
+
+  for (const forecast of forecastArray) {
+    const forecastDate = new Date(forecast.datetime);
+    const diffMinutes = Math.abs((forecastDate.getTime() - labelDate.getTime()) / 60000);
+
+    if (diffMinutes <= 30 && diffMinutes < smallestDiff) {
+      bestMatch = {
+        ...forecast,
+        source: 'forecast'
+      };
+      smallestDiff = diffMinutes;
+    }
+  }
+
+  // Fallback: if label is within the current hour and no forecast found, use current weather state
+  if (!bestMatch) {
+    const nowHour = now.getHours();
+    const isLabelNow = (
+      labelDate.getFullYear() === now.getFullYear() &&
+      labelDate.getMonth() === now.getMonth() &&
+      labelDate.getDate() === now.getDate() &&
+      labelDate.getHours() === nowHour
+    );
+
+    if (isLabelNow) {
+      const entity = this._hass.states[this.config.weather_entity];
+      if (entity) {
+        bestMatch = {
+          source: 'current',
+          datetime: new Date().toISOString(),
+          condition: entity.state,
+          temperature: entity.attributes.temperature,
+        };
+      }
+    }
+  }
+
+  return bestMatch || null;
+}
+
+
+/* findForecastForLabel(label, forecastArray) {
   if (!label || !forecastArray?.length) return null;
 
   const [labelDayStr, labelTimeStr] = label.split(' ');
@@ -1707,7 +1771,7 @@ findForecastForLabel(label, forecastArray) {
 
   return bestMatch || null;
 }
-
+*/
   
   getColumnDescription(column) {
         const headerClassesObject = {
