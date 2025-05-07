@@ -55,8 +55,9 @@ The following YAML config items can or should be set on the card
 | `show_day_totals`    | NO    | Displays a day "Totals" row at midnight of the plan for any columns that can be calculated   |
 | `show_plan_totals`    | NO    | Displays a "Totals" row at the <b>bottom</b> of the plan for any columns that can be calculated   |
 | `weather_entity`    | NO    | Add a weather forecast entity to see the weather for each time slot. Must add `weather-column` to `columns`   |
+| `car_charge_switch`    | NO    | Add the switch entity that identifies if your car is charging. This will show a charging icon on the plan in the `car-column` if your car is actively charging   |
 
-You can use `import-export-column` to see both import and export prices in a single column
+You can use `import-export-column` to see both import and export prices in a single column 
 
 ## Column Options
 
