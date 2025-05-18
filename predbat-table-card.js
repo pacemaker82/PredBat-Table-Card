@@ -8,8 +8,8 @@ class PredbatTableCard extends HTMLElement {
     }
     if (!config.columns) {
       throw new Error("You need to define a list of columns (see docs)");
-    } else if(config.columns.includes("weather-column") && !config.weather_entity) {
-        throw new Error("To use weather-column you need to include a weather_entity in your YAML");
+    } else if((config.columns.includes("weather-column") || config.columns.includes("temp-column")) && !config.weather_entity) {
+        throw new Error("To use weather or temp columns you need to include a weather_entity in your YAML");
     }
     
     this.config = config;
@@ -726,7 +726,7 @@ class PredbatTableCard extends HTMLElement {
     if(column === "time-column" && this.config.force_single_line === true)
         newCell.style.whiteSpace = "nowrap";
     
-    if(column !== "weather-column" && column !== "car-column"){ // weather and car not supported by old skool
+    if(column !== "temp-column" && column !== "weather-column" && column !== "car-column"){ // weather and car not supported by old skool
         if(this.config.old_skool === true || this.config.old_skool_columns !== undefined){ 
             
             if(this.config.old_skool === true || this.config.old_skool_columns.indexOf(column) >= 0){
@@ -1018,7 +1018,7 @@ class PredbatTableCard extends HTMLElement {
         }    
     }
         
-    if(column !== "import-export-column" && column !== "weather-column"){
+    if(column !== "import-export-column" && column !== "weather-column" && column !== "temp-column"){
         newCell.style.color = theItem.color;
         if(theItem.value.replace(/\s/g, '').length === 0 || theItem.value === "0" || theItem.value === "⚊") {
             if(fillEmptyCells)
@@ -1068,6 +1068,20 @@ class PredbatTableCard extends HTMLElement {
             newCell.innerHTML = `<div class="iconContainer"><ha-icon icon="mdi:${weatherIcon}" title="${readableCondition}, ${theItem.value.temperature}${tempUnit}"></ha-icon></div>`;
         }
     }
+    
+    if(column === "temp-column") {
+
+        newCell.style.color = theItem.color;
+        
+        if(theItem.value !== undefined && theItem.value !== null){
+            
+            const roundedTemp = Math.round(parseFloat(theItem.value.temperature));
+            const weatherEntity = this._hass.states[this.config.weather_entity];
+            const tempUnit = weatherEntity?.attributes?.temperature_unit || this._hass.config.unit_system.temperature;
+
+            newCell.innerHTML = `<div class="iconContainer">${roundedTemp}<div class="tempUnit">${tempUnit}</div></div>`;
+        }
+    }    
 
     if(column === "load-column" || column === "pv-column") {
         
@@ -1159,7 +1173,7 @@ class PredbatTableCard extends HTMLElement {
 
             battery = `<ha-icon icon="mdi:${batteryIcon}" style="--mdc-icon-size: 20px;"></ha-icon>${batteryArrow}`;
             
-            newCell.style.display = "flex";
+            //newCell.style.display = "flex";
             newCell.style.paddingLeft = "4px";
             
             newCell.style.minWidth = "70px";
@@ -1758,25 +1772,26 @@ findForecastForLabel(label, forecastArray) {
 
   getColumnDescription(column) {
         const headerClassesObject = {
-          'time-column': { description: "Time", smallDescription: "Time"},
-          'import-column': { description: "Import", smallDescription: "Import" },
-          'export-column': { description: "Export", smallDescription: "Export" },
+          'time-column': { description: "Time", smallDescription: "<ha-icon icon='mdi:calendar-clock' style='--mdc-icon-size: 20px;'></ha-icon>"},
+          'import-column': { description: "Import", smallDescription: "<ha-icon icon='mdi:transmission-tower-import' style='--mdc-icon-size: 20px;'></ha-icon>" },
+          'export-column': { description: "Export", smallDescription: "<ha-icon icon='mdi:transmission-tower-export' style='--mdc-icon-size: 20px;'></ha-icon>" },
           'state-column': { description: "State", smallDescription: "State" },
-          'limit-column': { description: "Limit", smallDescription: "Limit" },
-          'pv-column': { description: "PV kWh", smallDescription: "PV <br>kWh" },
-          'load-column': { description: "Load kWh", smallDescription: "Load <br>kWh" },
-          'soc-column': { description: "SoC", smallDescription: "SoC" },
+          'limit-column': { description: "Limit", smallDescription: "<ha-icon icon='mdi:alert-circle-outline' style='--mdc-icon-size: 20px;'></ha-icon>" },
+          'pv-column': { description: "PV kWh", smallDescription: "<ha-icon icon='mdi:solar-panel' style='--mdc-icon-size: 20px;'></ha-icon>" },
+          'load-column': { description: "Load kWh", smallDescription: "<ha-icon icon='mdi:home-lightning-bolt' style='--mdc-icon-size: 20px;'></ha-icon>" },
+          'soc-column': { description: "SoC", smallDescription: "<ha-icon icon='mdi:battery-80' style='--mdc-icon-size: 20px;'></ha-icon>" },
           'clip-column': { description: "Clip kWh", smallDescription: "Clip <br>kWh" },          
-          'car-column': { description: "Car kWh", smallDescription: "Car <br>kWh" },
-          'iboost-column': { description: "iBoost kWh", smallDescription: "iBoost <br>kWh" },    
+          'car-column': { description: "Car kWh", smallDescription: "<ha-icon icon='mdi:car-electric' style='--mdc-icon-size: 20px;'></ha-icon>" },
+          'iboost-column': { description: "iBoost kWh", smallDescription: "<ha-icon icon='mdi:water-boiler' style='--mdc-icon-size: 20px;'></ha-icon>" },    
           'co2kg-column': {description: "CO2 kg", smallDescription: "CO2 kg" },
           'co2kwh-column': { description: "CO2 g/kWh", smallDescription: "CO2 g/kWh" },    
-          'cost-column': { description: "Cost", smallDescription: "Cost" },
-          'total-column': { description: "Total Cost", smallDescription: "Total <br>Cost" },
+          'cost-column': { description: "Cost", smallDescription: "<ha-icon icon='mdi:currency-gbp' style='--mdc-icon-size: 20px;'></ha-icon>" },
+          'total-column': { description: "Total Cost", smallDescription: "<ha-icon icon='mdi:currency-gbp' style='--mdc-icon-size: 18px;'></ha-icon><ha-icon icon='mdi:currency-gbp' style='--mdc-icon-size: 18px;'></ha-icon>" },
           'xload-column': { description: "XLoad kWh", smallDescription: "XLoad kWh" },
-          'import-export-column': {description: "Import / Export", smallDescription: "Import / <br>Export" },
+          'import-export-column': {description: "Import / Export", smallDescription: "<ha-icon icon='mdi:transmission-tower-import' style='--mdc-icon-size: 18px;'></ha-icon><ha-icon icon='mdi:transmission-tower-export' style='--mdc-icon-size: 18px;'></ha-icon>" },
           'net-power-column': {description: "Net kWh", smallDescription: "Net <br>kWh" }, 
-          'weather-column': {description: "Weather", smallDescription: "Weather" }
+          'weather-column': {description: "Weather", smallDescription: "<ha-icon icon='mdi:weather-partly-cloudy' style='--mdc-icon-size: 20px;'></ha-icon>" },
+          'temp-column': {description: "Temp", smallDescription: "<ha-icon icon='mdi:thermometer' style='--mdc-icon-size: 20px;'></ha-icon>" }
         };
         
         if (headerClassesObject.hasOwnProperty(column)) {
@@ -2010,8 +2025,11 @@ findForecastForLabel(label, forecastArray) {
                             weatherColor = "rgb(31, 136, 207)";
                         
                         newTRObject["weather-column"] = {"value": matchStore, "color": weatherColor};
-                    } else 
+                        newTRObject["temp-column"] = {"value": matchStore, "color": weatherColor};
+                    } else {
                         newTRObject["weather-column"] = {"value": null, "color": null};
+                        newTRObject["temp-column"] = {"value": null, "color": null};
+                    }
                     //console.log("Label: " + newTRObject["time-column"].value + " - Forecast Time: " + match.datetime);
                     
                 }
@@ -2192,10 +2210,13 @@ findForecastForLabel(label, forecastArray) {
 	if(this.config.old_skool === true)
 	    maxHeight = "28px";
 	    
-	let fontSize = "14";
+	let fontSize = 14;
+	const tempSizeDiff = 3;
+	let tempUnitSize = fontSize - tempSizeDiff;
 	//use yaml font size if exists
 	if(this.config.font_size !== undefined){
 	    fontSize = this.config.font_size;
+	    tempUnitSize = parseFloat(this.config.font_size) - tempSizeDiff;
 	}
 	    
 		return `
@@ -2218,9 +2239,13 @@ findForecastForLabel(label, forecastArray) {
     
     .card-content table thead tr th {
         background-color: ${tableHeaderColumnsBackgroundColour};
-        height: 24px;
+        height: 28px;
         color: ${tableHeaderFontColour};
         text-align: center; !important
+    }
+    
+    .tempUnit {
+        font-size: ${tempUnitSize}px;
     }
     
     .totalRow {
