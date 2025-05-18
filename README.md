@@ -1,10 +1,12 @@
 # Predbat-Table-Card
 If you're using the excellent [Predbat](https://github.com/springfall2008/batpred) integration in Home Assistant, this custom table card for the Predbat plan maybe for you.
 
-This is a custom [Predbat](https://github.com/springfall2008/batpred) table card that allows flexible column management and styling - meaning you can set which columns you want to see, in which order, and with what styling. The card also supports [Predbat's](https://github.com/springfall2008/batpred) HTML debug mode, and collapsing import/export prices into a single column. The card can switch between light modes or you can force the mode you want through the YAML configuration. The card also supports flexible styling, so you can use a mix of this card's style as well as some of the original Predbat HTML plan style in different columns.
+This is a custom [Predbat](https://github.com/springfall2008/batpred) table card that allows flexible column management and styling - meaning you can set which columns you want to see, in which order, and with what styling. The card also supports [Predbat's](https://github.com/springfall2008/batpred) HTML debug mode, collapsing import/export prices into a single column, and local weather information. The card can switch between light modes or you can force the mode you want through the YAML configuration. The card also supports flexible styling, so you can use a mix of this card's style as well as some of the original Predbat HTML plan style in different columns.
 
-| ![Screenshot of light-mode](https://github.com/pacemaker82/PredBat-Table-Card/blob/main/light-screen-mode.png?raw=true) | ![Screenshot of dark-mode](https://github.com/pacemaker82/PredBat-Table-Card/blob/main/dark-screen.png?raw=true) |
-|----------|----------|
+<img width="1041" alt="Screenshot 2025-05-18 at 09 07 43" src="https://github.com/user-attachments/assets/36b5d735-be00-4b7c-80f7-d1e9cc8de06c" />
+
+|<img width="726" alt="Screenshot 2025-05-18 at 09 08 05" src="https://github.com/user-attachments/assets/87ee8234-9fc0-4401-b3c0-35564b05bd24" />|<img width="726" alt="Screenshot 2025-05-18 at 09 08 35" src="https://github.com/user-attachments/assets/3b54f489-4f93-4282-85c3-649711022d24" />|![IMG_3284](https://github.com/user-attachments/assets/211f9107-c12e-4ffe-b866-34f4dec478cd)|
+|----------|----------|----------|
 
 ## Table of Contents
 1. [Installation](#installation)
@@ -54,7 +56,7 @@ The following YAML config items can or should be set on the card
 | `debug_columns` | NO | Like `columns`, use this setting to override specific columns to show the 10% values in HTML Debug mode. <br> Only works for `import-column`, `export-column`, `load-column`, `limit-column` and `pv-column` <br> Default is OFF for these 10% values |
 | `show_day_totals`    | NO    | Displays a day "Totals" row at midnight of the plan for any columns that can be calculated   |
 | `show_plan_totals`    | NO    | Displays a "Totals" row at the <b>bottom</b> of the plan for any columns that can be calculated   |
-| `weather_entity`    | NO    | Add a weather forecast entity to see the weather for each time slot. Must add `weather-column` to `columns`   |
+| `weather_entity`    | NO    | Add a weather forecast entity to see the weather for each time slot. Must add `weather-column` or `temp-column` to `columns` to see weather  |
 
 You can use `import-export-column` to see both import and export prices in a single column 
 
@@ -81,10 +83,11 @@ You can use `import-export-column` to see both import and export prices in a sin
 | Clipping   | `clip-column`    | Displays the predicted PV clipping for that time period ** ***   |
 | Net Power   | `net-power-column`    | Displays the predicted net power when calculating available PV,<br> minus house load, car and iBoost loads for that time period   |
 | Weather   | `weather-column`    | Displays a weather icon based on the forecast for that timeslot   |
+| Temperature   | `temp-column`    | Displays the temperature based on the forecast for that timeslot   |
 
 
 
-** Indicates if configured in Predbat<br>
+** Column only works if feature configured in Predbat<br>
 *** Column only appears when Predbat set to HTML Debug Mode <br>
 Arrows indicate if the predicted value is increasing or decreasing
 
@@ -222,8 +225,10 @@ The image below demonstrates the friendly states in action:
 
 By adding a weather forecast entity to your YAML using `weather_entity`, and adding `weather-column` to your `columns`, you can view the weather forecast for the specific time.
 
-- Weather iconography shows RED if temperature is higher than 25C (77F), indicating _solar panel efficiency impact_
-- Weather iconography shows BLUE if temperature is below than 0C (32F), indicating _battery efficiency impact_
+You can also add `temp-column` to display the temperature for the timeframe.
+
+- Weather data shows RED if temperature is higher than 25C (77F), indicating _solar panel efficiency impact_
+- Weather data shows BLUE if temperature is below than 0C (32F), indicating _battery efficiency impact_
 
 **IMPORTANT:** Only works with valid weather forecast entities designed per the Home Assistant latest spec. See [here for some examples](https://community.home-assistant.io/t/definitive-guide-to-weather-integrations/736419) Tested with [met.no](https://www.home-assistant.io/integrations/met) and [WeatherFlow Forecast](https://github.com/briis/weatherflow_forecast) integrations.
 
@@ -234,10 +239,12 @@ weather_entity: weather.forecast_home
 columns:
   - time-column
   - weather-column
+  - temp-column
   - import-column
   - state-column
 ```
 
 Mouse over the weather icon to see a description and temperature. 
 
-<img width="521" alt="Screenshot 2025-05-03 at 13 37 31" src="https://github.com/user-attachments/assets/58bd2140-00bb-4ce9-85e4-39692aca8172" />
+<img width="564" alt="Screenshot 2025-05-18 at 09 04 39" src="https://github.com/user-attachments/assets/11ee4cfe-ce7e-4516-9e82-34b1144b691c" />
+
