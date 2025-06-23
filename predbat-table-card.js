@@ -1731,6 +1731,70 @@ findForecastForLabel(label, forecastArray) {
   // Create label Date (local time), but round down to the hour
   const labelDate = new Date(now);
   labelDate.setDate(now.getDate() + dayOffset);
+  labelDate.setHours(labelHour, 0, 0, 0); // zero minutes/seconds
+
+  const labelHourTime = labelDate.getTime();
+
+  // Try to find forecast that exactly matches this hour (local time)
+  for (const forecast of forecastArray) {
+    const forecastDate = new Date(forecast.datetime); // UTC -> local
+    if (forecastDate.getTime() === labelHourTime) {
+      return {
+        ...forecast,
+        source: 'forecast'
+      };
+    }
+  }
+
+  // If label time is in the past, return the closest future forecast or current weather
+  if (labelHourTime < now.getTime()) {
+    const futureForecasts = forecastArray
+      .map(f => ({ ...f, time: new Date(f.datetime).getTime() }))
+      .filter(f => f.time >= now.getTime())
+      .sort((a, b) => a.time - b.time);
+
+    if (futureForecasts.length) {
+      return {
+        ...futureForecasts[0],
+        source: 'fallback-forecast'
+      };
+    }
+
+    // Fallback to current weather if no future forecast is found
+    const weatherEntity = this._hass.states[this.config.weather_entity];
+    if (weatherEntity) {
+      return {
+        temperature: weatherEntity.attributes.temperature,
+        condition: weatherEntity.state,
+        source: 'current-weather'
+      };
+    }
+  }
+
+  return null;
+}
+
+
+previous_findForecastForLabel(label, forecastArray) {
+  if (!label || !forecastArray?.length || !this._hass || !this.config?.weather_entity) {
+    return null;
+  }
+
+  const [labelDayStr, labelTimeStr] = label.split(' ');
+  const [labelHour, _labelMinute] = labelTimeStr.split(':').map(Number);
+
+  const weekdayMap = {
+    Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6,
+  };
+
+  const targetWeekday = weekdayMap[labelDayStr];
+  const now = new Date();
+  const todayWeekday = now.getDay();
+  const dayOffset = (targetWeekday - todayWeekday + 7) % 7;
+
+  // Create label Date (local time), but round down to the hour
+  const labelDate = new Date(now);
+  labelDate.setDate(now.getDate() + dayOffset);
   labelDate.setHours(labelHour, 0, 0, 0); // <-- zero minutes/seconds
 
   const labelHourTime = labelDate.getTime();
