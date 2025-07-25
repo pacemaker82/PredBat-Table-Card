@@ -16,6 +16,7 @@ This is a custom [Predbat](https://github.com/springfall2008/batpred) table card
 5. [Managing table width for different devices](#managing-table-width-for-different-devices)
 6. [Friendly States](#friendly-states)
 7. [Showing the weather forecast](#showing-the-weather-forecast)
+8. [PV prediction card visual](#pv-prediction-card-visual)
 
 ## Installation
 
@@ -248,3 +249,8 @@ Mouse over the weather icon to see a description and temperature.
 
 <img width="564" alt="Screenshot 2025-05-18 at 09 04 39" src="https://github.com/user-attachments/assets/11ee4cfe-ce7e-4516-9e82-34b1144b691c" />
 
+## PV prediction card visual
+
+<img width="500" height="111" alt="Screenshot 2025-07-25 at 09 54 34" src="https://github.com/user-attachments/assets/189b1953-38f0-438e-8675-fdc48d827fd5" />
+
+If you'd like to visualise your 5 day PV prediction from Predbat, [take a look at this card configuration I created](https://github.com/pacemaker82/PV-Card-Preview)
