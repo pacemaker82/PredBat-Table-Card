@@ -660,7 +660,9 @@ class PredbatTableCard extends HTMLElement {
                         if(this.config.debug_columns !== undefined && this.config.debug_columns.indexOf(column) > -1){ // the column is a debug column
                         
                             // SHOW THE DEBUG VALUE TOO!
-                            newContent = theItem.value;
+                            newContent = theItem.value.replace(/[ⅎ]/g, '');
+                            if(theItem.value.includes("ⅎ"))
+                                newContent += ` <ha-icon icon="mdi:hand-back-right-outline" title="FORCED" style="--mdc-icon-size: 18px;"></ha-icon>`;  
                         } else {
                             // we need to remove the debug value from the string
                             if(column === "pv-column" || column === "load-column" || column === "limit-column")
@@ -668,6 +670,10 @@ class PredbatTableCard extends HTMLElement {
                                     newContent = parseFloat(theItem.value).toFixed(2);
                                 else 
                                     newContent = parseFloat(theItem.value).toFixed(0);
+                                    
+                                if(theItem.value.includes("ⅎ"))
+                                    newContent += ` <ha-icon icon="mdi:hand-back-right-outline" title="FORCED" style="--mdc-icon-size: 18px;"></ha-icon>`;  
+                            
                             else {
                                 if(debugPrices){
                                     let priceStrings = this.getPricesFromPriceString(contentWithoutTags, hasBoldTags, hasItalicTags, debugPrices);
@@ -681,6 +687,8 @@ class PredbatTableCard extends HTMLElement {
                                 newContent = parseFloat(theItem.value).toFixed(2);
                             else 
                                 newContent = parseFloat(theItem.value).toFixed(0);
+                            if(theItem.value.includes("ⅎ"))
+                                newContent += ` <ha-icon icon="mdi:hand-back-right-outline" title="FORCED" style="--mdc-icon-size: 18px;"></ha-icon>`;                                  
                         else {
                             if(debugPrices){
                                 let priceStrings = this.getPricesFromPriceString(contentWithoutTags, hasBoldTags, hasItalicTags, debugPrices);
@@ -970,8 +978,8 @@ class PredbatTableCard extends HTMLElement {
 
             //check for HTML Debug values
             if(newContent.includes("(") && newContent.includes(")")){
-                const match = theItem.value.match(/(\d+(?:\.\d+)?)\s*\((\d+(?:\.\d+)?)\)/);
-                
+                let content = theItem.value.replace(/[↘↗→ⅎ🐌⚠]/g, '').trim();
+                const match = content.match(/(\d+(?:\.\d+)?)\s*\((\d+(?:\.\d+)?)\)/);
                 let newVals = parseFloat(match[1]).toFixed(2) + " (" + parseFloat(match[2]).toFixed(2) + ")";
                 newContent = newVals;
             }
@@ -989,11 +997,14 @@ class PredbatTableCard extends HTMLElement {
                     newContent = newContent.replace(/[☀]/g, '');
                 
                     if(!this.isSmallScreen())
-                        additionalIcon = '<ha-icon icon="mdi:white-balance-sunny" style="margin: 0; --mdc-icon-size: 20px; display: flex; align-items: center; justify-content: center;"></ha-icon>';
+                        additionalIcon = '<ha-icon icon="mdi:white-balance-sunny" style="margin: 0; --mdc-icon-size: 18px; display: flex; align-items: center; justify-content: center;"></ha-icon>';
                     
                     newCell.innerHTML = `<div class="iconContainer">${additionalIcon} <div style="margin: 0 4px;">${newContent}</div></div>`;
                 }
             } else {
+                
+                if(theItem.value.includes("ⅎ"))
+                    newContent += ` <ha-icon icon="mdi:hand-back-right-outline" title="FORCED" style="--mdc-icon-size: 18px;"></ha-icon>`;                  
                 
                 newCell.innerHTML = `<div class="iconContainer">${newContent}</div>`;
             }
