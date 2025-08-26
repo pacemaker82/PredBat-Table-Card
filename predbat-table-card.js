@@ -1,3 +1,39 @@
+async function fetchEntityHistory(hass, entityId, hours = 1) {
+  const end = new Date();
+  const start = new Date(end.getTime() - hours * 3600 * 1000);
+  const path = `history/period/${start.toISOString()}?end_time=${end.toISOString()}&filter_entity_id=${entityId}&minimal_response=1&significant_changes_only=1&no_attributes`;
+  const data = await hass.callApi("GET", path);
+  return (Array.isArray(data) && data[0]) ? data[0] : [];
+}
+
+function getLastCompletedOnRun(history) {
+  if (!Array.isArray(history) || history.length < 2) return null;
+
+  for (let offIdx = history.length - 1; offIdx >= 0; offIdx--) {
+    if (history[offIdx].state !== 'off') continue;
+
+    for (let onIdx = offIdx - 1; onIdx >= 0; onIdx--) {
+      const s = history[onIdx].state;
+      if (s === 'on') {
+        const start = new Date(history[onIdx].last_changed);
+        const end   = new Date(history[offIdx].last_changed);
+        const ms    = end - start;
+        return ms > 0 ? { ms, start, end } : null;
+      }
+      if (s === 'off') break;
+    }
+  }
+  return null;
+}
+
+function formatDuration(ms) {
+  const s = Math.floor(ms / 1000);
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return m ? `${m}m ${sec}s` : `${sec}s`;
+}
+
+
 class PredbatTableCard extends HTMLElement {
 
   // The user supplied configuration. Throw an exception and Home Assistant
@@ -8,7 +44,7 @@ class PredbatTableCard extends HTMLElement {
     }
     if (!config.columns) {
       throw new Error("You need to define a list of columns (see docs)");
-    } else if((config.columns.includes("weather-column") || config.columns.includes("temp-column")) && !config.weather_entity) {
+    } else if((config.columns.includes("weather-column") || config.columns.includes("temp-column") || config.columns.includes("rain-column")) && !config.weather_entity) {
         throw new Error("To use weather or temp columns you need to include a weather_entity in your YAML");
     }
     
@@ -92,7 +128,8 @@ class PredbatTableCard extends HTMLElement {
                 this.subscribeForecast();
                 this.initialized = true;
             }
-        }        
+        }
+        this._lastOnText = null;
         this.processAndRender(hass);
     } else {
         const oldEntityUpdateTime = oldHass.states[entityId].last_updated;
@@ -101,9 +138,17 @@ class PredbatTableCard extends HTMLElement {
         let activeSwitchChanged = false;
         
         if (predbatActiveEntityId && hass.states[predbatActiveEntityId] && oldHass.states[predbatActiveEntityId]) {
-        const oldActiveTime = oldHass.states[predbatActiveEntityId].last_updated;
-        const newActiveTime = hass.states[predbatActiveEntityId].last_updated;
-        activeSwitchChanged = oldActiveTime !== newActiveTime;
+          const oldActive = oldHass.states[predbatActiveEntityId];
+          const newActive = hass.states[predbatActiveEntityId];
+          activeSwitchChanged = oldActive.last_updated !== newActive.last_updated;
+        
+          // If we just transitioned ON -> OFF, compute duration immediately
+          if (activeSwitchChanged && oldActive.state === 'on' && newActive.state === 'off') {
+            const start = new Date(oldActive.last_changed); // when it turned ON
+            const end   = new Date(newActive.last_changed); // when it turned OFF
+            const ms    = end - start;
+            this._lastOnText = ms > 0 ? formatDuration(ms) : '—';
+          }
         }
         
         if (switchEntityId && hass.states[switchEntityId] && oldHass.states[switchEntityId]) {
@@ -154,9 +199,25 @@ class PredbatTableCard extends HTMLElement {
     }
   }
   
-  processAndRender(hass){
-     
+ async processAndRender(hass){
+      
+    const predbatActiveEntityId = 'switch.predbat_active';
+
+    if(this._lastOnText === null){
+
+        const history = await fetchEntityHistory(this._hass, predbatActiveEntityId, 1);
+        const lastRun = getLastCompletedOnRun(history);  
+        
+        if (lastRun) {
+         this._lastOnText = formatDuration(lastRun.ms);
+        } else {
+         this._lastOnText = '—';
+        }
+    
+    }
+    
     console.log(`[${new Date().toLocaleTimeString()}] PROCESS AND RENDER TABLE`);
+    console.log(this._lastOnText);
     /*  
     this.hass.callWS({
         type: "weather/forecast",
@@ -200,9 +261,9 @@ class PredbatTableCard extends HTMLElement {
             let lastUpdateCell = document.createElement('th');
             lastUpdateCell.classList.add('lastUpdateRow');
             lastUpdateCell.colSpan = columnsToReturn.length;
-            lastUpdateCell.innerHTML = `<b>Plan Last Updated:</b> ${time}`;
+            lastUpdateCell.innerHTML = `<b>Plan Last Updated:</b> ${time}. Duration: ${this._lastOnText}`;
             
-            if(hass.states['switch.predbat_active'].state === "on"){
+            if(hass.states[predbatActiveEntityId].state === "on"){
                 console.log("Switch: " + hass.states['switch.predbat_active'].state);
                 lastUpdateCell.innerHTML += `<ha-icon class="icon-spin" icon="mdi:loading" style="--mdc-icon-size: 18px; margin-left: 4px;" title="Generating next plan"></ha-icon>`;
             }
@@ -606,7 +667,7 @@ class PredbatTableCard extends HTMLElement {
     if(column === "time-column" && this.config.force_single_line === true)
         newCell.style.whiteSpace = "nowrap";
     
-    if(column !== "temp-column" && column !== "weather-column" && column !== "car-column"){ // weather and car not supported by old skool
+    if(column !== "rain-column" && column !== "temp-column" && column !== "weather-column" && column !== "car-column"){ // weather and car not supported by old skool
         if(this.config.old_skool === true || this.config.old_skool_columns !== undefined){ 
             
             if(this.config.old_skool === true || this.config.old_skool_columns.indexOf(column) >= 0){
@@ -906,7 +967,7 @@ class PredbatTableCard extends HTMLElement {
         }    
     }
         
-    if(column !== "import-export-column" && column !== "weather-column" && column !== "temp-column"){
+    if(column !== "import-export-column" && column !== "weather-column" && column !== "temp-column" && column !== "rain-column"){
         newCell.style.color = theItem.color;
         if(theItem.value.replace(/\s/g, '').length === 0 || theItem.value === "0" || theItem.value === "⚊") {
             if(fillEmptyCells)
@@ -969,7 +1030,18 @@ class PredbatTableCard extends HTMLElement {
 
             newCell.innerHTML = `<div class="iconContainer">${roundedTemp}<div class="tempUnit">${tempUnit}</div></div>`;
         }
-    }    
+    } 
+    
+    if(column === "rain-column") {
+
+        newCell.style.color = theItem.color;
+        
+        if(theItem.value !== undefined && theItem.value !== null){
+            
+            const rainChance = Math.round(parseFloat(theItem.value.precipitation_probability));
+            newCell.innerHTML = `<div class="iconContainer">${rainChance}%</div>`;
+        }
+    }        
 
     if(column === "load-column" || column === "pv-column") {
         
@@ -1666,6 +1738,7 @@ findForecastForLabel(label, forecastArray) {
       return {
         temperature: weatherEntity.attributes.temperature,
         condition: weatherEntity.state,
+        precipitation_probability: weatherEntity.attributes.precipitation_probability,
         source: 'current-weather'
       };
     }
@@ -1726,6 +1799,7 @@ previous_findForecastForLabel(label, forecastArray) {
         condition: entity.state,
         temperature: entity.attributes.temperature,
         humidity: entity.attributes.humidity,
+        precipitation_probability: entity.attributes.precipitation_probability
       };
     }
   }
@@ -1755,6 +1829,7 @@ previous_findForecastForLabel(label, forecastArray) {
           'import-export-column': {description: "Import / Export", smallDescription: "<ha-icon icon='mdi:transmission-tower-import' style='--mdc-icon-size: 18px;'></ha-icon><ha-icon icon='mdi:transmission-tower-export' style='--mdc-icon-size: 18px;'></ha-icon>" },
           'net-power-column': {description: "Net kWh", smallDescription: "Net <br>kWh" }, 
           'weather-column': {description: "Weather", smallDescription: "<ha-icon icon='mdi:weather-partly-cloudy' style='--mdc-icon-size: 20px;'></ha-icon>" },
+          'rain-column': {description: "Rain Chance", smallDescription: "<ha-icon icon='mdi:weather-pouring' style='--mdc-icon-size: 20px;'></ha-icon>" },
           'temp-column': {description: "Temp", smallDescription: "<ha-icon icon='mdi:thermometer' style='--mdc-icon-size: 20px;'></ha-icon>" }
         };
         
@@ -1990,9 +2065,11 @@ previous_findForecastForLabel(label, forecastArray) {
                         
                         newTRObject["weather-column"] = {"value": matchStore, "color": weatherColor};
                         newTRObject["temp-column"] = {"value": matchStore, "color": weatherColor};
+                        newTRObject["rain-column"] = {"value": matchStore, "color": weatherColor};
                     } else {
                         newTRObject["weather-column"] = {"value": null, "color": null};
                         newTRObject["temp-column"] = {"value": null, "color": null};
+                        newTRObject["rain-column"] = {"value": null, "color": null};
                     }
                     //console.log("Label: " + newTRObject["time-column"].value + " - Forecast Time: " + match.datetime);
                     
