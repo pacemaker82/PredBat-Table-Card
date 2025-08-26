@@ -39,7 +39,7 @@ The following YAML config items can or should be set on the card
 | `version_entity`   | NO    | Set to `update.predbat_version` or whichever entity holds the predbat version. Setting this will show you the version on the table card and display if an update is available (shown at bottom of table).    |
 | `show_tablecard_version`    | NO    | Set to `true` if you want the card to show you the card version, and if there is an update available (shown at bottom of table)   |
 | `fill_empty_cells`    | NO    | `true` or `false`. Will add a "-" symbol where data isnt available to clear out empty space   |
-| `hide_last_update`    | NO    | `true` or `false`. Will determine if the last update time is shown at the top of the table  |
+| `hide_last_update`    | NO    | `true` or `false`. Will determine if the last update time is shown at the top of the table, with plan generation duration  |
 | `light_mode`    | NO    | Use `light`, `dark`, or `auto` - default is `auto` if you dont set it. Use this to force the mode you want   |
 | `debug_prices_only` | NO | `true` or `false`. If you have enabled Predbat's `HTML Plan debug`, set to `true` to only show the adjusted prices, rather than the default (actual and adjusted prices). **Important:** Only works if `HTML Plan debug` is enabled |
 | `stack_pills` | NO | `true` or `false`. Set to `false` if you want the price pills to only display on one line, `true` for on top of each other. Default is `true`|
@@ -85,7 +85,7 @@ You can use `import-export-column` to see both import and export prices in a sin
 | Net Power   | `net-power-column`    | Displays the predicted net power when calculating available PV,<br> minus house load, car and iBoost loads for that time period   |
 | Weather   | `weather-column`    | Displays a weather icon based on the forecast for that timeslot   |
 | Temperature   | `temp-column`    | Displays the temperature based on the forecast for that timeslot   |
-
+| Chance Of Rain   | `rain-column`    | Displays the chance of rain percentage based on the forecast for that timeslot   |
 
 
 ** Column only works if feature configured in Predbat<br>
