@@ -1,6 +1,8 @@
 # Predbat-Table-Card
 If you're using the excellent [Predbat](https://github.com/springfall2008/batpred) integration in Home Assistant, this custom table card for the Predbat plan maybe for you.
 
+**More of my [Predbat related enhancements here](https://smarter-home.blog/category/predbat/).**
+
 This is a custom [Predbat](https://github.com/springfall2008/batpred) table card that allows flexible column management and styling - meaning you can set which columns you want to see, in which order, and with what styling. The card also supports [Predbat's](https://github.com/springfall2008/batpred) HTML debug mode, collapsing import/export prices into a single column, and local weather information. The card can switch between light modes or you can force the mode you want through the YAML configuration. The card also supports flexible styling, so you can use a mix of this card's style as well as some of the original Predbat HTML plan style in different columns.
 
 <img width="1041" alt="Screenshot 2025-05-18 at 09 07 43" src="https://github.com/user-attachments/assets/36b5d735-be00-4b7c-80f7-d1e9cc8de06c" />
