@@ -233,7 +233,9 @@ You can also add `temp-column` to display the temperature for the timeframe.
 - Weather data shows RED if temperature is higher than 25C (77F), indicating _solar panel efficiency impact_
 - Weather data shows BLUE if temperature is below than 0C (32F), indicating _battery efficiency impact_
 
-**IMPORTANT:** Only works with valid weather forecast entities designed per the Home Assistant latest spec. See [here for some examples](https://community.home-assistant.io/t/definitive-guide-to-weather-integrations/736419) Tested with [met.no](https://www.home-assistant.io/integrations/met) and [WeatherFlow Forecast](https://github.com/briis/weatherflow_forecast) integrations.
+Read more about the [weather integration in my blog](https://smarter-home.blog/2025/09/03/adding-weather-forecast-to-the-predbat-table-card-in-home-assistant/).
+
+**IMPORTANT:** Only works with valid weather forecast entities designed per the Home Assistant latest spec. See [here for some examples](https://community.home-assistant.io/t/definitive-guide-to-weather-integrations/736419) Tested with [Met Office](https://www.home-assistant.io/integrations/metoffice/), [met.no](https://www.home-assistant.io/integrations/met) and [WeatherFlow Forecast](https://github.com/briis/weatherflow_forecast) integrations.
 
 **IMPORTANT:** Sometimes your weather forecast might not cover the Predbat plan. In this case no weather icon will show.
 
@@ -243,6 +245,7 @@ columns:
   - time-column
   - weather-column
   - temp-column
+  - rain-column
   - import-column
   - state-column
 ```
