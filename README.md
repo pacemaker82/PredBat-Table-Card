@@ -19,6 +19,7 @@ This is a custom [Predbat](https://github.com/springfall2008/batpred) table card
 6. [Friendly States](#friendly-states)
 7. [Showing the weather forecast](#showing-the-weather-forecast)
 8. [PV prediction card visual](#pv-prediction-card-visual)
+9. [Creating a mini Predbat card](#creating-a-mini-predbat-card)
 
 ## Installation
 
@@ -260,3 +261,29 @@ Mouse over the weather icon to see a description and temperature.
 <img width="500" height="111" alt="Screenshot 2025-07-25 at 09 54 34" src="https://github.com/user-attachments/assets/189b1953-38f0-438e-8675-fdc48d827fd5" />
 
 If you'd like to visualise your 5 day PV prediction from Predbat, [take a look at this card configuration I created](https://github.com/pacemaker82/PV-Card-Preview)
+
+## Creating a mini Predbat card
+
+Using a combination of `columns` and `row_limit` you can show a mini Predbat plan on dashboards with other cards, giving you a quick look of the plan. 
+
+<img width="619" height="328" alt="Screenshot 2025-09-18 at 09 10 49" src="https://github.com/user-attachments/assets/930b95ce-f50f-4b10-a4ce-06b64c3ace4c" />
+
+Example YAML: 
+
+```
+type: custom:predbat-table-card
+entity: predbat.plan_html
+columns:
+  - time-column
+  - state-column
+  - pv-column
+  - load-column
+  - soc-column
+table_width: 100
+fill_empty_cells: true
+row_limit: 5
+font_size: 13
+old_skool_columns:
+  - state-column
+hide_last_update: true
+```
