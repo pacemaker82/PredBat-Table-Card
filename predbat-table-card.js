@@ -279,7 +279,12 @@ class PredbatTableCard extends HTMLElement {
     let loadTotal = 0, pvTotal = 0, carTotal = 0, iboostTotal = 0, netTotal = 0, costTotal = 0, clipTotal = 0, co2kwhTotal = 0, co2kgTotal = 0, xloadTotal = 0, 
     loadDayTotal = 0, pvDayTotal = 0, carDayTotal = 0, iboostDayTotal = 0, netDayTotal = 0, costDayTotal = 0, clipDayTotal = 0, co2kwhDayTotal = 0, co2kgDayTotal = 0, xloadDayTotal = 0;
 
-    // create the data rows
+    // before we display the rows, lets drop any that the user doesnt want.
+    
+    if(this.config.row_limit && this.config.row_limit > 0)
+        dataArray.length = this.config.row_limit;
+
+    // iterate through the data
     dataArray.forEach((item, index) => {
         
         let newRow = document.createElement('tr');
