@@ -62,6 +62,7 @@ The following YAML config items can or should be set on the card
 | `show_day_totals`    | NO    | Displays a day "Totals" row at midnight of the plan for any columns that can be calculated   |
 | `show_plan_totals`    | NO    | Displays a "Totals" row at the <b>bottom</b> of the plan for any columns that can be calculated   |
 | `weather_entity`    | NO    | Add a weather forecast entity to see the weather for each time slot. Must add `weather-column` or `temp-column` to `columns` to see weather  |
+| `path_for_click`    | NO    | Add a dashboard path like `/my-dashboard/predbat-plan` to be navigated to when you click the plan  |
 
 You can use `import-export-column` to see both import and export prices in a single column 
 
@@ -268,6 +269,10 @@ Using a combination of `columns` and `row_limit` you can show a mini Predbat pla
 
 <img width="619" height="328" alt="Screenshot 2025-09-18 at 09 10 49" src="https://github.com/user-attachments/assets/930b95ce-f50f-4b10-a4ce-06b64c3ace4c" />
 
+Use `font_size` to customise the size of the plan even more on your dashboard.
+
+Use `path_to_click` to enable your mini plan card to click through to another dashboard showing the full plan.
+
 Example YAML: 
 
 ```
@@ -286,4 +291,5 @@ font_size: 13
 old_skool_columns:
   - state-column
 hide_last_update: true
+path_to_click: /my-dashboard/predbat-plan
 ```
