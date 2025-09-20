@@ -583,17 +583,36 @@ class PredbatTableCard extends HTMLElement {
     }
     
     
+    // If path_for_click config is added, show a pointer on hover over of table, and click to navigate to new view.
+    if(this.config.path_for_click && this.config.path_for_click.length > 0){
+        theTable.style.cursor = 'pointer';
+        theTable.addEventListener("click", () => {
+          this.navigateToPath(this.config.path_for_click);  // Replace with your actual path
+        });    
+    }
+    
     theTable.appendChild(newTableHead);    
     theTable.appendChild(newTableBody);
     
+    this.content.innerHTML = "";         // Clear existing content
+    this.content.appendChild(theTable);  // Add actual DOM node (preserves listeners)
     
-    this.content.innerHTML = theTable.outerHTML;
+    // this.content.innerHTML = theTable.outerHTML; OLD WAY
     //this.content.innerHTML = `<button @click=${this.handleClick}>Hello world</button>`;
 
     const styleTag = document.createElement('style');
 	styleTag.innerHTML = this.getStyles(this.getLightMode(hass.themes.darkMode));
 	this.content.appendChild(styleTag);      
   }
+  
+  navigateToPath(path) {
+    window.history.pushState(null, "", path);
+      const event = new CustomEvent("location-changed", {
+        bubbles: true,
+        composed: true,
+      });
+      window.dispatchEvent(event);
+    }
   
   createDividerRows(columnLength, darkMode){
 
