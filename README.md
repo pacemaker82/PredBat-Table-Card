@@ -20,6 +20,7 @@ This is a custom [Predbat](https://github.com/springfall2008/batpred) table card
 7. [Showing the weather forecast](#showing-the-weather-forecast)
 8. [PV prediction card visual](#pv-prediction-card-visual)
 9. [Creating a mini Predbat card](#creating-a-mini-predbat-card)
+10. [Using the Options column](#using-the-options-column)
 
 ## Installation
 
@@ -91,6 +92,7 @@ You can use `import-export-column` to see both import and export prices in a sin
 | Weather   | `weather-column`    | Displays a weather icon based on the forecast for that timeslot   |
 | Temperature   | `temp-column`    | Displays the temperature based on the forecast for that timeslot   |
 | Chance Of Rain   | `rain-column`    | Displays the chance of rain percentage based on the forecast for that timeslot   |
+| Options   | `options-column`    | Displays buttons to force demand, charge or export for that timeslot. [See more](#using-the-options-column)   |
 
 
 ** Column only works if feature configured in Predbat<br>
@@ -293,3 +295,16 @@ old_skool_columns:
 hide_last_update: true
 path_to_click: /my-dashboard/predbat-plan
 ```
+
+## Using the Options Column
+
+By adding the `options-column` to your card YAML you can display a column of buttons that help you control Predbat for that timeslot.
+
+<img width="275" height="77" alt="Screenshot 2025-10-06 at 13 03 52" src="https://github.com/user-attachments/assets/5197aa49-7a33-455d-9914-7f120b34a2f3" />
+
+This column currently supports the following capabilities:
+- Force Demand / Idle
+- Force Battery Charge
+- Force Battery Export
+
+Clicking these buttons within the timeslot is the same as selecting them from the Predbat dropdown options. It will trigger a plan rebuild, which will reflect the actual status in the `status-column` once calculated.
