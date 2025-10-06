@@ -35,6 +35,10 @@ function formatDuration(ms) {
 
 
 class PredbatTableCard extends HTMLElement {
+    
+    //      - entity: select.predbat_manual_charge
+    //      - entity: select.predbat_manual_export
+    //      - entity: select.predbat_manual_demand
 
   // The user supplied configuration. Throw an exception and Home Assistant
   // will render an error card.
@@ -136,6 +140,7 @@ class PredbatTableCard extends HTMLElement {
         const newEntityUpdateTime = hass.states[entityId].last_updated;
         let carSwitchChanged = false;
         let activeSwitchChanged = false;
+        let manualForceChanged = false;
         
         if (predbatActiveEntityId && hass.states[predbatActiveEntityId] && oldHass.states[predbatActiveEntityId]) {
           const oldActive = oldHass.states[predbatActiveEntityId];
@@ -152,13 +157,13 @@ class PredbatTableCard extends HTMLElement {
         }
         
         if (switchEntityId && hass.states[switchEntityId] && oldHass.states[switchEntityId]) {
-        const oldSwitchTime = oldHass.states[switchEntityId].last_updated;
-        const newSwitchTime = hass.states[switchEntityId].last_updated;
-        carSwitchChanged = oldSwitchTime !== newSwitchTime;
-        }          
-        
-        if (oldEntityUpdateTime !== newEntityUpdateTime || carSwitchChanged || activeSwitchChanged) {
-        this.processAndRender(hass);
+            const oldSwitchTime = oldHass.states[switchEntityId].last_updated;
+            const newSwitchTime = hass.states[switchEntityId].last_updated;
+            carSwitchChanged = oldSwitchTime !== newSwitchTime;
+        }  
+                
+        if (oldEntityUpdateTime !== newEntityUpdateTime || carSwitchChanged || activeSwitchChanged || manualForceChanged) {
+            this.processAndRender(hass);
         }
           
         /*
@@ -242,6 +247,7 @@ class PredbatTableCard extends HTMLElement {
     const dataArray = this.getArrayDataFromHTML(rawHTML, hass.themes.darkMode); 
     //filter out any columns not in the data
     columnsToReturn = columnsToReturn.filter(column => {
+        if (column === "options-column") return true;
         return dataArray[0][column] !== undefined;
     });
 
@@ -296,7 +302,7 @@ class PredbatTableCard extends HTMLElement {
                 if(item["time-column"].value.includes("23:30"))
                     isMidnight = true;
                 
-                let newColumn = this.getCellTransformation(item[column], column, hass.themes.darkMode, index);
+                let newColumn = this.getCellTransformation(item[column], column, hass.themes.darkMode, index, item["time-column"]);
     
                 newRow.appendChild(newColumn); 
                 
@@ -351,6 +357,11 @@ class PredbatTableCard extends HTMLElement {
                     co2kgDayTotal += val;
                 }
                 
+            } else {
+                if(column === "options-column"){
+                    let newColumn = this.getCellTransformation(item[column], column, hass.themes.darkMode, index, item["time-column"]);
+                    newRow.appendChild(newColumn); 
+                }
             }
         });
         
@@ -520,7 +531,7 @@ class PredbatTableCard extends HTMLElement {
         
     //create the header rows
     columnsToReturn.forEach((column, index) => {
-        //console.log(column + " - " + dataArray[0][column])
+           //console.log(column + " - " + dataArray[0][column])
     
            let newColumn = document.createElement('th');
             newColumn.innerHTML = this.getColumnDescription(column);
@@ -669,7 +680,29 @@ class PredbatTableCard extends HTMLElement {
     console.log('hello world');
   }
   
-  getCellTransformation(theItem, column, darkMode, itemIndex) {
+  getTimeframeForOverride(timeString){
+      const match = timeString.match(/\b(\d{2}):(\d{2})\b/);
+      if (!match) return null;
+    
+      let hours = parseInt(match[1], 10);
+      let minutes = parseInt(match[2], 10);
+    
+      // Floor to the nearest half-hour
+      minutes = minutes >= 30 ? 30 : 0;
+    
+      const hh = String(hours).padStart(2, '0');
+      const mm = String(minutes).padStart(2, '0');
+    
+      return `${hh}:${mm}:00`;      
+  }
+  
+  getArrayForEntityForceStates(entity){
+      
+      let entityState = entity.state;
+      return entityState.replace(/^\+/, '').split(',');
+  }
+  
+  getCellTransformation(theItem, column, darkMode, itemIndex, timestamp) {
     
     let newCell = document.createElement('td');
     let newContent = "";
@@ -687,6 +720,118 @@ class PredbatTableCard extends HTMLElement {
     //Set the table up for people that like the Trefor style
     //
     
+    if(column === "options-column"){
+        
+        let timeForSelectOverride = this.getTimeframeForOverride(timestamp.value);
+        
+        const forceEntityArray = [
+          "select.predbat_manual_demand",
+          "select.predbat_manual_charge",
+          "select.predbat_manual_export"
+        ];
+        
+        const titleMap = {
+          demand: "Force Manual Demand",
+          charge: "Force Manual Charge",
+          export: "Force Manual Export"
+        };
+        
+        const iconMap = {
+          demand: "mdi:home-battery",
+          charge: "mdi:battery-plus",
+          export: "mdi:battery-minus"
+        };
+        
+        const forceEntityObjects = forceEntityArray.map(entityName => {
+          const key = entityName.split('_').pop(); // "demand", "charge", "export"
+          return {
+            entityName,
+            entityIcon: iconMap[key],
+            entityTitle: titleMap[key]
+          };
+        });  
+        
+        const iconOpacityOff = 0.25;
+        const iconOpacityOn = 1.00;
+        const iconColorOff = "var(--icon-primary-color)";
+        const iconColorOn = "rgb(58, 238, 133)";
+        
+        for (const forceEntity of forceEntityObjects) {
+            
+            const settings = this.getArrayForEntityForceStates(this._hass.states[forceEntity.entityName]);
+            let iconOpacity = iconOpacityOff;
+            let iconColor = iconColorOff;
+            
+            let removeOption = [...settings]; 
+            if(settings.includes(timeForSelectOverride)){
+                iconColor = iconColorOn;
+                iconOpacity = iconOpacityOn;
+                
+                const index = settings.indexOf(timeForSelectOverride);
+                if (index !== -1) {
+                    removeOption.splice(index, 1);
+                }
+            }
+            
+            // CREATE THE ICON
+            const iconEl = document.createElement('ha-icon');
+            iconEl.setAttribute('title', forceEntity.entityTitle);
+            iconEl.setAttribute('icon', forceEntity.entityIcon);
+            iconEl.style.cursor = 'pointer';
+            iconEl.style.margin = '0 2px';
+            iconEl.style.opacity = iconOpacity;
+            iconEl.style.color = iconColor;
+            
+            // Add click handler
+            iconEl.addEventListener('click', () => {
+                
+                let currentSettings = this.getArrayForEntityForceStates(this._hass.states[forceEntity.entityName]);
+                
+                if(currentSettings.includes(timeForSelectOverride)){
+                    
+                    // Turn off
+                    iconEl.style.opacity = iconOpacityOff;
+                    iconEl.style.color = iconColorOff;
+                    
+                    const index = currentSettings.indexOf(timeForSelectOverride);
+                        if (index !== -1) {
+                        currentSettings.splice(index, 1);
+                    }
+                    
+                    this._hass.callService('select', 'select_option', {
+                        entity_id: forceEntity.entityName,
+                        option: 'off'
+                    });  
+                    
+                    for(const time of currentSettings){
+                    
+                      this._hass.callService('select', 'select_option', {
+                        entity_id: forceEntity.entityName,
+                        option: time
+                        });                     
+                    }
+                    
+                } else {
+                    
+                    // turn on
+                    
+                    iconEl.style.opacity = iconOpacityOn;
+                    iconEl.style.color = iconColorOn;                    
+                    
+                    this._hass.callService('select', 'select_option', {
+                      entity_id: forceEntity.entityName,
+                      option: timeForSelectOverride
+                    });                
+                    
+                }
+                
+            });
+            
+            // Append to DOM
+            newCell.appendChild(iconEl);            
+        }
+
+    }
     
     if(column === "time-column" && this.config.force_single_line === true)
         newCell.style.whiteSpace = "nowrap";
@@ -928,7 +1073,7 @@ class PredbatTableCard extends HTMLElement {
                             friendlyText = "Manually Forced " + friendlyText;
                             
                             if(!friendlyText.includes("Charge") && !friendlyText.includes("Discharge") && !friendlyText.includes("Export"))
-                                friendlyText = friendlyText + "Idle";
+                                friendlyText = friendlyText + "Demand";
                             friendlyText = friendlyText.replace('ⅎ', '');
                         } else {
                             if(theItem.value === "↘") {
@@ -991,7 +1136,7 @@ class PredbatTableCard extends HTMLElement {
         }    
     }
         
-    if(column !== "import-export-column" && column !== "weather-column" && column !== "temp-column" && column !== "rain-column"){
+    if(column !== "import-export-column" && column !== "weather-column" && column !== "temp-column" && column !== "rain-column" && column !== "options-column"){
         newCell.style.color = theItem.color;
         if(theItem.value.replace(/\s/g, '').length === 0 || theItem.value === "0" || theItem.value === "⚊") {
             if(fillEmptyCells)
@@ -1854,7 +1999,8 @@ previous_findForecastForLabel(label, forecastArray) {
           'net-power-column': {description: "Net kWh", smallDescription: "Net <br>kWh" }, 
           'weather-column': {description: "Weather", smallDescription: "<ha-icon icon='mdi:weather-partly-cloudy' style='--mdc-icon-size: 20px;'></ha-icon>" },
           'rain-column': {description: "Rain Chance", smallDescription: "<ha-icon icon='mdi:weather-pouring' style='--mdc-icon-size: 20px;'></ha-icon>" },
-          'temp-column': {description: "Temp", smallDescription: "<ha-icon icon='mdi:thermometer' style='--mdc-icon-size: 20px;'></ha-icon>" }
+          'temp-column': {description: "Temp", smallDescription: "<ha-icon icon='mdi:thermometer' style='--mdc-icon-size: 20px;'></ha-icon>" },
+          'options-column': {description: "Options", smallDescription: "<ha-icon icon='mdi:button-pointer' style='--mdc-icon-size: 20px;'></ha-icon>" }
         };
         
         if (headerClassesObject.hasOwnProperty(column)) {
