@@ -161,7 +161,19 @@ class PredbatTableCard extends HTMLElement {
             const newSwitchTime = hass.states[switchEntityId].last_updated;
             carSwitchChanged = oldSwitchTime !== newSwitchTime;
         }  
-                
+        
+        const forceEntityObjects = this.getOverrideEntities();
+        for (const forceEntity of forceEntityObjects) {
+            // forceEntity.entityName
+            const oldForce = oldHass.states[forceEntity.entityName].state;
+            const newForce = hass.states[forceEntity.entityName].state;
+            manualForceChanged = oldForce !== newForce;
+            if (manualForceChanged){
+                console.log("MANUAL FORCE CHANGED " + oldForce + " - " + newForce);
+                break;
+            }
+        }        
+        
         if (oldEntityUpdateTime !== newEntityUpdateTime || carSwitchChanged || activeSwitchChanged || manualForceChanged) {
             this.processAndRender(hass);
         }
@@ -247,7 +259,7 @@ class PredbatTableCard extends HTMLElement {
     const dataArray = this.getArrayDataFromHTML(rawHTML, hass.themes.darkMode); 
     //filter out any columns not in the data
     columnsToReturn = columnsToReturn.filter(column => {
-        if (column === "options-column") return true;
+        if (column === "options-column" || column === "options-popup-column") return true;
         return dataArray[0][column] !== undefined;
     });
 
@@ -358,7 +370,7 @@ class PredbatTableCard extends HTMLElement {
                 }
                 
             } else {
-                if(column === "options-column"){
+                if(column === "options-column" || column === "options-popup-column"){
                     let newColumn = this.getCellTransformation(item[column], column, hass.themes.darkMode, index, item["time-column"]);
                     newRow.appendChild(newColumn); 
                 }
@@ -702,6 +714,188 @@ class PredbatTableCard extends HTMLElement {
       return entityState.replace(/^\+/, '').split(',');
   }
   
+    createButtonForOverrides(entityObject, timeForSelectOverride, iconSize, textColor, hideLabel, fromPopup = false) {
+      const key = entityObject.entityName.replace('select.predbat_manual_', '');
+    
+      const iconOpacityOff = 1.00;
+      const iconOpacityOn = 1.00;
+      const iconColorOff = "rgb(75, 80, 87)";
+      const iconColorOn = "rgb(58, 238, 133)";
+      const snowIconColorOn = "#000000";
+      const snowIconColorOff = "#FFFFFF";
+    
+      const settings = this.getArrayForEntityForceStates(this._hass.states[entityObject.entityName]);
+      const isActive = settings.includes(timeForSelectOverride);
+    
+      const iconOpacity = isActive ? iconOpacityOn : iconOpacityOff;
+      const iconColor = isActive ? iconColorOn : iconColorOff;
+      
+      const snowIconColor = isActive ? snowIconColorOn : snowIconColorOff;
+      
+      let snowflakeIcon = null;
+    
+      // Main container: vertical layout
+      const container = document.createElement('div');
+      container.style.display = 'flex';
+      container.style.flexDirection = 'column';
+      container.style.alignItems = 'center';
+      container.style.justifyContent = 'center';
+      container.style.width = iconSize + "px";
+      //container.style.margin = '0 4px';
+    
+      // Icon wrapper for potential overlay
+      const iconWrapper = document.createElement('div');
+      iconWrapper.style.position = 'relative';
+      iconWrapper.style.width = iconSize + "px";
+      iconWrapper.style.height = iconSize + "px";
+    
+      // Main icon
+      const iconEl = document.createElement('ha-icon');
+      iconEl.setAttribute('title', entityObject.entityTitle);
+      iconEl.setAttribute('icon', entityObject.entityIcon);
+      iconEl.style.cursor = 'pointer';
+      iconEl.style.opacity = iconOpacity;
+      iconEl.style.color = iconColor;
+      iconEl.style.setProperty('--mdc-icon-size', iconSize + "px");
+      iconEl.style.width = iconSize + "px";
+      iconEl.style.height = iconSize + "px";
+    
+      // Click handler
+        iconEl.addEventListener('click', () => {
+          const currentSettings = this.getArrayForEntityForceStates(this._hass.states[entityObject.entityName]);
+          const isActive = currentSettings.includes(timeForSelectOverride);
+        
+          if (fromPopup) {
+            // 🔁 New behaviour: mutually exclusive icons inside popup
+            const parent = container.parentElement;
+            if (parent) {
+              const allButtons = parent.querySelectorAll('[data-force-key]');
+              allButtons.forEach((btn) => {
+                const keyAttr = btn.dataset.forceKey;
+                if (keyAttr === key) return;
+        
+                const icon = btn.querySelector('ha-icon');
+                if (icon) {
+                  icon.style.opacity = iconOpacityOff;
+                  icon.style.color = iconColorOff;
+                }
+        
+                const snowflake = btn.querySelector('ha-icon[icon="mdi:snowflake"]');
+                if (snowflake) {
+                  snowflake.style.color = snowIconColorOff;
+                }
+              });
+            }
+          }
+        
+          // ✅ Apply the standard toggle behaviour (used in both modes)
+          if (isActive) {
+            iconEl.style.opacity = iconOpacityOff;
+            iconEl.style.color = iconColorOff;
+            if (snowflakeIcon) snowflakeIcon.style.color = snowIconColorOff;
+        
+            const updatedSettings = currentSettings.filter(t => t !== timeForSelectOverride);
+        
+            this._hass.callService('select', 'select_option', {
+              entity_id: entityObject.entityName,
+              option: 'off'
+            });
+        
+            for (const time of updatedSettings) {
+              this._hass.callService('select', 'select_option', {
+                entity_id: entityObject.entityName,
+                option: time
+              });
+            }
+          } else {
+            iconEl.style.opacity = iconOpacityOn;
+            iconEl.style.color = iconColorOn;
+            if (snowflakeIcon) snowflakeIcon.style.color = snowIconColorOn;
+        
+            this._hass.callService('select', 'select_option', {
+              entity_id: entityObject.entityName,
+              option: timeForSelectOverride
+            });
+          }
+        });
+    
+      iconWrapper.appendChild(iconEl);
+    
+      // Overlay snowflake if applicable
+      if (key === 'freeze_charge' || key === 'freeze_export') {
+        snowflakeIcon = document.createElement('ha-icon');
+        snowflakeIcon.setAttribute('icon', 'mdi:snowflake');
+        snowflakeIcon.setAttribute('title', entityObject.entityTitle);
+        snowflakeIcon.style.setProperty('--mdc-icon-size', iconSize/3 + 'px');
+        snowflakeIcon.style.color = snowIconColor;
+        snowflakeIcon.style.position = 'absolute';
+        snowflakeIcon.style.top = (iconSize/3)-10 + 'px';
+        snowflakeIcon.style.left = iconSize/3 + 'px';
+        snowflakeIcon.style.opacity = '0.9';
+        snowflakeIcon.style.cursor = 'pointer';
+        snowflakeIcon.style.pointerEvents = 'none';
+        
+        iconWrapper.appendChild(snowflakeIcon);
+      }
+    
+      // Label
+      const label = document.createElement('div');
+      label.textContent = key.replace(/_/g, ' ');
+      label.style.fontSize = '8px';
+      label.style.textTransform = 'uppercase';
+      label.style.color = textColor;
+      label.style.textAlign = 'center';
+      label.style.marginTop = '2px';
+      label.style.whiteSpace = 'normal';      // Allow wrapping
+      label.style.wordBreak = 'break-word';   // Break long words if needed
+      label.style.width = '100%';             // Take full width of parent      
+    
+      // Assemble
+      container.appendChild(iconWrapper);
+      if(!hideLabel)
+        container.appendChild(label);
+        
+      container.dataset.forceKey = key;
+      return container;
+    }  
+    
+  getOverrideEntities() {
+        const forceEntityArray = [
+          "select.predbat_manual_demand",
+          "select.predbat_manual_charge",
+          "select.predbat_manual_export",
+          "select.predbat_manual_freeze_charge",
+          "select.predbat_manual_freeze_export"
+        ];
+        
+        const titleMap = {
+          demand: "Force Manual Demand",
+          charge: "Force Manual Charge",
+          export: "Force Manual Export",
+          freeze_export: "Force Freeze Export",
+          freeze_charge: "Force Freeze Charge"
+        };
+        
+        const iconMap = {
+          demand: "mdi:home-battery",
+          charge: "mdi:battery-plus",
+          export: "mdi:battery-minus",
+          freeze_export: "mdi:battery-minus",
+          freeze_charge: "mdi:battery-plus"          
+        };
+        
+        const forceEntityObjects = forceEntityArray.map(entityName => {
+          const key = entityName.replace('select.predbat_manual_', '');  // e.g., "freeze_export"
+          return {
+            entityName,
+            entityIcon: iconMap[key],
+            entityTitle: titleMap[key]
+          };
+        }); 
+        
+        return forceEntityObjects;
+  }
+  
   getCellTransformation(theItem, column, darkMode, itemIndex, timestamp) {
     
     let newCell = document.createElement('td');
@@ -720,118 +914,176 @@ class PredbatTableCard extends HTMLElement {
     //Set the table up for people that like the Trefor style
     //
     
-    if(column === "options-column"){
-        
+    if(column === "options-popup-column" || column === "options-column"){
         let timeForSelectOverride = this.getTimeframeForOverride(timestamp.value);
         
-        const forceEntityArray = [
-          "select.predbat_manual_demand",
-          "select.predbat_manual_charge",
-          "select.predbat_manual_export"
-        ];
+        const forceEntityObjects = this.getOverrideEntities();
         
-        const titleMap = {
-          demand: "Force Manual Demand",
-          charge: "Force Manual Charge",
-          export: "Force Manual Export"
-        };
-        
-        const iconMap = {
-          demand: "mdi:home-battery",
-          charge: "mdi:battery-plus",
-          export: "mdi:battery-minus"
-        };
-        
-        const forceEntityObjects = forceEntityArray.map(entityName => {
-          const key = entityName.split('_').pop(); // "demand", "charge", "export"
-          return {
-            entityName,
-            entityIcon: iconMap[key],
-            entityTitle: titleMap[key]
-          };
-        });  
-        
-        const iconOpacityOff = 0.25;
-        const iconOpacityOn = 1.00;
-        const iconColorOff = "var(--icon-primary-color)";
-        const iconColorOn = "rgb(58, 238, 133)";
-        
-        for (const forceEntity of forceEntityObjects) {
+        if(column === "options-popup-column") {
             
-            const settings = this.getArrayForEntityForceStates(this._hass.states[forceEntity.entityName]);
-            let iconOpacity = iconOpacityOff;
-            let iconColor = iconColorOff;
-            
-            let removeOption = [...settings]; 
-            if(settings.includes(timeForSelectOverride)){
-                iconColor = iconColorOn;
-                iconOpacity = iconOpacityOn;
-                
-                const index = settings.indexOf(timeForSelectOverride);
-                if (index !== -1) {
-                    removeOption.splice(index, 1);
-                }
-            }
+            const iconSize = 24;
             
             // CREATE THE ICON
             const iconEl = document.createElement('ha-icon');
-            iconEl.setAttribute('title', forceEntity.entityTitle);
-            iconEl.setAttribute('icon', forceEntity.entityIcon);
+            iconEl.setAttribute('title', "Battery Overrides");
+            iconEl.setAttribute('icon', "mdi:application-edit-outline");
             iconEl.style.cursor = 'pointer';
-            iconEl.style.margin = '0 2px';
-            iconEl.style.opacity = iconOpacity;
-            iconEl.style.color = iconColor;
+            iconEl.style.opacity = 0.8;
+            iconEl.style.fill = "var(--text-primary-color)";
+            iconEl.style.setProperty('--mdc-icon-size', iconSize + 'px');
+            
+            for (const forceEntity of forceEntityObjects) {
+                const settings = this.getArrayForEntityForceStates(this._hass.states[forceEntity.entityName]);
+                const isActive = settings.includes(timeForSelectOverride);
+                if(isActive){
+                    iconEl.style.color = "rgb(58, 238, 133)";
+                    iconEl.style.opacity = 1.0;
+                    break;
+                }
+            }            
             
             // Add click handler
             iconEl.addEventListener('click', () => {
+              // Check if modal already exists
+              if (document.getElementById('custom-modal-overlay')) return;
+            
+              // Create overlay
+              const overlay = document.createElement('div');
+              overlay.id = 'custom-modal-overlay';
+              overlay.style.position = 'fixed';
+              overlay.style.top = '0';
+              overlay.style.left = '0';
+              overlay.style.width = '100vw';
+              overlay.style.height = '100vh';
+              overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.4)';
+              overlay.style.display = 'flex';
+              overlay.style.alignItems = 'center';
+              overlay.style.justifyContent = 'center';
+              overlay.style.zIndex = '10000';
+              overlay.style.opacity = '0';
+              overlay.style.transition = 'opacity 200ms ease-in-out';
+            
+              // Create modal box
+              const modalBox = document.createElement('div');
+                modalBox.style.background = 'rgba(0, 0, 0, 0.8)';
+                modalBox.style.padding = '20px';
+                modalBox.style.borderRadius = '8px';
+                modalBox.style.border = "2px solid var(--text-primary-color)";
+                modalBox.style.boxShadow = '0 2px 10px rgba(0,0,0,1)';
+                modalBox.style.display = "flex";
+                modalBox.style.flexDirection = 'column';
+              
+              const headerRow = document.createElement('div');
+                headerRow.style.display = 'flex';
+                headerRow.style.justifyContent = 'space-between';
+                headerRow.style.alignItems = 'center';
+                headerRow.style.paddingBottom = '10px';
+              
+              const titleBox = document.createElement('div');
+              titleBox.style.color = 'var(--text-primary-color)';
+              titleBox.innerHTML = timestamp.value;
+              titleBox.style.width = '100%';
+                titleBox.style.display = 'flex';
+                titleBox.style.justifyContent = 'center';   // horizontal center
+                titleBox.style.alignItems = 'center';       // vertical center
+              titleBox.style.flex = '1';
+              titleBox.style.fontSize = '16px';
+              titleBox.style.fontWeight = 'bold';
+              titleBox.style.textShadow = '1px 1px 1px black';
+              
+              const closeBox = document.createElement('div');
+              
+                const closeButton = document.createElement('ha-icon');
+                closeButton.setAttribute('title', "Battery Overrides");
+                closeButton.setAttribute('icon', "mdi:close-circle-outline");
+                closeButton.style.cursor = 'pointer';
+                closeButton.style.margin = '0 2px';
+                closeButton.style.color = "var(--text-primary-color)";
+                closeButton.style.setProperty('--mdc-icon-size', iconSize + 'px');
+                closeButton.id = 'modal-close-btn'; 
                 
-                let currentSettings = this.getArrayForEntityForceStates(this._hass.states[forceEntity.entityName]);
-                
-                if(currentSettings.includes(timeForSelectOverride)){
-                    
-                    // Turn off
-                    iconEl.style.opacity = iconOpacityOff;
-                    iconEl.style.color = iconColorOff;
-                    
-                    const index = currentSettings.indexOf(timeForSelectOverride);
-                        if (index !== -1) {
-                        currentSettings.splice(index, 1);
-                    }
-                    
-                    this._hass.callService('select', 'select_option', {
-                        entity_id: forceEntity.entityName,
-                        option: 'off'
-                    });  
-                    
-                    for(const time of currentSettings){
-                    
-                      this._hass.callService('select', 'select_option', {
-                        entity_id: forceEntity.entityName,
-                        option: time
-                        });                     
-                    }
-                    
-                } else {
-                    
-                    // turn on
-                    
-                    iconEl.style.opacity = iconOpacityOn;
-                    iconEl.style.color = iconColorOn;                    
-                    
-                    this._hass.callService('select', 'select_option', {
-                      entity_id: forceEntity.entityName,
-                      option: timeForSelectOverride
-                    });                
-                    
+                closeBox.appendChild(closeButton);
+              
+              headerRow.appendChild(titleBox);
+              headerRow.appendChild(closeBox);
+              
+              modalBox.appendChild(headerRow);
+              
+              const buttonBox = document.createElement('div');
+                buttonBox.style.display = 'flex';
+                buttonBox.style.justifyContent = 'space-between';
+                buttonBox.style.alignItems = 'flex-start';   
+                //buttonBox.style.border = '1px solid white';
+              
+                for (const forceEntity of forceEntityObjects) {
+                    // Create Icon
+                    const icon = this.createButtonForOverrides(forceEntity, timeForSelectOverride, '40', 'var(--text-primary-color)', false, true);
+                    // Append to DOM
+                    //icon.style.border = '1px solid white';
+                    buttonBox.appendChild(icon);            
                 }
+            
+            modalBox.appendChild(buttonBox);
+            
+              // Add modal to overlay
+              overlay.appendChild(modalBox);
+              document.body.appendChild(overlay);
+              
+                // Trigger fade-in
+                void overlay.offsetWidth;  // Force reflow
+                overlay.style.opacity = '1';              
+            
+                // Close handler
+                document.getElementById('modal-close-btn').addEventListener('click', () => {
+                  overlay.remove();
+                  document.removeEventListener('keydown', escHandler);
+                });
                 
+                // Close on click outside modal
+                overlay.addEventListener('click', (e) => {
+                  if (e.target === overlay) {
+                    overlay.remove();
+                    document.removeEventListener('keydown', escHandler);
+                  }
+                });
+                
+                // Close on Escape key
+                const escHandler = (e) => {
+                  if (e.key === 'Escape') {
+                    overlay.remove();
+                    document.removeEventListener('keydown', escHandler);
+                  }
+                };
+                document.addEventListener('keydown', escHandler);
             });
             
-            // Append to DOM
-            newCell.appendChild(iconEl);            
+            newCell.style.height = (iconSize+10) + 'px';
+            newCell.appendChild(iconEl);        
         }
-
+        
+        if(column === "options-column"){
+            
+            const headerRow = document.createElement('div');
+            headerRow.style.display = 'flex';
+            headerRow.style.justifyContent = 'space-between';
+            headerRow.style.alignItems = 'flex-start';
+            
+            for (const forceEntity of forceEntityObjects) {
+                // Create Icon
+                const icon = this.createButtonForOverrides(forceEntity, timeForSelectOverride, '24', 'var(--primary-text-color)', true);
+                // Append to DOM
+                icon.style.width = '34px';
+                headerRow.appendChild(icon);            
+            }
+            
+            newCell.style.width = '170px';
+            newCell.appendChild(headerRow);     
+    
+        }
+        
     }
+    
+
     
     if(column === "time-column" && this.config.force_single_line === true)
         newCell.style.whiteSpace = "nowrap";
@@ -1136,7 +1388,7 @@ class PredbatTableCard extends HTMLElement {
         }    
     }
         
-    if(column !== "import-export-column" && column !== "weather-column" && column !== "temp-column" && column !== "rain-column" && column !== "options-column"){
+    if(column !== "import-export-column" && column !== "weather-column" && column !== "temp-column" && column !== "rain-column" && column !== "options-column" && column !== "options-popup-column"){
         newCell.style.color = theItem.color;
         if(theItem.value.replace(/\s/g, '').length === 0 || theItem.value === "0" || theItem.value === "⚊") {
             if(fillEmptyCells)
@@ -2000,7 +2252,8 @@ previous_findForecastForLabel(label, forecastArray) {
           'weather-column': {description: "Weather", smallDescription: "<ha-icon icon='mdi:weather-partly-cloudy' style='--mdc-icon-size: 20px;'></ha-icon>" },
           'rain-column': {description: "Rain Chance", smallDescription: "<ha-icon icon='mdi:weather-pouring' style='--mdc-icon-size: 20px;'></ha-icon>" },
           'temp-column': {description: "Temp", smallDescription: "<ha-icon icon='mdi:thermometer' style='--mdc-icon-size: 20px;'></ha-icon>" },
-          'options-column': {description: "Options", smallDescription: "<ha-icon icon='mdi:button-pointer' style='--mdc-icon-size: 20px;'></ha-icon>" }
+          'options-column': {description: "Override", smallDescription: "<ha-icon icon='mdi:button-pointer' style='--mdc-icon-size: 20px;'></ha-icon>" },
+          'options-popup-column': {description: "Override", smallDescription: "<ha-icon icon='mdi:button-pointer' style='--mdc-icon-size: 20px;'></ha-icon>" }
         };
         
         if (headerClassesObject.hasOwnProperty(column)) {
