@@ -966,18 +966,19 @@ class PredbatTableCard extends HTMLElement {
               // Create modal box
               const modalBox = document.createElement('div');
                 modalBox.style.background = 'rgba(0, 0, 0, 0.8)';
-                modalBox.style.padding = '20px';
+                modalBox.style.padding = '20px 40px 20px 40px';
                 modalBox.style.borderRadius = '8px';
                 modalBox.style.border = "2px solid var(--text-primary-color)";
                 modalBox.style.boxShadow = '0 2px 10px rgba(0,0,0,1)';
                 modalBox.style.display = "flex";
                 modalBox.style.flexDirection = 'column';
+                modalBox.style.position = 'relative';
               
               const headerRow = document.createElement('div');
                 headerRow.style.display = 'flex';
                 headerRow.style.justifyContent = 'space-between';
                 headerRow.style.alignItems = 'center';
-                headerRow.style.paddingBottom = '10px';
+                headerRow.style.paddingBottom = '20px';
               
               const titleBox = document.createElement('div');
               titleBox.style.color = 'var(--text-primary-color)';
@@ -992,6 +993,9 @@ class PredbatTableCard extends HTMLElement {
               titleBox.style.textShadow = '1px 1px 1px black';
               
               const closeBox = document.createElement('div');
+              closeBox.style.position = 'absolute';
+              closeBox.style.top = '5px';
+              closeBox.style.right = '5px';
               
                 const closeButton = document.createElement('ha-icon');
                 closeButton.setAttribute('title', "Battery Overrides");
@@ -999,14 +1003,14 @@ class PredbatTableCard extends HTMLElement {
                 closeButton.style.cursor = 'pointer';
                 closeButton.style.margin = '0 2px';
                 closeButton.style.color = "var(--text-primary-color)";
-                closeButton.style.setProperty('--mdc-icon-size', iconSize + 'px');
+                closeButton.style.setProperty('--mdc-icon-size', '40px');
                 closeButton.id = 'modal-close-btn'; 
                 
                 closeBox.appendChild(closeButton);
               
               headerRow.appendChild(titleBox);
-              headerRow.appendChild(closeBox);
               
+              modalBox.appendChild(closeBox);
               modalBox.appendChild(headerRow);
               
               const buttonBox = document.createElement('div');
