@@ -64,7 +64,7 @@ The following YAML config items can or should be set on the card
 | `show_plan_totals`    | NO    | Displays a "Totals" row at the <b>bottom</b> of the plan for any columns that can be calculated   |
 | `weather_entity`    | NO    | Add a weather forecast entity to see the weather for each time slot. Must add `weather-column` or `temp-column` to `columns` to see weather  |
 | `path_for_click`    | NO    | Add a dashboard path like `/my-dashboard/predbat-plan` to be navigated to when you click the plan  |
-| `battery_capacity`    | NO    | Set a float value e.g. `9.523` for your total battery capacity. Setting this will display the `soc-column` in kWh rather than a % |
+| `battery_capacity`    | NO    | Set a float value e.g. `9.523` for your total battery capacity in kWh. Setting this will display the `soc-column` in kWh rather than a % |
 
 ## Column Options
 
