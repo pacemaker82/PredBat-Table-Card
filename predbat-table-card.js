@@ -896,54 +896,10 @@ class PredbatTableCard extends HTMLElement {
         return forceEntityObjects;
   }
   
-  getCellTransformation(theItem, column, darkMode, itemIndex, timestamp) {
-    
-    let newCell = document.createElement('td');
-    let newContent = "";
-    
-    //newCell.setAttribute('onclick', 'console.log("hello")');
-    
-    //override fill empty cells
-    let fillEmptyCells;
-    if(this.config.fill_empty_cells === undefined)
-        fillEmptyCells = true;
-    else 
-        fillEmptyCells = this.config.fill_empty_cells;
+  createPopUpForOverrides(timeForSelectOverride, timestamp) {
       
-    //  
-    //Set the table up for people that like the Trefor style
-    //
-    
-    if(column === "options-popup-column" || column === "options-column"){
-        let timeForSelectOverride = this.getTimeframeForOverride(timestamp.value);
-        
-        const forceEntityObjects = this.getOverrideEntities();
-        
-        if(column === "options-popup-column") {
-            
-            const iconSize = 24;
-            
-            // CREATE THE ICON
-            const iconEl = document.createElement('ha-icon');
-            iconEl.setAttribute('title', "Battery Overrides");
-            iconEl.setAttribute('icon', "mdi:application-edit-outline");
-            iconEl.style.cursor = 'pointer';
-            iconEl.style.opacity = 0.8;
-            iconEl.style.fill = "var(--text-primary-color)";
-            iconEl.style.setProperty('--mdc-icon-size', iconSize + 'px');
-            
-            for (const forceEntity of forceEntityObjects) {
-                const settings = this.getArrayForEntityForceStates(this._hass.states[forceEntity.entityName]);
-                const isActive = settings.includes(timeForSelectOverride);
-                if(isActive){
-                    iconEl.style.color = "rgb(58, 238, 133)";
-                    iconEl.style.opacity = 1.0;
-                    break;
-                }
-            }            
-            
-            // Add click handler
-            iconEl.addEventListener('click', () => {
+      const forceEntityObjects = this.getOverrideEntities();
+     
               // Check if modal already exists
               if (document.getElementById('custom-modal-overlay')) return;
             
@@ -1058,7 +1014,58 @@ class PredbatTableCard extends HTMLElement {
                     document.removeEventListener('keydown', escHandler);
                   }
                 };
-                document.addEventListener('keydown', escHandler);
+                document.addEventListener('keydown', escHandler);      
+  }
+  
+  getCellTransformation(theItem, column, darkMode, itemIndex, timestamp) {
+    
+    let newCell = document.createElement('td');
+    let newContent = "";
+    
+    //newCell.setAttribute('onclick', 'console.log("hello")');
+    
+    //override fill empty cells
+    let fillEmptyCells;
+    if(this.config.fill_empty_cells === undefined)
+        fillEmptyCells = true;
+    else 
+        fillEmptyCells = this.config.fill_empty_cells;
+      
+    //  
+    //Set the table up for people that like the Trefor style
+    //
+    
+    if(column === "options-popup-column" || column === "options-column"){
+        let timeForSelectOverride = this.getTimeframeForOverride(timestamp.value);
+        
+        const forceEntityObjects = this.getOverrideEntities();
+        
+        if(column === "options-popup-column") {
+            
+            const iconSize = 24;
+            
+            // CREATE THE ICON
+            const iconEl = document.createElement('ha-icon');
+            iconEl.setAttribute('title', "Battery Overrides");
+            iconEl.setAttribute('icon', "mdi:application-edit-outline");
+            iconEl.style.cursor = 'pointer';
+            iconEl.style.opacity = 0.8;
+            iconEl.style.fill = "var(--text-primary-color)";
+            iconEl.style.setProperty('--mdc-icon-size', iconSize + 'px');
+            
+            for (const forceEntity of forceEntityObjects) {
+                const settings = this.getArrayForEntityForceStates(this._hass.states[forceEntity.entityName]);
+                const isActive = settings.includes(timeForSelectOverride);
+                if(isActive){
+                    iconEl.style.color = "rgb(58, 238, 133)";
+                    iconEl.style.opacity = 1.0;
+                    break;
+                }
+            }            
+            
+            // Add click handler
+            iconEl.addEventListener('click', () => {
+                this.createPopUpForOverrides(this.getTimeframeForOverride(timestamp.value), timestamp);
             });
             
             newCell.style.height = (iconSize+10) + 'px';
@@ -1798,6 +1805,24 @@ class PredbatTableCard extends HTMLElement {
         }
 
     }  
+    
+    // make time column tap/clickable for override pop up
+    
+    const columnsToReturn = this.config.columns;
+    if(column === "time-column" && !columnsToReturn.includes('options-popup-column')) {
+        newCell.style.cursor = 'pointer';
+        for (const forceEntity of this.getOverrideEntities()) {
+            const settings = this.getArrayForEntityForceStates(this._hass.states[forceEntity.entityName]);
+            const isActive = settings.includes(this.getTimeframeForOverride(timestamp.value));
+            if(isActive){
+                newCell.style.color = "rgb(58, 238, 133)";
+                break;
+            }
+        }         
+        newCell.addEventListener('click', () => {
+            this.createPopUpForOverrides(this.getTimeframeForOverride(timestamp.value), timestamp);
+        });        
+    }
     
 
       return newCell;
