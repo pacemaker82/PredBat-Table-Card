@@ -64,9 +64,7 @@ The following YAML config items can or should be set on the card
 | `show_plan_totals`    | NO    | Displays a "Totals" row at the <b>bottom</b> of the plan for any columns that can be calculated   |
 | `weather_entity`    | NO    | Add a weather forecast entity to see the weather for each time slot. Must add `weather-column` or `temp-column` to `columns` to see weather  |
 | `path_for_click`    | NO    | Add a dashboard path like `/my-dashboard/predbat-plan` to be navigated to when you click the plan  |
-| `battery_capacity`    | NO    | Set a float value e.g. 9.523 for your total battery capacity. Setting this will display the `soc-column` in kWh rather than a % |
-
-You can use `import-export-column` to see both import and export prices in a single column 
+| `battery_capacity`    | NO    | Set a float value e.g. `9.523` for your total battery capacity. Setting this will display the `soc-column` in kWh rather than a % |
 
 ## Column Options
 
@@ -96,6 +94,7 @@ You can use `import-export-column` to see both import and export prices in a sin
 | Overrides   | `options-column`    | Displays buttons to force demand, charge or export for that timeslot. [See more](#using-the-options-columns)   |
 | Overrides (PopUp) | `options-popup-column`    | Displays a popup of buttons to force demand, charge or export for that timeslot. [See more](#using-the-options-columns)   |
 
+You can use `import-export-column` to see both import and export prices in a single column 
 
 ** Column only works if feature configured in Predbat<br>
 *** Column only appears when Predbat set to HTML Debug Mode <br>
@@ -313,7 +312,7 @@ The card now supports the following Predbat overrides:
 
 There are a number of ways you can use these manual override settings, choose your favoured option below:
 
-1. By default, the time-column is now clickable. On click/tap, a pop up will appear allowing you to manage the override settings for that timeslot.
+1. By default, the `time-column` is now clickable. On click/tap, a pop up will appear allowing you to manage the override settings for that timeslot.
 2. Add `options-column` to the `columns` YAML settings to show a new column on the plan, giving you all the options in line.
 3. Add `options-popup-column` to the `columns` YAML settings, this will display a single icon that you can click to show the same pop up in option (1). Useful if you dont want the `time-column` to be clickable, and want the placement of that column to be somewhere else in your plan. 
 
