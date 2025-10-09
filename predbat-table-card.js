@@ -1555,6 +1555,16 @@ class PredbatTableCard extends HTMLElement {
         
         if(column === "soc-column") {
             newContent += "%";
+            
+            //calculate % in kWh if battery_capacity is present
+            
+            if(this.config.battery_capacity && !isNaN(parseFloat(this.config.battery_capacity))){
+            
+                let capacity = parseFloat(this.config.battery_capacity);
+                let actualCapacity = ((batteryPercent / 100) * capacity).toFixed(2);
+                newContent = actualCapacity + " kWh";
+            }
+            
             const roundedPercent = Math.round(parseInt(batteryPercent, 10) / 10) * 10;
             let batteryIcon;
             if(roundedPercent === 100){
@@ -1809,7 +1819,7 @@ class PredbatTableCard extends HTMLElement {
     // make time column tap/clickable for override pop up
     
     const columnsToReturn = this.config.columns;
-    if(column === "time-column" && (!columnsToReturn.includes('options-popup-column') || !columnsToReturn.includes('options-column')) {
+    if(column === "time-column" && (!columnsToReturn.includes('options-popup-column') || !columnsToReturn.includes('options-column'))) {
         newCell.style.cursor = 'pointer';
         for (const forceEntity of this.getOverrideEntities()) {
             const settings = this.getArrayForEntityForceStates(this._hass.states[forceEntity.entityName]);
