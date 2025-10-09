@@ -20,7 +20,7 @@ This is a custom [Predbat](https://github.com/springfall2008/batpred) table card
 7. [Showing the weather forecast](#showing-the-weather-forecast)
 8. [PV prediction card visual](#pv-prediction-card-visual)
 9. [Creating a mini Predbat card](#creating-a-mini-predbat-card)
-10. [Using the Options column](#using-the-options-column)
+10. [Using the Options columns](#using-the-options-columns)
 
 ## Installation
 
@@ -64,6 +64,7 @@ The following YAML config items can or should be set on the card
 | `show_plan_totals`    | NO    | Displays a "Totals" row at the <b>bottom</b> of the plan for any columns that can be calculated   |
 | `weather_entity`    | NO    | Add a weather forecast entity to see the weather for each time slot. Must add `weather-column` or `temp-column` to `columns` to see weather  |
 | `path_for_click`    | NO    | Add a dashboard path like `/my-dashboard/predbat-plan` to be navigated to when you click the plan  |
+| `battery_capacity`    | NO    | Set a float value e.g. 9.523 for your total battery capacity. Setting this will display the `soc-column` in kWh rather than a % |
 
 You can use `import-export-column` to see both import and export prices in a single column 
 
@@ -92,7 +93,8 @@ You can use `import-export-column` to see both import and export prices in a sin
 | Weather   | `weather-column`    | Displays a weather icon based on the forecast for that timeslot   |
 | Temperature   | `temp-column`    | Displays the temperature based on the forecast for that timeslot   |
 | Chance Of Rain   | `rain-column`    | Displays the chance of rain percentage based on the forecast for that timeslot   |
-| Options   | `options-column`    | Displays buttons to force demand, charge or export for that timeslot. [See more](#using-the-options-column)   |
+| Overrides   | `options-column`    | Displays buttons to force demand, charge or export for that timeslot. [See more](#using-the-options-columns)   |
+| Overrides (PopUp) | `options-popup-column`    | Displays a popup of buttons to force demand, charge or export for that timeslot. [See more](#using-the-options-columns)   |
 
 
 ** Column only works if feature configured in Predbat<br>
@@ -296,15 +298,25 @@ hide_last_update: true
 path_to_click: /my-dashboard/predbat-plan
 ```
 
-## Using the Options Column
+## Using the Options Columns
 
-By adding the `options-column` to your card YAML you can display a column of buttons that help you control Predbat for that timeslot.
+<img width="348" height="174" alt="Screenshot 2025-10-09 at 09 31 04" src="https://github.com/user-attachments/assets/dac662ac-5610-49d0-a2a6-9d543789ad7d" />
 
-<img width="275" height="77" alt="Screenshot 2025-10-06 at 13 03 52" src="https://github.com/user-attachments/assets/5197aa49-7a33-455d-9914-7f120b34a2f3" />
+Overrides allow you to force Predbat to behave in the way you want, rather than the way it wants, like force a charge for a time slot, or export. 
 
-This column currently supports the following capabilities:
-- Force Demand / Idle
-- Force Battery Charge
-- Force Battery Export
+The card now supports the following Predbat overrides:
+- Manual Force Demand
+- Manual Force Charge
+- Manual Force Export
+- Manual Freeze Charge
+- Manual Freeze Export
 
-Clicking these buttons within the timeslot is the same as selecting them from the Predbat dropdown options. It will trigger a plan rebuild, which will reflect the actual status in the `status-column` once calculated.
+There are a number of ways you can use these manual override settings, choose your favoured option below:
+
+1. By default, the time-column is now clickable. On click/tap, a pop up will appear allowing you to manage the override settings for that timeslot.
+2. Add `options-column` to the `columns` YAML settings to show a new column on the plan, giving you all the options in line.
+3. Add `options-popup-column` to the `columns` YAML settings, this will display a single icon that you can click to show the same pop up in option (1). Useful if you dont want the `time-column` to be clickable, and want the placement of that column to be somewhere else in your plan. 
+
+Icons (or the `time-column`) will turn GREEN when a timeslot has had a manual override set on it. 
+
+**REMEMBER: You need to wait for the plan to do a re-run before your settings take hold. Selecting multiple settings at once may not necessarily get planned in by Predbat straight away. Be patient... this is the nature of Predbat and how it handles the manual override changes.**
