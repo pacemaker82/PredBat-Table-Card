@@ -1809,7 +1809,7 @@ class PredbatTableCard extends HTMLElement {
     // make time column tap/clickable for override pop up
     
     const columnsToReturn = this.config.columns;
-    if(column === "time-column" && !columnsToReturn.includes('options-popup-column')) {
+    if(column === "time-column" && (!columnsToReturn.includes('options-popup-column') || !columnsToReturn.includes('options-column')) {
         newCell.style.cursor = 'pointer';
         for (const forceEntity of this.getOverrideEntities()) {
             const settings = this.getArrayForEntityForceStates(this._hass.states[forceEntity.entityName]);
