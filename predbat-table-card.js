@@ -169,7 +169,7 @@ class PredbatTableCard extends HTMLElement {
             const newForce = hass.states[forceEntity.entityName].state;
             manualForceChanged = oldForce !== newForce;
             if (manualForceChanged){
-                console.log("MANUAL FORCE CHANGED " + oldForce + " - " + newForce);
+                //console.log("MANUAL FORCE CHANGED " + oldForce + " - " + newForce);
                 break;
             }
         }        
@@ -194,8 +194,8 @@ class PredbatTableCard extends HTMLElement {
       this.unsubscribe = await this._hass.connection.subscribeMessage(
         (event) => {
           this.forecast = event.forecast || [];
-          console.log(`[${new Date().toLocaleTimeString()}] FORECAST READY FOR RENDER`);
-          console.log(this.forecast);
+          //console.log(`[${new Date().toLocaleTimeString()}] FORECAST READY FOR RENDER`);
+          //console.log(this.forecast);
           this.processAndRender(this._hass);
         },
         {
@@ -282,7 +282,7 @@ class PredbatTableCard extends HTMLElement {
             lastUpdateCell.innerHTML = `<b>Plan Last Updated:</b> ${time}. Duration: ${this._lastOnText}`;
             
             if(hass.states[predbatActiveEntityId].state === "on"){
-                console.log("Switch: " + hass.states['switch.predbat_active'].state);
+                //console.log("Switch: " + hass.states['switch.predbat_active'].state);
                 lastUpdateCell.innerHTML += `<ha-icon class="icon-spin" icon="mdi:loading" style="--mdc-icon-size: 18px; margin-left: 4px;" title="Generating next plan"></ha-icon>`;
             }
             
@@ -688,10 +688,6 @@ class PredbatTableCard extends HTMLElement {
     return 3;
   }
   
-  handleClick() {
-    console.log('hello world');
-  }
-  
   getTimeframeForOverride(timeString){
       const match = timeString.match(/\b(\d{2}):(\d{2})\b/);
       if (!match) return null;
@@ -984,8 +980,7 @@ class PredbatTableCard extends HTMLElement {
             buttonBox.style.display = 'flex';
             buttonBox.style.justifyContent = 'space-between';
             buttonBox.style.alignItems = 'flex-start';   
-            //buttonBox.style.border = '1px solid white';
-            console.log(isAllowed);
+            
           if(isAllowed){
             
             // Only create the buttons if allowed
@@ -1388,7 +1383,6 @@ class PredbatTableCard extends HTMLElement {
             
             for (const forceEntity of forceEntityObjects) {
                 // Create Icon
-                console.log("Creating Icons", isAllowed);
                 const icon = this.createButtonForOverrides(forceEntity, timeForSelectOverride, '24', 'var(--primary-text-color)', true, isAllowed, true);
                 // Append to DOM
                 icon.style.width = '34px';
