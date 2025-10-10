@@ -1345,13 +1345,15 @@ class PredbatTableCard extends HTMLElement {
         if(column === "options-popup-column") {
             
             const iconSize = 24;
+            const iconOpacity = isAllowed ? '0.8' : '0.25';
+            const iconPointer = isAllowed ? 'pointer' : 'not-allowed';
             
             // CREATE THE ICON
             const iconEl = document.createElement('ha-icon');
             iconEl.setAttribute('title', "Battery Overrides");
             iconEl.setAttribute('icon', "mdi:application-edit-outline");
-            iconEl.style.cursor = 'pointer';
-            iconEl.style.opacity = 0.8;
+            iconEl.style.cursor = iconPointer;
+            iconEl.style.opacity = iconOpacity;
             iconEl.style.fill = "var(--text-primary-color)";
             iconEl.style.setProperty('--mdc-icon-size', iconSize + 'px');
             
