@@ -993,6 +993,7 @@ class PredbatTableCard extends HTMLElement {
             }
           } else {
               buttonBox.style.textAlign = "center";
+              buttonBox.style.color = "#FFFFFF";
               buttonBox.innerHTML = "This slot cannot currently be overridden. <br>Overrides will be available as the day progresses.";
           }
         
@@ -1235,7 +1236,7 @@ class PredbatTableCard extends HTMLElement {
             
             if(column === "weather-column" || column === "temp-column" || column === "rain-column"){
                 if(useOldSkool && theItem.color == "#FFFFFF")
-                    newCell.style.color = "#000000";
+                    newCell.style.color = "var(--primary-text-color)";
                 else 
                     newCell.style.color = theItem.color;
             }
@@ -1730,11 +1731,15 @@ class PredbatTableCard extends HTMLElement {
         }
     }
     
+    if(column === "weather-column" || column === "temp-column" || column === "rain-column"){
+        if(theItem.color === "#FFFFFF")
+            newCell.style.color = "var(--primary-text-color)";
+        else
+            newCell.style.color = theItem.color;
+    }
+    
     if(column === "weather-column") {
-        //console.log("Weather: ", theItem.value);
-        
-        newCell.style.color = theItem.color;
-        
+
         if(theItem.value !== undefined && theItem.value !== null){
            
             let condition = theItem.value.condition;
@@ -1757,8 +1762,6 @@ class PredbatTableCard extends HTMLElement {
     
     if(column === "temp-column") {
 
-        newCell.style.color = theItem.color;
-        
         if(theItem.value !== undefined && theItem.value !== null){
             
             const roundedTemp = Math.round(parseFloat(theItem.value.temperature));
@@ -1770,8 +1773,6 @@ class PredbatTableCard extends HTMLElement {
     } 
     
     if(column === "rain-column") {
-
-        newCell.style.color = theItem.color;
         
         if(theItem.value !== undefined && theItem.value !== null){
             
