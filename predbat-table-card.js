@@ -714,7 +714,7 @@ class PredbatTableCard extends HTMLElement {
       return entityState.replace(/^\+/, '').split(',');
   }
   
-    createButtonForOverrides(entityObject, timeForSelectOverride, iconSize, textColor, hideLabel, fromPopup = false) {
+    createButtonForOverrides(entityObject, timeForSelectOverride, iconSize, textColor, hideLabel, isAllowed, fromPopup = false) {
       const key = entityObject.entityName.replace('select.predbat_manual_', '');
     
       const iconOpacityOff = 1.00;
@@ -727,10 +727,12 @@ class PredbatTableCard extends HTMLElement {
       const settings = this.getArrayForEntityForceStates(this._hass.states[entityObject.entityName]);
       const isActive = settings.includes(timeForSelectOverride);
     
-      const iconOpacity = isActive ? iconOpacityOn : iconOpacityOff;
-      const iconColor = isActive ? iconColorOn : iconColorOff;
+      const iconColor = isAllowed ? (isActive ? iconColorOn : iconColorOff) : iconColorOff;
+      const iconOpacity = isAllowed ? (isActive ? iconOpacityOn : iconOpacityOff) : '0.25';
+      const iconCursor = isAllowed ? 'pointer' : 'not-allowed';
       
       const snowIconColor = isActive ? snowIconColorOn : snowIconColorOff;
+      const snowOpacity = isAllowed ? '0.9' : '0.25';      
       
       let snowflakeIcon = null;
     
@@ -753,14 +755,17 @@ class PredbatTableCard extends HTMLElement {
       const iconEl = document.createElement('ha-icon');
       iconEl.setAttribute('title', entityObject.entityTitle);
       iconEl.setAttribute('icon', entityObject.entityIcon);
-      iconEl.style.cursor = 'pointer';
+      iconEl.style.cursor = iconCursor;
       iconEl.style.opacity = iconOpacity;
       iconEl.style.color = iconColor;
       iconEl.style.setProperty('--mdc-icon-size', iconSize + "px");
       iconEl.style.width = iconSize + "px";
       iconEl.style.height = iconSize + "px";
+      
+      if(isAllowed) {   
     
-      // Click handler
+      // Click handler ONLY if allowed
+      
         iconEl.addEventListener('click', () => {
           const currentSettings = this.getArrayForEntityForceStates(this._hass.states[entityObject.entityName]);
           const isActive = currentSettings.includes(timeForSelectOverride);
@@ -787,42 +792,46 @@ class PredbatTableCard extends HTMLElement {
               });
             }
           }
+            if(isAllowed){
+                  if (isActive) {
         
-          // ✅ Apply the standard toggle behaviour (used in both modes)
-          if (isActive) {
-            iconEl.style.opacity = iconOpacityOff;
-            iconEl.style.color = iconColorOff;
-            if (snowflakeIcon) snowflakeIcon.style.color = snowIconColorOff;
-        
-            const updatedSettings = currentSettings.filter(t => t !== timeForSelectOverride);
-        
-            this._hass.callService('select', 'select_option', {
-              entity_id: entityObject.entityName,
-              option: 'off'
-            });
-        
-            for (const time of updatedSettings) {
-              this._hass.callService('select', 'select_option', {
-                entity_id: entityObject.entityName,
-                option: time
-              });
+                    iconEl.style.opacity = iconOpacityOff;
+                    iconEl.style.color = iconColorOff;
+                    if (snowflakeIcon) snowflakeIcon.style.color = snowIconColorOff;
+                
+                    const updatedSettings = currentSettings.filter(t => t !== timeForSelectOverride);
+                
+                    this._hass.callService('select', 'select_option', {
+                      entity_id: entityObject.entityName,
+                      option: 'off'
+                    });
+                
+                    for (const time of updatedSettings) {
+                      this._hass.callService('select', 'select_option', {
+                        entity_id: entityObject.entityName,
+                        option: time
+                      });
+                    }
+                  } else {
+                    iconEl.style.opacity = iconOpacityOn;
+                    iconEl.style.color = iconColorOn;
+                    if (snowflakeIcon) snowflakeIcon.style.color = snowIconColorOn;
+                
+                    this._hass.callService('select', 'select_option', {
+                      entity_id: entityObject.entityName,
+                      option: timeForSelectOverride
+                    });
+                  }
             }
-          } else {
-            iconEl.style.opacity = iconOpacityOn;
-            iconEl.style.color = iconColorOn;
-            if (snowflakeIcon) snowflakeIcon.style.color = snowIconColorOn;
-        
-            this._hass.callService('select', 'select_option', {
-              entity_id: entityObject.entityName,
-              option: timeForSelectOverride
-            });
-          }
         });
     
+      }
+      
       iconWrapper.appendChild(iconEl);
     
       // Overlay snowflake if applicable
       if (key === 'freeze_charge' || key === 'freeze_export') {
+          
         snowflakeIcon = document.createElement('ha-icon');
         snowflakeIcon.setAttribute('icon', 'mdi:snowflake');
         snowflakeIcon.setAttribute('title', entityObject.entityTitle);
@@ -831,10 +840,10 @@ class PredbatTableCard extends HTMLElement {
         snowflakeIcon.style.position = 'absolute';
         snowflakeIcon.style.top = (iconSize/3)-10 + 'px';
         snowflakeIcon.style.left = iconSize/3 + 'px';
-        snowflakeIcon.style.opacity = '0.9';
+        snowflakeIcon.style.opacity = snowOpacity;
         snowflakeIcon.style.cursor = 'pointer';
         snowflakeIcon.style.pointerEvents = 'none';
-        
+
         iconWrapper.appendChild(snowflakeIcon);
       }
     
@@ -896,131 +905,430 @@ class PredbatTableCard extends HTMLElement {
         return forceEntityObjects;
   }
   
-  createPopUpForOverrides(timeForSelectOverride, timestamp) {
+  createPopUpForOverrides(timeForSelectOverride, timestamp, isAllowed) {
       
       const forceEntityObjects = this.getOverrideEntities();
      
-              // Check if modal already exists
-              if (document.getElementById('custom-modal-overlay')) return;
+          // Check if modal already exists
+          if (document.getElementById('custom-modal-overlay')) return;
+        
+          // Create overlay
+          const overlay = document.createElement('div');
+          overlay.id = 'custom-modal-overlay';
+          overlay.style.position = 'fixed';
+          overlay.style.top = '0';
+          overlay.style.left = '0';
+          overlay.style.width = '100vw';
+          overlay.style.height = '100vh';
+          overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.4)';
+          overlay.style.display = 'flex';
+          overlay.style.alignItems = 'center';
+          overlay.style.justifyContent = 'center';
+          overlay.style.zIndex = '10000';
+          overlay.style.opacity = '0';
+          overlay.style.transition = 'opacity 200ms ease-in-out';
+        
+          // Create modal box
+          const modalBox = document.createElement('div');
+            modalBox.style.background = 'rgba(0, 0, 0, 0.8)';
+            modalBox.style.padding = '20px 40px 20px 40px';
+            modalBox.style.borderRadius = '8px';
+            modalBox.style.border = "2px solid var(--text-primary-color)";
+            modalBox.style.boxShadow = '0 2px 10px rgba(0,0,0,1)';
+            modalBox.style.display = "flex";
+            modalBox.style.flexDirection = 'column';
+            modalBox.style.position = 'relative';
+          
+          const headerRow = document.createElement('div');
+            headerRow.style.display = 'flex';
+            headerRow.style.justifyContent = 'space-between';
+            headerRow.style.alignItems = 'center';
+            headerRow.style.paddingBottom = '20px';
+          
+          const titleBox = document.createElement('div');
+          titleBox.style.color = 'var(--text-primary-color)';
+          titleBox.innerHTML = timestamp.value;
+          titleBox.style.width = '100%';
+            titleBox.style.display = 'flex';
+            titleBox.style.justifyContent = 'center';   // horizontal center
+            titleBox.style.alignItems = 'center';       // vertical center
+          titleBox.style.flex = '1';
+          titleBox.style.fontSize = '16px';
+          titleBox.style.fontWeight = 'bold';
+          titleBox.style.textShadow = '1px 1px 1px black';
+          
+          const closeBox = document.createElement('div');
+          closeBox.style.position = 'absolute';
+          closeBox.style.top = '5px';
+          closeBox.style.right = '5px';
+          
+            const closeButton = document.createElement('ha-icon');
+            closeButton.setAttribute('title', "Battery Overrides");
+            closeButton.setAttribute('icon', "mdi:close-circle-outline");
+            closeButton.style.cursor = 'pointer';
+            closeButton.style.margin = '0 2px';
+            closeButton.style.color = "var(--text-primary-color)";
+            closeButton.style.setProperty('--mdc-icon-size', '40px');
+            closeButton.id = 'modal-close-btn'; 
             
-              // Create overlay
-              const overlay = document.createElement('div');
-              overlay.id = 'custom-modal-overlay';
-              overlay.style.position = 'fixed';
-              overlay.style.top = '0';
-              overlay.style.left = '0';
-              overlay.style.width = '100vw';
-              overlay.style.height = '100vh';
-              overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.4)';
-              overlay.style.display = 'flex';
-              overlay.style.alignItems = 'center';
-              overlay.style.justifyContent = 'center';
-              overlay.style.zIndex = '10000';
-              overlay.style.opacity = '0';
-              overlay.style.transition = 'opacity 200ms ease-in-out';
+            closeBox.appendChild(closeButton);
+          
+          headerRow.appendChild(titleBox);
+          
+          modalBox.appendChild(closeBox);
+          modalBox.appendChild(headerRow);
+          
+          // Add the buttons to the popup
+          
+          const buttonBox = document.createElement('div');
+            buttonBox.style.display = 'flex';
+            buttonBox.style.justifyContent = 'space-between';
+            buttonBox.style.alignItems = 'flex-start';   
+            //buttonBox.style.border = '1px solid white';
+            console.log(isAllowed);
+          if(isAllowed){
             
-              // Create modal box
-              const modalBox = document.createElement('div');
-                modalBox.style.background = 'rgba(0, 0, 0, 0.8)';
-                modalBox.style.padding = '20px 40px 20px 40px';
-                modalBox.style.borderRadius = '8px';
-                modalBox.style.border = "2px solid var(--text-primary-color)";
-                modalBox.style.boxShadow = '0 2px 10px rgba(0,0,0,1)';
-                modalBox.style.display = "flex";
-                modalBox.style.flexDirection = 'column';
-                modalBox.style.position = 'relative';
-              
-              const headerRow = document.createElement('div');
-                headerRow.style.display = 'flex';
-                headerRow.style.justifyContent = 'space-between';
-                headerRow.style.alignItems = 'center';
-                headerRow.style.paddingBottom = '20px';
-              
-              const titleBox = document.createElement('div');
-              titleBox.style.color = 'var(--text-primary-color)';
-              titleBox.innerHTML = timestamp.value;
-              titleBox.style.width = '100%';
-                titleBox.style.display = 'flex';
-                titleBox.style.justifyContent = 'center';   // horizontal center
-                titleBox.style.alignItems = 'center';       // vertical center
-              titleBox.style.flex = '1';
-              titleBox.style.fontSize = '16px';
-              titleBox.style.fontWeight = 'bold';
-              titleBox.style.textShadow = '1px 1px 1px black';
-              
-              const closeBox = document.createElement('div');
-              closeBox.style.position = 'absolute';
-              closeBox.style.top = '5px';
-              closeBox.style.right = '5px';
-              
-                const closeButton = document.createElement('ha-icon');
-                closeButton.setAttribute('title', "Battery Overrides");
-                closeButton.setAttribute('icon', "mdi:close-circle-outline");
-                closeButton.style.cursor = 'pointer';
-                closeButton.style.margin = '0 2px';
-                closeButton.style.color = "var(--text-primary-color)";
-                closeButton.style.setProperty('--mdc-icon-size', '40px');
-                closeButton.id = 'modal-close-btn'; 
+            // Only create the buttons if allowed
+            for (const forceEntity of forceEntityObjects) {
+                // Create Icon
+                const icon = this.createButtonForOverrides(forceEntity, timeForSelectOverride, '40', 'var(--text-primary-color)', false, isAllowed, true);
+                // Append to DOM
+                //icon.style.border = '1px solid white';
+                buttonBox.appendChild(icon);            
+            }
+          } else {
+              buttonBox.innerHTML = "Sorry, this slot cannot be overridden";
+          }
+        
+            modalBox.appendChild(buttonBox);        
+          
+          
+          // Add modal to overlay
+          overlay.appendChild(modalBox);
+          document.body.appendChild(overlay);
+          
+            // Trigger fade-in
+            void overlay.offsetWidth;  // Force reflow
+            overlay.style.opacity = '1';              
+        
+            // Close handler
+            document.getElementById('modal-close-btn').addEventListener('click', () => {
+              overlay.remove();
+              document.removeEventListener('keydown', escHandler);
+            });
+            
+            // Close on click outside modal
+            overlay.addEventListener('click', (e) => {
+              if (e.target === overlay) {
+                overlay.remove();
+                document.removeEventListener('keydown', escHandler);
+              }
+            });
+            
+            // Close on Escape key
+            const escHandler = (e) => {
+              if (e.key === 'Escape') {
+                overlay.remove();
+                document.removeEventListener('keydown', escHandler);
+              }
+            };
+            document.addEventListener('keydown', escHandler);      
+  }
+  
+  checkRowIsAllowedForOverride(forceEntityObjects, timeForSelectOverride, itemIndex) {
+    let isAllowed = false;
+    for (const forceEntity of forceEntityObjects) {
+        const allowedOptions = this._hass.states[forceEntity.entityName].attributes.options;
+        if(itemIndex <= allowedOptions.length-2)
+            isAllowed = allowedOptions.includes(timeForSelectOverride);
+        if(isAllowed)
+            break;
+    }  
+    return isAllowed;
+  }
+  
+  getCellTransformationRefactor(theItem, column, darkMode, itemIndex, timestamp) {
+      
+        let newCell = document.createElement('td');
+        let newContent = (typeof theItem?.value === 'string') ? theItem.value.trim() : theItem?.value ?? '';
+        // Remove and Replace "_" with empty string
+        newContent = (newContent.length === 1 && newContent === "⚊") ? "" : newContent;
+        
+        const timeForSelectOverride = this.getTimeframeForOverride(timestamp.value);
+        const forceEntityObjects = this.getOverrideEntities();           
+      
+        // Old Skool Configuration
+        
+        let useOldSkool = false;
+        if(this.config.old_skool || this.config.old_skool_columns?.includes(column)) {
+            newCell.style.backgroundColor = theItem.color;
+            if(theItem.color)
+                newCell.style.color = "#000000";
+            newCell.innerHTML = newContent;
+            useOldSkool = true;
+        }
+        
+        // Column Specific Configuration
+        // These are the custom column treatments, must be included in the array first, then specifically called out in the IF statement
+        
+        const columnsWithCustomTransformation = ['time-column', 'import-column', 'export-column', 'limit-column', 'soc-column', 'cost-column', 'weather-column', 'rain-column', 'temp-column'];
+        if(columnsWithCustomTransformation.includes(column)){
+
+            // Time Column time-column
+            
+            if(column === "time-column" && !useOldSkool) {
+            
+                if (this.config.force_single_line)
+                    newCell.style.whiteSpace = "nowrap";
                 
-                closeBox.appendChild(closeButton);
-              
-              headerRow.appendChild(titleBox);
-              
-              modalBox.appendChild(closeBox);
-              modalBox.appendChild(headerRow);
-              
-              const buttonBox = document.createElement('div');
-                buttonBox.style.display = 'flex';
-                buttonBox.style.justifyContent = 'space-between';
-                buttonBox.style.alignItems = 'flex-start';   
-                //buttonBox.style.border = '1px solid white';
-              
-                for (const forceEntity of forceEntityObjects) {
-                    // Create Icon
-                    const icon = this.createButtonForOverrides(forceEntity, timeForSelectOverride, '40', 'var(--text-primary-color)', false, true);
-                    // Append to DOM
-                    //icon.style.border = '1px solid white';
-                    buttonBox.appendChild(icon);            
+                newCell.style.width = "70px";
+                    
+                // make time column tap/clickable for override pop up
+                
+                const columnsToReturn = this.config.columns;
+                const optionsColumnPresent = (columnsToReturn.includes('options-popup-column') || columnsToReturn.includes('options-column'));
+                if(column === "time-column" && !optionsColumnPresent) {
+                    newCell.style.cursor = 'pointer';
+                    for (const forceEntity of this.getOverrideEntities()) {
+                        const settings = this.getArrayForEntityForceStates(this._hass.states[forceEntity.entityName]);
+                        const isActive = settings.includes(this.getTimeframeForOverride(timestamp.value));
+                        if(isActive && isAllowed){
+                            newCell.style.color = "rgb(58, 238, 133)";
+                            break;
+                        }
+                    }         
+                    newCell.addEventListener('click', () => {
+                        this.createPopUpForOverrides(this.getTimeframeForOverride(timestamp.value), timestamp, isAllowed);
+                    });        
+                }          
+                
+                newCell.innerHTML = newContent;
+            
+            }
+    
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            // Import Column import-column
+            
+            if(column === "import-column" && !useOldSkool){
+                
+                // If not oldSkool do something different
+                if(!useOldSkool){
+                    
                 }
-            
-            modalBox.appendChild(buttonBox);
-            
-              // Add modal to overlay
-              overlay.appendChild(modalBox);
-              document.body.appendChild(overlay);
-              
-                // Trigger fade-in
-                void overlay.offsetWidth;  // Force reflow
-                overlay.style.opacity = '1';              
-            
-                // Close handler
-                document.getElementById('modal-close-btn').addEventListener('click', () => {
-                  overlay.remove();
-                  document.removeEventListener('keydown', escHandler);
-                });
                 
-                // Close on click outside modal
-                overlay.addEventListener('click', (e) => {
-                  if (e.target === overlay) {
-                    overlay.remove();
-                    document.removeEventListener('keydown', escHandler);
-                  }
-                });
+            }
+            
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            // Export Column export-column
+            
+            if(column === "export-column" && !useOldSkool){
                 
-                // Close on Escape key
-                const escHandler = (e) => {
-                  if (e.key === 'Escape') {
-                    overlay.remove();
-                    document.removeEventListener('keydown', escHandler);
-                  }
-                };
-                document.addEventListener('keydown', escHandler);      
+                // If not oldSkool do something different
+                if(!useOldSkool){
+                    
+                }
+                
+            }       
+            
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            // Limit Column limit-column
+            
+            if(column === "limit-column" && !useOldSkool){
+                
+                if(theItem.value.replace(/\s/g, '').length > 0){
+                    
+                    let debugSVG = ``;
+                    let debugString = theItem.value;
+                    if (theItem.value.includes("(") || theItem.value.includes(")")) {
+                        const match = theItem.value.match(/(\d+)\s*\((\d+(?:\.\d+)?)\)/);
+                        
+                        if(this.config.debug_columns !== undefined && this.config.debug_columns.indexOf(column) > -1){
+                            if(match[1] != match[2]){
+                                debugSVG = `<svg version="1.1" width="26" height="26" id="limitSVG">
+                                    <circle cx="13" cy="13" r="11" stroke="#2a3240" stroke-width="1" stroke-dasharray="5,3" fill="#e1e1e1"/>
+                                    <text class="pill" x="13" y="14" dominant-baseline="middle" text-anchor="middle" fill="#2a3240" font-size="10">${match[2]}</text>
+                                    </svg>`;
+                            }
+                        }
+                        debugString = match[1];
+                    }
+                    
+                    const mainSVG = `<svg version="1.1" width="26" height="26" id="limitSVG">
+                            <circle cx="13" cy="13" r="11" stroke="#2a3240" stroke-width="2" fill="#e1e1e1"/>
+                            <text class="pill" x="13" y="14" dominant-baseline="middle" text-anchor="middle" fill="#2a3240" font-size="10" font-weight="bold">${debugString}</text>
+                            </svg>`;
+        
+                    newCell.innerHTML = `<div class="iconContainer">${mainSVG} ${debugSVG}</div>`;
+                
+                }
+            }
+            
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            // SOC Column soc-column OR cost-column
+            
+            if((column === "soc-column" || column === "cost-column")){
+
+                newContent = theItem.value.replace(/[↘↗→]/g, '');
+                newContent = newContent.replace(' ', '');
+                newContent = newContent.trim();
+                let batteryPercent = newContent;
+                  
+                let additionalArrow = "";
+                let batteryArrow = "";
+                
+                if(theItem.value.includes("↘")) {
+                    // include a down arrow
+                    additionalArrow = '<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 0 0 -5px;"></ha-icon>';
+                    newCell.style.paddingRight = "0px";
+                    batteryArrow = '<ha-icon icon="mdi:arrow-down-thin" style="--mdc-icon-size: 16px; margin: 0 -5px 0 -5px;"></ha-icon>';
+                } else if (theItem.value.includes("↗")) {
+                    // include a down arrow
+                    additionalArrow = '<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 0 0 -5px;"></ha-icon>';                    
+                    newCell.style.paddingRight = "0px";
+                    batteryArrow = '<ha-icon icon="mdi:arrow-up-thin" style="--mdc-icon-size: 16px; margin: 0 -5px 0 -5px;"></ha-icon>';
+                } else {
+                    batteryArrow = '<ha-icon icon="mdi:arrow-right-thin" style="--mdc-icon-size: 16px; margin: 0 -5px 0 -5px;"></ha-icon>';
+                }
+                let battery;
+                        
+                if(column === "soc-column") {
+                    newContent += "%";
+                    
+                    //calculate % in kWh if battery_capacity is present
+                    
+                    if(this.config.battery_capacity && !isNaN(parseFloat(this.config.battery_capacity))){
+                    
+                        let capacity = parseFloat(this.config.battery_capacity);
+                        let actualCapacity = ((batteryPercent / 100) * capacity).toFixed(2);
+                        newContent = actualCapacity;
+                    }
+                    
+                    const roundedPercent = Math.round(parseInt(batteryPercent, 10) / 10) * 10;
+                    let batteryIcon;
+                    if(roundedPercent === 100){
+                        batteryIcon = "battery";
+                    }
+                    else if (roundedPercent < 5){
+                        batteryIcon = `battery-outline`;
+                    } else {
+                        batteryIcon = `battery-${roundedPercent}`;
+                    }
+        
+                    battery = `<ha-icon icon="mdi:${batteryIcon}" style="--mdc-icon-size: 20px;"></ha-icon>${batteryArrow}`;
+                    
+                    //newCell.style.display = "flex";
+                    newCell.style.paddingLeft = "4px";
+                    
+                    newCell.style.minWidth = "70px";
+                    
+                    newCell.style.alignItems = "center";
+                    
+                    newCell.innerHTML = `<div style="width: 70px; align-items: center; display: flex; justify-content: center; margin: 0 auto;"><div class="iconContainerSOC">${battery}</div><div style="margin-left: 5px; margin-top: 2px;">${newContent}</div></div>`;                
+                } else {
+                    newCell.innerHTML = `<div class="iconContainer"><div style="margin: 0 1px;">${newContent}</div>${additionalArrow}</div>`;
+                }                
+            }
+            
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            // Setting appropriate cell color for weather columns
+            
+            if(column === "weather-column" || column === "temp-column" || column === "rain-column"){
+                if(useOldSkool && theItem.color == "#FFFFFF")
+                    newCell.style.color = "#000000";
+                else 
+                    newCell.style.color = theItem.color;
+            }
+
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            // Weather Column weather-column            
+            
+            if(column === "weather-column") {
+                
+                if(theItem.value !== undefined && theItem.value !== null){
+                   
+                    let condition = theItem.value.condition;
+                    if(condition === "partlycloudynight")
+                        condition = "partlycloudy";
+                    const lang = this._hass.language;
+                    const key = `component.weather.entity_component._.state.${condition}`;
+                    
+                    const readableCondition = this._hass.resources[lang]?.[key] || condition;            
+                    
+                    let weatherIcon = this.convertConditionToIcon(theItem.value.condition);
+                    //const readableCondition = this._hass.localize(`component.weather.state._.${theItem.value.condition}`);
+                    
+                    const weatherEntity = this._hass.states[this.config.weather_entity];
+                    const tempUnit = weatherEntity?.attributes?.temperature_unit || this._hass.config.unit_system.temperature;
+        
+                    newCell.innerHTML = `<div class="iconContainer"><ha-icon icon="mdi:${weatherIcon}" title="${readableCondition}, ${theItem.value.temperature}${tempUnit}"></ha-icon></div>`;
+                }
+            }
+            
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            // Temperature Column temp-column                   
+            
+            if(column === "temp-column") {
+                
+                if(theItem.value !== undefined && theItem.value !== null){
+                    
+                    const roundedTemp = Math.round(parseFloat(theItem.value.temperature));
+                    const weatherEntity = this._hass.states[this.config.weather_entity];
+                    const tempUnit = weatherEntity?.attributes?.temperature_unit || this._hass.config.unit_system.temperature;
+        
+                    newCell.innerHTML = `<div class="iconContainer">${roundedTemp}<div class="tempUnit">${tempUnit}</div></div>`;
+                }
+            } 
+            
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            // Rain Column rain-column                   
+            
+            if(column === "rain-column") {
+                
+                if(theItem.value !== undefined && theItem.value !== null){
+                    
+                    const rainChance = Math.round(parseFloat(theItem.value.precipitation_probability));
+                    newCell.innerHTML = `<div class="iconContainer">${rainChance}%</div>`;
+                }
+            }             
+            
+        }
+        
+        // For all other cells that dont need custom transform
+        
+        if(!columnsWithCustomTransformation.includes(column)){
+            newCell.innerHTML = newContent;
+        }
+        
+        // finally replace any empty cell with iconography        
+        
+        if ((this.config.fill_empty_cells ?? true) && newContent.length === 0){
+            let minusColor = "var(--primary-text-color)";
+            if(theItem.color && useOldSkool)
+                minusColor = "black";
+                
+            newCell.innerHTML = `<div class="iconContainer"><ha-icon icon="mdi:minus" style="color: ${minusColor}; margin: 0 2px; opacity: 0.25;"></ha-icon></div>`;
+        }
+
+        return newCell;
+      
   }
   
   getCellTransformation(theItem, column, darkMode, itemIndex, timestamp) {
-    
+      
     let newCell = document.createElement('td');
     let newContent = "";
+    
+    const timeForSelectOverride = this.getTimeframeForOverride(timestamp.value);
+    const forceEntityObjects = this.getOverrideEntities();    
+    const isAllowed = this.checkRowIsAllowedForOverride(forceEntityObjects, timeForSelectOverride, itemIndex);    
     
     //newCell.setAttribute('onclick', 'console.log("hello")');
     
@@ -1036,9 +1344,8 @@ class PredbatTableCard extends HTMLElement {
     //
     
     if(column === "options-popup-column" || column === "options-column"){
-        let timeForSelectOverride = this.getTimeframeForOverride(timestamp.value);
         
-        const forceEntityObjects = this.getOverrideEntities();
+        // check if its allowed for the override to be set on the row.
         
         if(column === "options-popup-column") {
             
@@ -1056,7 +1363,7 @@ class PredbatTableCard extends HTMLElement {
             for (const forceEntity of forceEntityObjects) {
                 const settings = this.getArrayForEntityForceStates(this._hass.states[forceEntity.entityName]);
                 const isActive = settings.includes(timeForSelectOverride);
-                if(isActive){
+                if(isActive && isAllowed){
                     iconEl.style.color = "rgb(58, 238, 133)";
                     iconEl.style.opacity = 1.0;
                     break;
@@ -1065,7 +1372,7 @@ class PredbatTableCard extends HTMLElement {
             
             // Add click handler
             iconEl.addEventListener('click', () => {
-                this.createPopUpForOverrides(this.getTimeframeForOverride(timestamp.value), timestamp);
+                this.createPopUpForOverrides(this.getTimeframeForOverride(timestamp.value), timestamp, isAllowed);
             });
             
             newCell.style.height = (iconSize+10) + 'px';
@@ -1081,7 +1388,8 @@ class PredbatTableCard extends HTMLElement {
             
             for (const forceEntity of forceEntityObjects) {
                 // Create Icon
-                const icon = this.createButtonForOverrides(forceEntity, timeForSelectOverride, '24', 'var(--primary-text-color)', true);
+                console.log("Creating Icons", isAllowed);
+                const icon = this.createButtonForOverrides(forceEntity, timeForSelectOverride, '24', 'var(--primary-text-color)', true, isAllowed, true);
                 // Append to DOM
                 icon.style.width = '34px';
                 headerRow.appendChild(icon);            
@@ -1099,7 +1407,7 @@ class PredbatTableCard extends HTMLElement {
     if(column === "time-column" && this.config.force_single_line === true)
         newCell.style.whiteSpace = "nowrap";
     
-    if(column !== "rain-column" && column !== "temp-column" && column !== "weather-column" && column !== "car-column"){ // weather and car not supported by old skool
+    if(column !== "options-column" && column !== "options-popup-column" && column !== "rain-column" && column !== "temp-column" && column !== "weather-column" && column !== "car-column"){ // weather and car not supported by old skool
         if(this.config.old_skool === true || this.config.old_skool_columns !== undefined){ 
             
             if(this.config.old_skool === true || this.config.old_skool_columns.indexOf(column) >= 0){
@@ -1562,7 +1870,7 @@ class PredbatTableCard extends HTMLElement {
             
                 let capacity = parseFloat(this.config.battery_capacity);
                 let actualCapacity = ((batteryPercent / 100) * capacity).toFixed(2);
-                newContent = actualCapacity + " kWh";
+                newContent = actualCapacity;
             }
             
             const roundedPercent = Math.round(parseInt(batteryPercent, 10) / 10) * 10;
@@ -1819,18 +2127,19 @@ class PredbatTableCard extends HTMLElement {
     // make time column tap/clickable for override pop up
     
     const columnsToReturn = this.config.columns;
-    if(column === "time-column" && (!columnsToReturn.includes('options-popup-column') || !columnsToReturn.includes('options-column'))) {
+    const optionsColumnPresent = (columnsToReturn.includes('options-popup-column') || columnsToReturn.includes('options-column'));
+    if(column === "time-column" && !optionsColumnPresent) {
         newCell.style.cursor = 'pointer';
         for (const forceEntity of this.getOverrideEntities()) {
             const settings = this.getArrayForEntityForceStates(this._hass.states[forceEntity.entityName]);
             const isActive = settings.includes(this.getTimeframeForOverride(timestamp.value));
-            if(isActive){
+            if(isActive && isAllowed){
                 newCell.style.color = "rgb(58, 238, 133)";
                 break;
             }
         }         
         newCell.addEventListener('click', () => {
-            this.createPopUpForOverrides(this.getTimeframeForOverride(timestamp.value), timestamp);
+            this.createPopUpForOverrides(this.getTimeframeForOverride(timestamp.value), timestamp, isAllowed);
         });        
     }
     
@@ -2424,6 +2733,9 @@ previous_findForecastForLabel(label, forecastArray) {
                 tdElements.forEach((tdElement, tdIndex) => {
                     
                     let bgColor = tdElement.getAttribute('bgcolor'); 
+                    if (bgColor && !bgColor.startsWith('#')) {
+                        bgColor = `#${bgColor}`;
+                    }
                     
                     if(bgColor !== null){
                         if(bgColor.toUpperCase() === "#FFFFFF" && tdIndex != 1 && tdIndex != 2 && (this.config.old_skool !== true) && this.getLightMode(hassDarkMode) !== true)
@@ -2508,7 +2820,7 @@ previous_findForecastForLabel(label, forecastArray) {
                 
                 // weather forecast
                 if(this.forecast){
-                    let weatherColor = "var(--primary-text-color)"; // #F18261
+                    let weatherColor = "#FFFFFF"; // var(--primary-text-color)
                     const match = this.findForecastForLabel(newTRObject["time-column"].value, this.forecast);
                     if(match !== undefined && match !== null){
                         let matchStore = match;
