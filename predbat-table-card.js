@@ -992,7 +992,8 @@ class PredbatTableCard extends HTMLElement {
                 buttonBox.appendChild(icon);            
             }
           } else {
-              buttonBox.innerHTML = "Sorry, this slot cannot be overridden";
+              buttonBox.style.textAlign = "center";
+              buttonBox.innerHTML = "This slot cannot currently be overridden. <br>Overrides will be available as the day progresses.";
           }
         
             modalBox.appendChild(buttonBox);        
