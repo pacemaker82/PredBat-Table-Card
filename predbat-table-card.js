@@ -1240,7 +1240,7 @@ class PredbatTableCard extends HTMLElement {
         
         if(!isNonDataColumn && typeof theItem.value === 'string'){
          
-            rawValue = theItem.value.replace(/[↘↗→]/g, '');
+            rawValue = theItem.value.replace(/[↘↗→☀]/g, '');
             rawValue = rawValue.replace(' ', '');
             rawValue.trim();
             rawValue = rawValue.replace(/<b>(.*?)<\/b>/g, '$1');
