@@ -302,6 +302,10 @@ class PredbatTableCard extends HTMLElement {
     if(this.config.row_limit && this.config.row_limit > 0)
         dataArray.length = this.config.row_limit;
 
+    //const useRefactor = this._hass.states['input_boolean.predbat_tablecard_refactor']?.state === 'on';
+    
+    const useRefactor = !this.config?.bypassRefactor;
+
     // iterate through the data
     dataArray.forEach((item, index) => {
         
@@ -314,7 +318,11 @@ class PredbatTableCard extends HTMLElement {
                 if(item["time-column"].value.includes("23:30"))
                     isMidnight = true;
                 
-                let newColumn = this.getCellTransformation(item[column], column, hass.themes.darkMode, index, item["time-column"]);
+                let newColumn;
+                if(useRefactor)
+                    newColumn = this.getCellTransformationRefactor(item[column], column, hass.themes.darkMode, index, item["time-column"]);
+                else 
+                    newColumn = this.getCellTransformation(item[column], column, hass.themes.darkMode, index, item["time-column"]);
     
                 newRow.appendChild(newColumn); 
                 
@@ -371,7 +379,11 @@ class PredbatTableCard extends HTMLElement {
                 
             } else {
                 if(column === "options-column" || column === "options-popup-column"){
-                    let newColumn = this.getCellTransformation(item[column], column, hass.themes.darkMode, index, item["time-column"]);
+                    let newColumn;
+                    if(useRefactor)
+                        newColumn = this.getCellTransformationRefactor(item[column], column, hass.themes.darkMode, index, item["time-column"]);
+                    else
+                        newColumn = this.getCellTransformation(item[column], column, hass.themes.darkMode, index, item["time-column"]);
                     newRow.appendChild(newColumn); 
                 }
             }
@@ -767,7 +779,6 @@ class PredbatTableCard extends HTMLElement {
           const isActive = currentSettings.includes(timeForSelectOverride);
         
           if (fromPopup) {
-            // 🔁 New behaviour: mutually exclusive icons inside popup
             const parent = container.parentElement;
             if (parent) {
               const allButtons = parent.querySelectorAll('[data-force-key]');
@@ -1044,36 +1055,228 @@ class PredbatTableCard extends HTMLElement {
     return isAllowed;
   }
   
+    replaceArrowsWithIcons(theItem) {
+      const val = theItem;
+    
+      // Find the first arrow (↘ ↗ →). Adjust the regex if you want a different priority.
+      const m = val.match(/[↘↗→]/);
+    
+      const iconName = m ? ({
+        '↘': 'mdi:arrow-down-thin',
+        '↗': 'mdi:arrow-up-thin',
+        '→': 'mdi:arrow-right-thin'
+      }[m[0]]) : null;
+    
+      const theArrowIcon = iconName
+        ? `<ha-icon icon="${iconName}" style="margin:0 0px;"></ha-icon>`
+        : '';
+    
+      const rawValue = val.replace(/[↘↗→]/g, '');
+      return [rawValue, theArrowIcon];
+    }
+    
+    getFriendlyNamesForState(state){
+        let friendlyText = state;
+        
+        friendlyText = friendlyText.replace('Force Dischrg', 'Discharge');
+        friendlyText = friendlyText.replace('Force Charge', 'Charge');
+        //friendlyText = friendlyText.replace('Exp🐌', 'Export');
+        
+        
+        if(friendlyText.includes("ⅎ")){
+            friendlyText = friendlyText.replace('Exp', 'Export');
+            friendlyText = "Manually Forced " + friendlyText;
+            if(!friendlyText.includes("Charge") && !friendlyText.includes("Discharge") && !friendlyText.includes("Export"))
+                friendlyText = friendlyText + "Demand";
+            friendlyText = friendlyText.replace('ⅎ', '');
+        } else {
+            if (/^[↘↗→]$/.test(state)) {
+                friendlyText = friendlyText.replace('↘', 'Discharging');
+                friendlyText = friendlyText.replace('↗', 'Charging');
+                friendlyText = friendlyText.replace('→', 'Idle');
+            }
+            friendlyText = friendlyText.replace('FrzDis', 'Charging Paused');
+            friendlyText = friendlyText.replace('FrzExp', 'Charging Paused');
+            friendlyText = friendlyText.replace('FrzChrg', 'Maintaining SOC'); //FreezeChrg
+            friendlyText = friendlyText.replace('HoldChrg', 'Maintaining SOC'); //HoldChrg
+            friendlyText = friendlyText.includes("NoCharge") ? friendlyText.replace('NoCharge','Charge to "limit"') : friendlyText.replace('Charge', 'Planned Charge');
+            friendlyText = friendlyText.replace('Discharge', 'Planned Export'); //Discharge
+            friendlyText = friendlyText.replace('Export', 'Planned Export'); //Discharge
+            friendlyText = friendlyText.replace('Alert Charge', 'Planned Charge ⚠'); // Alert Charge
+        }   
+        friendlyText = friendlyText.replace(/[↘↗→]/g, '');
+        return friendlyText;
+    }
+    
+    getCellsForSplitCell(theItem, newCell){
+
+            newCell.style.minWidth = "186px";
+            if(this.config.use_friendly_states === true)
+                newCell.style.minWidth = "276px";
+            newCell.style.paddingLeft = "0px";
+            newCell.style.paddingRight = "0px";
+            
+            let chargeString = "Charge";
+            if(theItem.value === "Both-Chg" || theItem.value === "Both-Dis" || theItem.value === "Both-Idle" || theItem.value === "Both-Dis-Snail")
+                chargeString = "";
+            
+            let dischargeString = "Export";
+            
+            //console.log("1: " + dischargeString);
+            
+            if(this.isSmallScreen() && (this.config.use_friendly_states === false || this.config.use_friendly_states === undefined)){
+                
+                if(theItem.value === "Both") {
+                    chargeString = "Chg";
+                    dischargeString = "Exp";
+                }
+                
+                if(theItem.value === "Both-Chg" || theItem.value === "Both-Dis" || theItem.value === "Both-Idle" || theItem.value === "Both-Dis-Snail") {
+                    dischargeString = "Exp";                        
+                }
+                
+                newCell.style.minWidth = "110px";
+            }
+            
+            //console.log("2: " + dischargeString);
+            
+            
+            if(this.config.use_friendly_states === true && this.isSmallScreen() === false){
+                if(theItem.value === "Both")
+                    chargeString = "Planned Charge";
+                else if(theItem.value === "Both-Chg")
+                    chargeString = "Charging";
+                else if(theItem.value === "Both-Dis")
+                    chargeString = "Discharging";
+                    
+                dischargeString = "Planned Export";                    
+            } else if(this.config.use_friendly_states === true && this.isSmallScreen() === true){
+                if(theItem.value === "Both")
+                    chargeString = "Plnd Chg";
+                else if(theItem.value === "Both-Chg")
+                    chargeString = "Chg";    
+                else if(theItem.value === "Both-Dis" || theItem.value === "Both-Dis-Snail")
+                    chargeString = "Dis"; 
+                    
+                dischargeString = "Plnd Dis"; 
+                newCell.style.minWidth = "110px";
+            }
+            
+            //console.log("3: " + dischargeString);
+            
+            let chargeBackgroundColor = "background-color:#3AEE85;";
+            let chargeTextColor = "color: #000000;";
+            if(theItem.value === "Both-Idle" || theItem.value === "Both-Dis" || theItem.value === "Both-Chg" || theItem.value === "Both-Dis-Snail"){
+                chargeBackgroundColor = "background-color:#FFFFFF;";
+                chargeTextColor = "";
+            }
+            let chargeIcon;
+            if(theItem.value === "Both" || theItem.value === "Both-Chg")
+                chargeIcon = '<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 0 0 -5px"></ha-icon>';
+            else if(theItem.value === "Both-Idle")
+                chargeIcon = '<ha-icon icon="mdi:arrow-right-thin" style="margin: 0 0 0 -3px"></ha-icon>';
+            else if(theItem.value === "Both-Dis" || theItem.value === "Both-Dis-Snail")
+                chargeIcon = '<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 0 0 -5px"></ha-icon>';
+            
+            let snail = ``;
+            if(theItem.value === "Both-Dis-Snail")
+                snail = `<ha-icon icon="mdi:snail" title="Low Power Mode" style="--mdc-icon-size: 14px;"></ha-icon>`;
+             
+                
+            return `<div style="width: 100%; height: 100%;" id="${theItem.value}">
+            <div style='${chargeBackgroundColor} width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center; ${chargeTextColor}'>${chargeString}${chargeIcon}</div>
+            <div style='background-color:#FFFF00; width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center; color: #000000;'>${dischargeString}<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 0 0 -5px"></ha-icon>${snail}</div>
+            </div>`;        
+    }
+  
   getCellTransformationRefactor(theItem, column, darkMode, itemIndex, timestamp) {
       
         let newCell = document.createElement('td');
         let newContent = (typeof theItem?.value === 'string') ? theItem.value.trim() : theItem?.value ?? '';
-        // Remove and Replace "_" with empty string
-        newContent = (newContent.length === 1 && newContent === "⚊") ? "" : newContent;
+        let rawValue, debugValue;
+        let hasBoldTags = false, hasItalicTags = false;
+        const wrap = (text, tag) => `<${tag}>${text}</${tag}>`;
         
         const timeForSelectOverride = this.getTimeframeForOverride(timestamp.value);
-        const forceEntityObjects = this.getOverrideEntities();           
-      
+        const forceEntityObjects = this.getOverrideEntities(); 
+        const isAllowed = this.checkRowIsAllowedForOverride(forceEntityObjects, timeForSelectOverride, itemIndex);          
+        
+        const nonDataColumns = ['options-column', 'options-popup-column'];
+        const isNonDataColumn = nonDataColumns.includes(column);
+        
+        const columnsWithCustomTransformation = ['time-column', 'import-column', 'export-column', 'limit-column', 'soc-column', 
+        'weather-column', 'rain-column', 'temp-column', 'state-column', 'cost-column', 'options-column', 'options-popup-column',
+        'pv-column', 'import-export-column'];
+        
+        // This var will be used to collect the different parts of the response and build at the end.
+        let cellResponseArray = [];
+        
         // Old Skool Configuration
         
         let useOldSkool = false;
-        if(this.config.old_skool || this.config.old_skool_columns?.includes(column)) {
+        if((this.config.old_skool || this.config.old_skool_columns?.includes(column)) && !isNonDataColumn) {
             newCell.style.backgroundColor = theItem.color;
             if(theItem.color)
                 newCell.style.color = "#000000";
-            newCell.innerHTML = newContent;
             useOldSkool = true;
+        } else if(!isNonDataColumn) {
+            if(theItem.color)
+                newCell.style.color = theItem.color
         }
         
+        if((isNonDataColumn && this.config.old_skool) || (this.config.old_skool && column === 'import-export-column')) {
+            newCell.style.backgroundColor = "#FFFFFF";
+            useOldSkool = true;
+            newCell.style.color = "#000000";
+        }
+        
+
+        
+        // clean string formatting from predbat to get raw value
+        // Organise Debug things...
+        
+        let hasDebug = false;
+        const useDebug = (this.config.debug_columns !== undefined && this.config.debug_columns.indexOf(column) > -1);
+        let pricesStringFromRaw;
+        
+        if(!isNonDataColumn && typeof theItem.value === 'string'){
+         
+            rawValue = theItem.value.replace(/[↘↗→]/g, '');
+            rawValue = rawValue.replace(' ', '');
+            rawValue.trim();
+            rawValue = rawValue.replace(/<b>(.*?)<\/b>/g, '$1');
+            rawValue = rawValue.replace(/<i>(.*?)<\/i>/g, '$1');
+            hasBoldTags = /<b>.*?<\/b>/.test(theItem.value);
+            hasItalicTags = /<i>.*?<\/i>/.test(theItem.value);
+            
+            pricesStringFromRaw = rawValue;
+            
+            //debug
+            hasDebug = (theItem.value.includes("(") && theItem.value.includes(")"));
+            if(hasDebug){
+                
+                const match = rawValue.match(/(\d+(?:\.\d+)?)\D+(\d+(?:\.\d+)?)/);
+                if(match) {
+                    rawValue = match?.[1] ?? rawValue;
+                    debugValue = match[2];
+                }
+                
+                if(match === null){
+                    console.log("Raw: ", rawValue);
+                    console.log("match: ", match);
+                }
+            }
+        }
+        
+      
         // Column Specific Configuration
         // These are the custom column treatments, must be included in the array first, then specifically called out in the IF statement
         
-        const columnsWithCustomTransformation = ['time-column', 'import-column', 'export-column', 'limit-column', 'soc-column', 'cost-column', 'weather-column', 'rain-column', 'temp-column'];
         if(columnsWithCustomTransformation.includes(column)){
 
             // Time Column time-column
             
-            if(column === "time-column" && !useOldSkool) {
+            if(column === "time-column") {
             
                 if (this.config.force_single_line)
                     newCell.style.whiteSpace = "nowrap";
@@ -1083,8 +1286,9 @@ class PredbatTableCard extends HTMLElement {
                 // make time column tap/clickable for override pop up
                 
                 const columnsToReturn = this.config.columns;
-                const optionsColumnPresent = (columnsToReturn.includes('options-popup-column') || columnsToReturn.includes('options-column'));
-                if(column === "time-column" && !optionsColumnPresent) {
+                const hasNonData = nonDataColumns.some(col => columnsToReturn.includes(col));
+
+                if(column === "time-column" && !hasNonData) {
                     newCell.style.cursor = 'pointer';
                     for (const forceEntity of this.getOverrideEntities()) {
                         const settings = this.getArrayForEntityForceStates(this._hass.states[forceEntity.entityName]);
@@ -1099,21 +1303,274 @@ class PredbatTableCard extends HTMLElement {
                     });        
                 }          
                 
-                newCell.innerHTML = newContent;
+                cellResponseArray.push(theItem.value);
             
             }
+            
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            // Options Columns 
+            
+            if(column === "options-popup-column" || column === "options-column"){
+                
+                if(column === "options-popup-column") {
+                    
+                    const iconSize = 24;
+                    const iconOpacity = isAllowed ? '0.8' : '0.25';
+                    const iconPointer = isAllowed ? 'pointer' : 'not-allowed';
+                    
+                    // CREATE THE ICON
+                    const iconEl = document.createElement('ha-icon');
+                    iconEl.setAttribute('title', "Battery Overrides");
+                    iconEl.setAttribute('icon', "mdi:application-edit-outline");
+                    iconEl.style.cursor = iconPointer;
+                    iconEl.style.opacity = iconOpacity;
+                    iconEl.style.fill = "var(--text-primary-color)";
+                    iconEl.style.setProperty('--mdc-icon-size', iconSize + 'px');
+                    
+                    for (const forceEntity of forceEntityObjects) {
+                        const settings = this.getArrayForEntityForceStates(this._hass.states[forceEntity.entityName]);
+                        const isActive = settings.includes(timeForSelectOverride);
+                        if(isActive && isAllowed){
+                            iconEl.style.color = "rgb(58, 238, 133)";
+                            iconEl.style.opacity = 1.0;
+                            break;
+                        }
+                    }            
+                    
+                    // Add click handler
+                    iconEl.addEventListener('click', () => {
+                        this.createPopUpForOverrides(this.getTimeframeForOverride(timestamp.value), timestamp, isAllowed);
+                    });
+                    
+                    newCell.style.height = (iconSize+10) + 'px';
+                    newCell.appendChild(iconEl);        
+                }
+                
+                if(column === "options-column"){
+                    
+                    const headerRow = document.createElement('div');
+                    headerRow.style.display = 'flex';
+                    headerRow.style.justifyContent = 'space-between';
+                    headerRow.style.alignItems = 'flex-start';
+                    
+                    for (const forceEntity of forceEntityObjects) {
+                        // Create Icon
+                        const icon = this.createButtonForOverrides(forceEntity, timeForSelectOverride, '24', 'var(--primary-text-color)', true, isAllowed, true);
+                        // Append to DOM
+                        icon.style.width = '34px';
+                        headerRow.appendChild(icon);            
+                    }
+                    
+                    newCell.style.width = '170px';
+                    newCell.appendChild(headerRow);     
+            
+                }
+                
+            }
+            
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            // Import Export Column
+            
+            if(column === "import-export-column"){
+                let newPills = "";
+                let newPillsNoContainer = "";
+                theItem.forEach((item, index) => {
+                
+                    let contentWithoutTags = pricesStringFromRaw;
+                    let priceStrings;
+                    
+                    if(this.config.debug_prices_only === true){
+                        // force debug price pill only
+                        
+                        priceStrings = this.getPricesFromPriceString(contentWithoutTags, hasBoldTags, hasItalicTags, true);
+                        newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill({"value": priceStrings[1], "color": item.color}, darkMode) + '</div>';
+                        newPillsNoContainer += this.getTransformedCostToPill({"value": priceStrings[1], "color": item.color}, darkMode);
+        
+                    } else {
+                        
+                        let numberOfPrices = theItem.length;
+                        
+                        
+                        newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill(item, darkMode) + '</div>';
+                        newPillsNoContainer += this.getTransformedCostToPill(item, darkMode);
+                    }
+                    
+                });
+                
+                if(this.config.stack_pills === false){
+                    cellResponseArray.push('<div class="iconContainer">' + newPillsNoContainer + '</div>');
+                } else {
+                    cellResponseArray.push('<div class="multiPillContainer">' + newPills + '</div>');
+                }                
+            }
+                
     
             //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             
             // Import Column import-column
             
-            if(column === "import-column" && !useOldSkool){
+            if(column === "import-column" || column === "export-column"){
                 
-                // If not oldSkool do something different
-                if(!useOldSkool){
+                // If oldSkool do something different
+                if(useOldSkool){
+                    if(hasDebug && useDebug)
+                        cellResponseArray.push(theItem.value);
+                    else {
+                        if (hasBoldTags) rawValue = wrap(rawValue, 'b');
+                        if (hasItalicTags) rawValue = wrap(rawValue, 'i');
+                        cellResponseArray.push(rawValue);
+                    }
+                        
+                } else {
+                    // manage debug price pills appropriately
+                    // debug_prices_only | true | false
                     
+                    let contentWithoutTags = pricesStringFromRaw;
+                    
+                    if(hasDebug && useDebug){
+                        // if debug prices are present based on ( ) search
+                        // AND YAML config has debug_columns
+                        // AND YAML config has specific column for debug_columns
+                        // THEN SHOW THE DEBUG
+                        
+                        let newPills = "";
+                        
+                        // TEST
+                        //contentWithoutTags = "-1.23? ⚖ (-3.45)";
+                        
+                        let priceStrings;
+                        if(this.config.debug_prices_only === true){
+                            // force debug price pill only
+                            priceStrings = this.getPricesFromPriceString(contentWithoutTags, hasBoldTags, hasItalicTags, true);
+                            cellResponseArray.push('<div class="iconContainer">' + this.getTransformedCostToPill({"value":priceStrings[1], "color":theItem.color}, darkMode) + '</div>');
+                        
+                        } else {
+                            priceStrings = this.getPricesFromPriceString(contentWithoutTags, hasBoldTags, hasItalicTags, false);
+                
+                                if(this.config.stack_pills === false){
+                                    newCell.innerHTML = '<div class="iconContainer">' + this.getTransformedCostToPill({"value":priceStrings[0], "color":theItem.color}, darkMode) 
+                                    + this.getTransformedCostToPill({"value":priceStrings[1], "color":theItem.color}, darkMode) 
+                                    + '</div>';
+                                } else {
+                                    newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill({"value":priceStrings[0], "color":theItem.color}, darkMode) + '</div>';
+                                    newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill({"value":priceStrings[1], "color":theItem.color}, darkMode) + '</div>';
+                                    cellResponseArray.push('<div class="multiPillContainer">' + newPills + '</div>');                        
+                                }
+                        }
+                        
+                    } else if(hasDebug){
+            
+                        // TEST
+                        //contentWithoutTags = "-1.23? ⚖ (-3.45)";
+                        
+                       let priceStrings = this.getPricesFromPriceString(contentWithoutTags, hasBoldTags, hasItalicTags, this.config.debug_prices_only);
+                       cellResponseArray.push('<div class="iconContainer">' + this.getTransformedCostToPill({"value":priceStrings[0], "color":theItem.color}, darkMode) + '</div>');
+                        
+                    } else {
+            
+                        cellResponseArray.push('<div class="iconContainer">' + this.getTransformedCostToPill(theItem, darkMode) + '</div>');
+                    }
+
                 }
                 
+            }
+            
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            // Cost Column
+            
+            if(column === "cost-column"){
+                
+                let costText = theItem.value;
+                cellResponseArray = this.replaceArrowsWithIcons(theItem.value);
+                cellResponseArray[0] = cellResponseArray[0].replace(' ', '');
+
+            }            
+            
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            // State Column
+            
+            if(column === "state-column"){
+                
+                let stateText;
+                if(useOldSkool){
+                    
+                    if(theItem.value === "Both" || theItem.value === "Both-Idle" || theItem.value === "Both-Chg" || theItem.value === "Both-Dis" || theItem.value === "Both-Dis-Snail"){
+                    
+                        cellResponseArray.push(this.getCellsForSplitCell(theItem, newCell));
+                        
+                    } else {
+                
+                        stateText = theItem.value;
+                        if(this.config.use_friendly_states)
+                            stateText = this.getFriendlyNamesForState(theItem.value);
+                        
+                        cellResponseArray = this.replaceArrowsWithIcons(theItem.value);
+                        
+                        if(this.config.use_friendly_states)
+                            cellResponseArray[0] = stateText;
+                    }
+                } else {
+                    
+                    let snail = ``;
+                    if(theItem.value.includes("🐌")){
+                        snail = `<ha-icon icon="mdi:snail" title="Low Power Mode" style="--mdc-icon-size: 18px;"></ha-icon>`;
+                    }
+                        
+                    stateText = theItem.value.replace(/[↘↗→ⅎ🐌⚠]/g, '').trim();
+                    
+                    let weatherAlert = ``;
+                    if(theItem.value.includes("⚠"))
+                        weatherAlert = `<ha-icon icon="mdi:alert-outline" title="Weather Alert" style="--mdc-icon-size: 18px;"></ha-icon>`;
+                    
+                      stateText = this.adjustStatusFields(stateText);
+                        
+                        let additionalArrow = "";
+                        newCell.setAttribute('style', 'color: var(--energy-battery-out-color)');
+                
+                        if(theItem.value === "↘" || theItem.value === "↗" || theItem.value === "→"){
+                            let tooltip = "Running Normally";
+                            additionalArrow = `<ha-icon icon="mdi:home-lightning-bolt" title=${tooltip} style="--mdc-icon-size: 22px;"></ha-icon>`;
+
+                            newCell.setAttribute('style', `color: ${theItem.color}`);
+                        } else if(theItem.value === "↘ ⅎ" || theItem.value === "↗ ⅎ" || theItem.value === "→ ⅎ"){
+                            let tooltip = "Running Normally";
+                            additionalArrow = `<ha-icon icon="mdi:home-lightning-bolt" title=${tooltip} style="--mdc-icon-size: 22px;"></ha-icon>`;
+                            newCell.setAttribute('style', `color: ${theItem.color}`);
+                        } else if(stateText === "Discharge" || stateText === "Export"){
+                                
+                                // use force discharge icon
+                                let tooltip = "Planned Export";
+                                additionalArrow = `<ha-icon icon="mdi:battery-minus" style="" title="${tooltip}" class="icons" style="--mdc-icon-size: 22px;"></ha-icon>`;
+                                
+                        } else if(stateText === "FreezeDis" || stateText === "FreezeChrg" || stateText === "HoldChrg" || stateText === "NoCharge" || stateText === "FreezeExp"){
+                                // use force discharge icon
+                                additionalArrow = '<ha-icon icon="mdi:battery-lock" style="" title="Charging Paused"></ha-icon>';
+                                newCell.setAttribute('style', `color: ${theItem.color}`);
+                        } else if(stateText === "Charge" || stateText === "Alert Charge"){
+                            let tooltip = "Planned Charge";
+                            additionalArrow = `<ha-icon icon="mdi:battery-charging-100" title="${tooltip}" style="--mdc-icon-size: 22px;"></ha-icon>`;
+                            
+                            newCell.setAttribute('style', 'color: var(--energy-battery-in-color)');                    
+                        } else if(stateText === "Both"){
+                            additionalArrow = '<ha-icon icon="mdi:battery-charging-100" style="color: var(--energy-battery-in-color); --mdc-icon-size: 22px;" title="Planned Charge" class="icons"></ha-icon><ha-icon icon="mdi:battery-minus" style="color: var(--energy-battery-out-color);" title="Planned Export" class="icons"></ha-icon>';
+                        } else if(stateText === "Both-Idle" || stateText === "Both-Chg" || stateText === "Both-Dis" || stateText === "Both-Dis-Snail"){
+                            let houseColor = "#000000";
+                            if(this.getLightMode(darkMode))
+                                houseColor = "#FFFFFF";
+                                    
+                            this.getLightMode(darkMode)
+                            additionalArrow = `<ha-icon icon="mdi:home-lightning-bolt" style="color: ${houseColor}" title="Idle" style="--mdc-icon-size: 22px;"></ha-icon><ha-icon icon="mdi:battery-minus" style="color: var(--energy-battery-out-color);" title="Planned Export" class="icons"></ha-icon>`;
+                            if(stateText === "Both-Dis-Snail")
+                                additionalArrow += `<ha-icon icon="mdi:snail" title="Low Power Mode" style="--mdc-icon-size: 18px;"></ha-icon>`;
+                        }
+                            
+                      cellResponseArray.push(`${weatherAlert}${additionalArrow}${snail}`); 
+                    
+                }
             }
             
             //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1127,7 +1584,30 @@ class PredbatTableCard extends HTMLElement {
                     
                 }
                 
-            }       
+            }    
+            
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            // PV Column pv-column            
+            
+            if(column === 'pv-column'){
+                //newCell.style.backgroundColor = theItem.color;
+                
+                if((theItem.value.includes("☀") || theItem.value.length > 0) && !theItem.value.includes("⚊")) {
+                    
+                    if(hasDebug && useDebug)
+                        newContent = rawValue + " (" + debugValue + ")";
+                    else
+                        newContent = rawValue;
+                    
+                    
+                    let additionalIcon = "";
+                    if(!this.isSmallScreen())
+                        additionalIcon = '<ha-icon icon="mdi:white-balance-sunny" style="margin: 0; --mdc-icon-size: 16px; display: flex; align-items: center; justify-content: center;"></ha-icon>';
+                    
+                    cellResponseArray.push(`<div class="iconContainer">${additionalIcon} <div style="margin: 0 4px;">${newContent}</div></div>`);                
+                }
+            }
             
             //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             
@@ -1139,18 +1619,17 @@ class PredbatTableCard extends HTMLElement {
                     
                     let debugSVG = ``;
                     let debugString = theItem.value;
-                    if (theItem.value.includes("(") || theItem.value.includes(")")) {
-                        const match = theItem.value.match(/(\d+)\s*\((\d+(?:\.\d+)?)\)/);
+                    if (hasDebug) {
                         
-                        if(this.config.debug_columns !== undefined && this.config.debug_columns.indexOf(column) > -1){
-                            if(match[1] != match[2]){
+                        if(useDebug){
+                            if(rawValue != debugValue){
                                 debugSVG = `<svg version="1.1" width="26" height="26" id="limitSVG">
                                     <circle cx="13" cy="13" r="11" stroke="#2a3240" stroke-width="1" stroke-dasharray="5,3" fill="#e1e1e1"/>
-                                    <text class="pill" x="13" y="14" dominant-baseline="middle" text-anchor="middle" fill="#2a3240" font-size="10">${match[2]}</text>
+                                    <text class="pill" x="13" y="14" dominant-baseline="middle" text-anchor="middle" fill="#2a3240" font-size="10">${debugValue}</text>
                                     </svg>`;
                             }
                         }
-                        debugString = match[1];
+                        debugString = rawValue;
                     }
                     
                     const mainSVG = `<svg version="1.1" width="26" height="26" id="limitSVG">
@@ -1158,76 +1637,68 @@ class PredbatTableCard extends HTMLElement {
                             <text class="pill" x="13" y="14" dominant-baseline="middle" text-anchor="middle" fill="#2a3240" font-size="10" font-weight="bold">${debugString}</text>
                             </svg>`;
         
-                    newCell.innerHTML = `<div class="iconContainer">${mainSVG} ${debugSVG}</div>`;
+                    cellResponseArray.push(`<div class="iconContainer">${mainSVG} ${debugSVG}</div>`);
                 
                 }
+            } else if(column === "limit-column" && useOldSkool){
+                cellResponseArray.push(theItem.value);
             }
             
             //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             
-            // SOC Column soc-column OR cost-column
+            // SOC Column soc-column
             
-            if((column === "soc-column" || column === "cost-column")){
-
-                newContent = theItem.value.replace(/[↘↗→]/g, '');
-                newContent = newContent.replace(' ', '');
-                newContent = newContent.trim();
-                let batteryPercent = newContent;
-                  
-                let additionalArrow = "";
+            if(column === "soc-column"){
+    
+                let batteryPercent = rawValue;
                 let batteryArrow = "";
                 
                 if(theItem.value.includes("↘")) {
                     // include a down arrow
-                    additionalArrow = '<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 0 0 -5px;"></ha-icon>';
                     newCell.style.paddingRight = "0px";
                     batteryArrow = '<ha-icon icon="mdi:arrow-down-thin" style="--mdc-icon-size: 16px; margin: 0 -5px 0 -5px;"></ha-icon>';
                 } else if (theItem.value.includes("↗")) {
                     // include a down arrow
-                    additionalArrow = '<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 0 0 -5px;"></ha-icon>';                    
                     newCell.style.paddingRight = "0px";
                     batteryArrow = '<ha-icon icon="mdi:arrow-up-thin" style="--mdc-icon-size: 16px; margin: 0 -5px 0 -5px;"></ha-icon>';
                 } else {
                     batteryArrow = '<ha-icon icon="mdi:arrow-right-thin" style="--mdc-icon-size: 16px; margin: 0 -5px 0 -5px;"></ha-icon>';
                 }
+                
                 let battery;
-                        
-                if(column === "soc-column") {
-                    newContent += "%";
-                    
-                    //calculate % in kWh if battery_capacity is present
-                    
-                    if(this.config.battery_capacity && !isNaN(parseFloat(this.config.battery_capacity))){
-                    
-                        let capacity = parseFloat(this.config.battery_capacity);
-                        let actualCapacity = ((batteryPercent / 100) * capacity).toFixed(2);
-                        newContent = actualCapacity;
-                    }
-                    
-                    const roundedPercent = Math.round(parseInt(batteryPercent, 10) / 10) * 10;
-                    let batteryIcon;
-                    if(roundedPercent === 100){
-                        batteryIcon = "battery";
-                    }
-                    else if (roundedPercent < 5){
-                        batteryIcon = `battery-outline`;
-                    } else {
-                        batteryIcon = `battery-${roundedPercent}`;
-                    }
-        
-                    battery = `<ha-icon icon="mdi:${batteryIcon}" style="--mdc-icon-size: 20px;"></ha-icon>${batteryArrow}`;
-                    
-                    //newCell.style.display = "flex";
-                    newCell.style.paddingLeft = "4px";
-                    
-                    newCell.style.minWidth = "70px";
-                    
-                    newCell.style.alignItems = "center";
-                    
-                    newCell.innerHTML = `<div style="width: 70px; align-items: center; display: flex; justify-content: center; margin: 0 auto;"><div class="iconContainerSOC">${battery}</div><div style="margin-left: 5px; margin-top: 2px;">${newContent}</div></div>`;                
+                let columnContent = batteryPercent + "%";
+
+                //calculate % in kWh if battery_capacity is present
+                
+                if(this.config.battery_capacity && !isNaN(parseFloat(this.config.battery_capacity))){
+                
+                    let capacity = parseFloat(this.config.battery_capacity);
+                    let actualCapacity = ((batteryPercent / 100) * capacity).toFixed(2);
+                    columnContent = actualCapacity;
+                }
+                
+                const roundedPercent = Math.round(parseInt(batteryPercent, 10) / 10) * 10;
+                let batteryIcon;
+                if(roundedPercent === 100){
+                    batteryIcon = "battery";
+                }
+                else if (roundedPercent < 5){
+                    batteryIcon = `battery-outline`;
                 } else {
-                    newCell.innerHTML = `<div class="iconContainer"><div style="margin: 0 1px;">${newContent}</div>${additionalArrow}</div>`;
-                }                
+                    batteryIcon = `battery-${roundedPercent}`;
+                }
+    
+                battery = `<ha-icon icon="mdi:${batteryIcon}" style="--mdc-icon-size: 20px;"></ha-icon>${batteryArrow}`;
+                
+                //newCell.style.display = "flex";
+                newCell.style.paddingLeft = "4px";
+                
+                newCell.style.minWidth = "70px";
+                
+                newCell.style.alignItems = "center";
+                
+                cellResponseArray.push(`<div style="width: 70px; align-items: center; display: flex; justify-content: center; margin: 0 auto;"><div class="iconContainerSOC">${battery}</div><div style="margin-left: 5px; margin-top: 2px;">${columnContent}</div></div>`);                
+                             
             }
             
             //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1235,7 +1706,7 @@ class PredbatTableCard extends HTMLElement {
             // Setting appropriate cell color for weather columns
             
             if(column === "weather-column" || column === "temp-column" || column === "rain-column"){
-                if(useOldSkool && theItem.color == "#FFFFFF")
+                if(theItem.color == "#FFFFFF")
                     newCell.style.color = "var(--primary-text-color)";
                 else 
                     newCell.style.color = theItem.color;
@@ -1263,7 +1734,7 @@ class PredbatTableCard extends HTMLElement {
                     const weatherEntity = this._hass.states[this.config.weather_entity];
                     const tempUnit = weatherEntity?.attributes?.temperature_unit || this._hass.config.unit_system.temperature;
         
-                    newCell.innerHTML = `<div class="iconContainer"><ha-icon icon="mdi:${weatherIcon}" title="${readableCondition}, ${theItem.value.temperature}${tempUnit}"></ha-icon></div>`;
+                    cellResponseArray.push(`<div class="iconContainer"><ha-icon icon="mdi:${weatherIcon}" title="${readableCondition}, ${theItem.value.temperature}${tempUnit}"></ha-icon></div>`);
                 }
             }
             
@@ -1279,7 +1750,7 @@ class PredbatTableCard extends HTMLElement {
                     const weatherEntity = this._hass.states[this.config.weather_entity];
                     const tempUnit = weatherEntity?.attributes?.temperature_unit || this._hass.config.unit_system.temperature;
         
-                    newCell.innerHTML = `<div class="iconContainer">${roundedTemp}<div class="tempUnit">${tempUnit}</div></div>`;
+                    cellResponseArray.push(`<div class="iconContainer">${roundedTemp}<div class="tempUnit">${tempUnit}</div></div>`);
                 }
             } 
             
@@ -1292,26 +1763,45 @@ class PredbatTableCard extends HTMLElement {
                 if(theItem.value !== undefined && theItem.value !== null){
                     
                     const rainChance = Math.round(parseFloat(theItem.value.precipitation_probability));
-                    newCell.innerHTML = `<div class="iconContainer">${rainChance}%</div>`;
+                    cellResponseArray.push(`<div class="iconContainer">${rainChance}%</div>`);
                 }
             }             
             
         }
         
-        // For all other cells that dont need custom transform
+        // finally replace any empty cell or "⚊" with iconography
         
-        if(!columnsWithCustomTransformation.includes(column)){
-            newCell.innerHTML = newContent;
-        }
-        
-        // finally replace any empty cell with iconography        
-        
-        if ((this.config.fill_empty_cells ?? true) && newContent.length === 0){
+        if (typeof theItem?.value === 'string' && (this.config.fill_empty_cells ?? true) && (newContent.length === 0 || newContent ==="⚊") && !isNonDataColumn){
+
             let minusColor = "var(--primary-text-color)";
             if(theItem.color && useOldSkool)
                 minusColor = "black";
                 
-            newCell.innerHTML = `<div class="iconContainer"><ha-icon icon="mdi:minus" style="color: ${minusColor}; margin: 0 2px; opacity: 0.25;"></ha-icon></div>`;
+            newContent = "";
+                
+            cellResponseArray.push(`<div class="iconContainer"><ha-icon icon="mdi:minus" style="color: ${minusColor}; margin: 0 2px; opacity: 0.25;"></ha-icon></div>`);
+        }
+        
+        // For all other cells that dont need custom transform
+        if(!columnsWithCustomTransformation.includes(column) && cellResponseArray.length === 0){
+            
+            if(hasDebug && useDebug)
+                newContent = rawValue + " (" + debugValue + ")";
+            else 
+                newContent = rawValue;
+                
+            if(newContent.length > 0)
+                cellResponseArray.push(newContent);
+        }        
+
+        // 
+        
+        if(!isNonDataColumn && typeof theItem.value === 'string')
+            if(theItem.value.includes("ⅎ"))
+                cellResponseArray.push(` <ha-icon icon="mdi:hand-back-right-outline" title="OVERRIDE" style="--mdc-icon-size: 18px;"></ha-icon>`); 
+        
+        for (const object of cellResponseArray) {
+          newCell.innerHTML += object;
         }
 
         return newCell;
@@ -1405,13 +1895,12 @@ class PredbatTableCard extends HTMLElement {
     if(column === "time-column" && this.config.force_single_line === true)
         newCell.style.whiteSpace = "nowrap";
     
-    if(column !== "options-column" && column !== "options-popup-column" && column !== "rain-column" && column !== "temp-column" && column !== "weather-column" && column !== "car-column"){ // weather and car not supported by old skool
+    if(column !== 'import-export-column' && column !== "options-column" && column !== "options-popup-column" && column !== "rain-column" && column !== "temp-column" && column !== "weather-column" && column !== "car-column"){ // weather and car not supported by old skool
         if(this.config.old_skool === true || this.config.old_skool_columns !== undefined){ 
             
             if(this.config.old_skool === true || this.config.old_skool_columns.indexOf(column) >= 0){
             
                 //this.config.old_skool_columns.indexOf(column) >= 0
-                
                 newContent = theItem.value.replace(/[↘↗→]/g, '');
                 newContent = this.adjustStatusFields(newContent);
               
