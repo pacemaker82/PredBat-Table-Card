@@ -1101,8 +1101,9 @@ class PredbatTableCard extends HTMLElement {
             friendlyText = friendlyText.replace('HoldChrg', 'Maintaining SOC'); //HoldChrg
             friendlyText = friendlyText.includes("NoCharge") ? friendlyText.replace('NoCharge','Charge to "limit"') : friendlyText.replace('Charge', 'Planned Charge');
             friendlyText = friendlyText.replace('Discharge', 'Planned Export'); //Discharge
-            friendlyText = friendlyText.replace('Export', 'Planned Export'); //Discharge
+            friendlyText = friendlyText.replace(/Export|Exp/g, 'Planned Export'); // Exp or Export
             friendlyText = friendlyText.replace('Alert Charge', 'Planned Charge ⚠'); // Alert Charge
+            friendlyText = friendlyText.replace(/Charge|Chrg/g, 'Planned Charge'); // Chrg or Charge
         }   
         friendlyText = friendlyText.replace(/[↘↗→]/g, '');
         return friendlyText;
@@ -1229,8 +1230,6 @@ class PredbatTableCard extends HTMLElement {
             useOldSkool = true;
             newCell.style.color = "#000000";
         }
-        
-
         
         // clean string formatting from predbat to get raw value
         // Organise Debug things...
@@ -1688,13 +1687,10 @@ class PredbatTableCard extends HTMLElement {
                     batteryIcon = `battery-${roundedPercent}`;
                 }
     
-                battery = `<ha-icon icon="mdi:${batteryIcon}" style="--mdc-icon-size: 20px;"></ha-icon>${batteryArrow}`;
+                battery = `<ha-icon icon="mdi:${batteryIcon}" style="--mdc-icon-size: 20px;" title="${batteryPercent}%"></ha-icon>${batteryArrow}`;
                 
-                //newCell.style.display = "flex";
                 newCell.style.paddingLeft = "4px";
-                
                 newCell.style.minWidth = "70px";
-                
                 newCell.style.alignItems = "center";
                 
                 cellResponseArray.push(`<div style="width: 70px; align-items: center; display: flex; justify-content: center; margin: 0 auto;"><div class="iconContainerSOC">${battery}</div><div style="margin-left: 5px; margin-top: 2px;">${columnContent}</div></div>`);                
