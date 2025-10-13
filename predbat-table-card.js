@@ -1646,6 +1646,8 @@ class PredbatTableCard extends HTMLElement {
             // SOC Column soc-column
             
             if(column === "soc-column"){
+                
+                let arrowForLabel = this.replaceArrowsWithIcons(theItem.value);
     
                 let batteryPercent = rawValue;
                 let batteryArrow = "";
@@ -1692,7 +1694,7 @@ class PredbatTableCard extends HTMLElement {
                 newCell.style.alignItems = "center";
                 
                 if(useOldSkool)
-                    cellResponseArray.push(`<div title="${batteryPercent}%">${columnContent}</div>`);
+                    cellResponseArray.push(`<div title="${batteryPercent}%">${columnContent}${arrowForLabel[1]}</div>`);
                 else 
                     cellResponseArray.push(`<div style="width: 70px; align-items: center; display: flex; justify-content: center; margin: 0 auto;"><div class="iconContainerSOC">${battery}</div><div style="margin-left: 5px; margin-top: 2px;">${columnContent}</div></div>`);                
                              
