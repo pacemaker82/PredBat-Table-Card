@@ -1519,15 +1519,16 @@ class PredbatTableCard extends HTMLElement {
                         cellResponseArray.push(this.getCellsForSplitCell(theItem, newCell));
                         
                     } else {
-                
-                        stateText = this.adjustStatusFields(theItem.value);
+                        
+                        stateText = theItem.value.replace(/[↘↗→ⅎ🐌⚠]/g, '').trim();
+                        stateText = this.adjustStatusFields(stateText);
                         if(this.config.use_friendly_states)
                             stateText = this.getFriendlyNamesForState(theItem.value);
                         
                         cellResponseArray = this.replaceArrowsWithIcons(theItem.value);
                         
-                        if(this.config.use_friendly_states)
-                            cellResponseArray[0] = stateText;
+                        //if(this.config.use_friendly_states)
+                        cellResponseArray[0] = stateText;
                     }
                 } else {
                     
