@@ -1207,7 +1207,7 @@ class PredbatTableCard extends HTMLElement {
         
         const columnsWithCustomTransformation = ['time-column', 'import-column', 'export-column', 'limit-column', 'soc-column', 
         'weather-column', 'rain-column', 'temp-column', 'state-column', 'cost-column', 'options-column', 'options-popup-column',
-        'pv-column', 'import-export-column'];
+        'pv-column', 'import-export-column', 'car-column'];
         
         // This var will be used to collect the different parts of the response and build at the end.
         let cellResponseArray = [];
@@ -1303,6 +1303,25 @@ class PredbatTableCard extends HTMLElement {
                 cellResponseArray.push(theItem.value);
             
             }
+            
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            
+            // Car Column           
+            
+            if(column === "car-column") {
+                //newCell.style.color = "var(--primary-text-color)";
+                let additionalIcon = "";
+                
+                if(this.config.car_charge_switch){
+                    const entity = this._hass.states[this.config.car_charge_switch];
+                    if (entity && entity.state === 'on' && itemIndex === 0) {
+                        additionalIcon = '<ha-icon class="pulse-icon" icon="mdi:ev-plug-type2" style="--mdc-icon-size: 16px; margin-top: -2px; margin-left: 2px;"></ha-icon>';
+                    }
+                }
+                
+                cellResponseArray.push(`<div class="iconContainer">${theItem.value}${additionalIcon}</div>`);
+            
+            }            
             
             //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             
@@ -1501,7 +1520,7 @@ class PredbatTableCard extends HTMLElement {
                         
                     } else {
                 
-                        stateText = theItem.value;
+                        stateText = this.adjustStatusFields(theItem.value);
                         if(this.config.use_friendly_states)
                             stateText = this.getFriendlyNamesForState(theItem.value);
                         
@@ -1696,7 +1715,7 @@ class PredbatTableCard extends HTMLElement {
                 if(useOldSkool)
                     cellResponseArray.push(`<div title="${batteryPercent}%">${columnContent}${arrowForLabel[1]}</div>`);
                 else 
-                    cellResponseArray.push(`<div style="width: 70px; align-items: center; display: flex; justify-content: center; margin: 0 auto;"><div class="iconContainerSOC">${battery}</div><div style="margin-left: 5px; margin-top: 2px;">${columnContent}</div></div>`);                
+                    cellResponseArray.push(`<div style="width: 70px; align-items: center; display: flex; justify-content: center; margin: 0 auto;"><div class="iconContainerSOC" title="${batteryPercent}%">${battery}</div><div style="margin-left: 5px; margin-top: 2px;">${columnContent}</div></div>`);                
                              
             }
             
