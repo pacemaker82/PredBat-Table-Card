@@ -1797,7 +1797,7 @@ class PredbatTableCard extends HTMLElement {
                 minusColor = "black";
                 
             newContent = "";
-                
+            cellResponseArray.length = 0;
             cellResponseArray.push(`<div class="iconContainer"><ha-icon icon="mdi:minus" style="color: ${minusColor}; margin: 0 2px; opacity: 0.25;"></ha-icon></div>`);
         }
         
