@@ -1068,7 +1068,7 @@ class PredbatTableCard extends HTMLElement {
       }[m[0]]) : null;
     
       const theArrowIcon = iconName
-        ? `<ha-icon icon="${iconName}" style="margin:0 0px;"></ha-icon>`
+        ? `<ha-icon icon="${iconName}" style="margin:0 -2px;"></ha-icon>`
         : '';
     
       const rawValue = val.replace(/[↘↗→]/g, '');
@@ -1097,8 +1097,8 @@ class PredbatTableCard extends HTMLElement {
             }
             friendlyText = friendlyText.replace('FrzDis', 'Charging Paused');
             friendlyText = friendlyText.replace('FrzExp', 'Charging Paused');
-            friendlyText = friendlyText.replace('FrzChrg', 'Maintaining SOC'); //FreezeChrg
-            friendlyText = friendlyText.replace('HoldChrg', 'Maintaining SOC'); //HoldChrg
+            friendlyText = friendlyText.replace('FrzChrg', 'Maintaining SoC'); //FreezeChrg
+            friendlyText = friendlyText.replace('HoldChrg', 'Maintaining SoC'); //HoldChrg
             friendlyText = friendlyText.includes("NoCharge") ? friendlyText.replace('NoCharge','Charge to "limit"') : friendlyText.replace('Charge', 'Planned Charge');
             friendlyText = friendlyText.replace('Discharge', 'Planned Export'); //Discharge
             friendlyText = friendlyText.replace(/Export|Exp/g, 'Planned Export'); // Exp or Export
@@ -1512,9 +1512,12 @@ class PredbatTableCard extends HTMLElement {
             if(column === "state-column"){
                 
                 let stateText;
+                const bothValues = ["Both", "Both-Idle", "Both-Chg", "Both-Dis", "Both-Dis-Snail"];
+                const isBothField = bothValues.includes(theItem.value);
+                
                 if(useOldSkool){
                     
-                    if(theItem.value === "Both" || theItem.value === "Both-Idle" || theItem.value === "Both-Chg" || theItem.value === "Both-Dis" || theItem.value === "Both-Dis-Snail"){
+                    if(isBothField){
                     
                         cellResponseArray.push(this.getCellsForSplitCell(theItem, newCell));
                         
@@ -1543,50 +1546,85 @@ class PredbatTableCard extends HTMLElement {
                     if(theItem.value.includes("⚠"))
                         weatherAlert = `<ha-icon icon="mdi:alert-outline" title="Weather Alert" style="--mdc-icon-size: 18px;"></ha-icon>`;
                     
-                      stateText = this.adjustStatusFields(stateText);
-                        
-                        let additionalArrow = "";
-                        newCell.setAttribute('style', 'color: var(--energy-battery-out-color)');
-                
-                        if(theItem.value === "↘" || theItem.value === "↗" || theItem.value === "→"){
-                            let tooltip = "Running Normally";
-                            additionalArrow = `<ha-icon icon="mdi:home-lightning-bolt" title=${tooltip} style="--mdc-icon-size: 22px;"></ha-icon>`;
+                    stateText = this.adjustStatusFields(stateText);
+                    
+                    let additionalArrow = "";
+                    newCell.setAttribute('style', 'color: var(--energy-battery-out-color)');
+            
+                    if(theItem.value === "↘" || theItem.value === "↗" || theItem.value === "→"){
+                        let tooltip = "Running Normally";
+                        additionalArrow = `<ha-icon icon="mdi:home-lightning-bolt" title="${tooltip}" style="--mdc-icon-size: 22px;"></ha-icon>`;
 
-                            newCell.setAttribute('style', `color: ${theItem.color}`);
-                        } else if(theItem.value === "↘ ⅎ" || theItem.value === "↗ ⅎ" || theItem.value === "→ ⅎ"){
-                            let tooltip = "Running Normally";
-                            additionalArrow = `<ha-icon icon="mdi:home-lightning-bolt" title=${tooltip} style="--mdc-icon-size: 22px;"></ha-icon>`;
-                            newCell.setAttribute('style', `color: ${theItem.color}`);
-                        } else if(stateText === "Discharge" || stateText === "Export"){
-                                
-                                // use force discharge icon
-                                let tooltip = "Planned Export";
-                                additionalArrow = `<ha-icon icon="mdi:battery-minus" style="" title="${tooltip}" class="icons" style="--mdc-icon-size: 22px;"></ha-icon>`;
-                                
-                        } else if(stateText === "FreezeDis" || stateText === "FreezeChrg" || stateText === "HoldChrg" || stateText === "NoCharge" || stateText === "FreezeExp"){
-                                // use force discharge icon
-                                additionalArrow = '<ha-icon icon="mdi:battery-lock" style="" title="Charging Paused"></ha-icon>';
-                                newCell.setAttribute('style', `color: ${theItem.color}`);
-                        } else if(stateText === "Charge" || stateText === "Alert Charge"){
-                            let tooltip = "Planned Charge";
-                            additionalArrow = `<ha-icon icon="mdi:battery-charging-100" title="${tooltip}" style="--mdc-icon-size: 22px;"></ha-icon>`;
+                        newCell.setAttribute('style', `color: ${theItem.color}`);
+                    } else if(theItem.value === "↘ ⅎ" || theItem.value === "↗ ⅎ" || theItem.value === "→ ⅎ"){
+                        let tooltip = "Running Normally";
+                        additionalArrow = `<ha-icon icon="mdi:home-lightning-bolt" title="${tooltip}" style="--mdc-icon-size: 22px;"></ha-icon>`;
+                        newCell.setAttribute('style', `color: ${theItem.color}`);
+                    } else if(stateText === "Discharge" || stateText === "Export"){
                             
-                            newCell.setAttribute('style', 'color: var(--energy-battery-in-color)');                    
-                        } else if(stateText === "Both"){
-                            additionalArrow = '<ha-icon icon="mdi:battery-charging-100" style="color: var(--energy-battery-in-color); --mdc-icon-size: 22px;" title="Planned Charge" class="icons"></ha-icon><ha-icon icon="mdi:battery-minus" style="color: var(--energy-battery-out-color);" title="Planned Export" class="icons"></ha-icon>';
+                            // use force discharge icon
+                            let tooltip = "Planned Export";
+                            additionalArrow = `<ha-icon icon="mdi:battery-minus" style="" title="${tooltip}" class="icons" style="--mdc-icon-size: 22px;"></ha-icon>`;
+                            
+                    } else if(stateText === "FreezeDis" || stateText === "FreezeChrg" || stateText === "HoldChrg" || stateText === "NoCharge" || stateText === "FreezeExp"){
+                            // use force discharge icon
+                            additionalArrow = '<ha-icon icon="mdi:battery-lock" style="" title="Charging Paused"></ha-icon>';
+                            newCell.setAttribute('style', `color: ${theItem.color}`);
+                    } else if(stateText === "Charge" || stateText === "Alert Charge"){
+                        let tooltip = "Planned Charge";
+                        additionalArrow = `<ha-icon icon="mdi:battery-charging-100" title="${tooltip}" style="--mdc-icon-size: 22px;"></ha-icon>`;
+                        
+                        newCell.setAttribute('style', 'color: var(--energy-battery-in-color)');                    
+                    }
+                    
+                    let directionalArrow = this.replaceArrowsWithIcons(theItem.value);
+                    cellResponseArray.push(`${weatherAlert}${additionalArrow}${directionalArrow[1]}${snail}`);                         
+
+                    if(isBothField){
+                    
+                        const arrowsToReturn = ["↗", "↘"];
+                        let arrowArray = [];
+                        for (const arrow of arrowsToReturn) {
+                            const iconString = this.replaceArrowsWithIcons(arrow)[1];
+                            const tempDiv = document.createElement('div');
+                            tempDiv.innerHTML = iconString;
+                            
+                            const iconElement = tempDiv.firstElementChild; // the <ha-icon> element
+                            
+                            if(arrow === "↗")
+                                iconElement.style.color = 'var(--energy-battery-in-color)';
+                            if(arrow === "↘")
+                                iconElement.style.color = 'var(--energy-battery-out-color)';
+                            
+                            iconElement.style.margin = '0 -4px';
+                                
+                            arrowArray.push(iconElement);
+                        }  
+                        
+                        if(stateText === "Both"){
+                            cellResponseArray.length = 0;
+
+                            cellResponseArray.push('<ha-icon icon="mdi:battery-charging-100" style="color: var(--energy-battery-in-color); --mdc-icon-size: 22px;" title="Planned Charge" class="icons"></ha-icon>');
+                            cellResponseArray.push(arrowArray[0].outerHTML);
+                            cellResponseArray.push('<ha-icon icon="mdi:battery-minus" style="color: var(--energy-battery-out-color);" title="Planned Export" class="icons"></ha-icon>');
+                            cellResponseArray.push(arrowArray[1].outerHTML);
                         } else if(stateText === "Both-Idle" || stateText === "Both-Chg" || stateText === "Both-Dis" || stateText === "Both-Dis-Snail"){
                             let houseColor = "#000000";
                             if(this.getLightMode(darkMode))
                                 houseColor = "#FFFFFF";
-                                    
-                            this.getLightMode(darkMode)
-                            additionalArrow = `<ha-icon icon="mdi:home-lightning-bolt" style="color: ${houseColor}" title="Idle" style="--mdc-icon-size: 22px;"></ha-icon><ha-icon icon="mdi:battery-minus" style="color: var(--energy-battery-out-color);" title="Planned Export" class="icons"></ha-icon>`;
+
+                            cellResponseArray.length = 0;
+                            cellResponseArray.push(`<ha-icon icon="mdi:home-lightning-bolt" style="color: ${houseColor}" title="Idle" style="--mdc-icon-size: 22px;"></ha-icon>`);
+                            let arrowColourOverride = arrowArray[1].cloneNode(true);
+                            arrowColourOverride.style.color = houseColor;
+                            cellResponseArray.push(arrowColourOverride.outerHTML);
+                            cellResponseArray.push(`<ha-icon icon="mdi:battery-minus" style="color: var(--energy-battery-out-color);" title="Planned Export" class="icons"></ha-icon>`);
+                            cellResponseArray.push(arrowArray[1].outerHTML);
                             if(stateText === "Both-Dis-Snail")
-                                additionalArrow += `<ha-icon icon="mdi:snail" title="Low Power Mode" style="--mdc-icon-size: 18px;"></ha-icon>`;
+                                cellResponseArray.push(`<ha-icon icon="mdi:snail" title="Low Power Mode" style="--mdc-icon-size: 18px;"></ha-icon>`);
                         }
-                            
-                      cellResponseArray.push(`${weatherAlert}${additionalArrow}${snail}`); 
                     
+                    }
                 }
             }
             
@@ -1797,7 +1835,8 @@ class PredbatTableCard extends HTMLElement {
                 minusColor = "black";
                 
             newContent = "";
-            cellResponseArray.length = 0;
+            
+            cellResponseArray.length = 0;    
             cellResponseArray.push(`<div class="iconContainer"><ha-icon icon="mdi:minus" style="color: ${minusColor}; margin: 0 2px; opacity: 0.25;"></ha-icon></div>`);
         }
         
