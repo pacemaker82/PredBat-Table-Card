@@ -1098,7 +1098,7 @@ class PredbatTableCard extends HTMLElement {
             friendlyText = friendlyText.replace('FrzDis', 'Charging Paused');
             friendlyText = friendlyText.replace('FrzExp', 'Charging Paused');
             friendlyText = friendlyText.replace('FrzChrg', 'Maintaining SoC'); //FreezeChrg
-            friendlyText = friendlyText.replace('HoldChrg', 'Maintaining SoC'); //HoldChrg
+            friendlyText = friendlyText.replace('HoldChrg', 'Maintain SoC to Limit'); //HoldChrg
             friendlyText = friendlyText.includes("NoCharge") ? friendlyText.replace('NoCharge','Charge to "limit"') : friendlyText.replace('Charge', 'Planned Charge');
             friendlyText = friendlyText.replace('Discharge', 'Planned Export'); //Discharge
             friendlyText = friendlyText.replace(/Export|Exp/g, 'Planned Export'); // Exp or Export
