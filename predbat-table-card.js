@@ -1202,7 +1202,7 @@ class PredbatTableCard extends HTMLElement {
         'pv-column', 'import-export-column', 'car-column'];
         
         const bothValues = ["Both", "Both-Idle", "Both-Chg", "Both-Dis", "Both-Dis-Snail"];
-        const isBothField = bothValues.includes(theItem.value);
+        const isBothField = bothValues.includes(theItem?.value);
         
         // This var will be used to collect the different parts of the response and build at the end.
         let cellResponseArray = [];
