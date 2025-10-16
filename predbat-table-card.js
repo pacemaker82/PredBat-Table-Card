@@ -1123,8 +1123,6 @@ class PredbatTableCard extends HTMLElement {
             
             let dischargeString = "Export";
             
-            //console.log("1: " + dischargeString);
-            
             if(this.isSmallScreen() && (this.config.use_friendly_states === false || this.config.use_friendly_states === undefined)){
                 
                 if(theItem.value === "Both") {
@@ -1138,9 +1136,6 @@ class PredbatTableCard extends HTMLElement {
                 
                 newCell.style.minWidth = "110px";
             }
-            
-            //console.log("2: " + dischargeString);
-            
             
             if(this.config.use_friendly_states === true && this.isSmallScreen() === false){
                 if(theItem.value === "Both")
@@ -1163,13 +1158,11 @@ class PredbatTableCard extends HTMLElement {
                 newCell.style.minWidth = "110px";
             }
             
-            //console.log("3: " + dischargeString);
-            
             let chargeBackgroundColor = "background-color:#3AEE85;";
             let chargeTextColor = "color: #000000;";
             if(theItem.value === "Both-Idle" || theItem.value === "Both-Dis" || theItem.value === "Both-Chg" || theItem.value === "Both-Dis-Snail"){
-                chargeBackgroundColor = "background-color:#FFFFFF;";
-                chargeTextColor = "";
+                chargeBackgroundColor = "background-color:transparent;";
+                chargeTextColor = "color: var(--primary-text-color)";
             }
             let chargeIcon;
             if(theItem.value === "Both" || theItem.value === "Both-Chg")
@@ -1183,7 +1176,6 @@ class PredbatTableCard extends HTMLElement {
             if(theItem.value === "Both-Dis-Snail")
                 snail = `<ha-icon icon="mdi:snail" title="Low Power Mode" style="--mdc-icon-size: 14px;"></ha-icon>`;
              
-                
             return `<div style="width: 100%; height: 100%;" id="${theItem.value}">
             <div style='${chargeBackgroundColor} width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center; ${chargeTextColor}'>${chargeString}${chargeIcon}</div>
             <div style='background-color:#FFFF00; width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center; color: #000000;'>${dischargeString}<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 0 0 -5px"></ha-icon>${snail}</div>
@@ -1209,6 +1201,9 @@ class PredbatTableCard extends HTMLElement {
         'weather-column', 'rain-column', 'temp-column', 'state-column', 'cost-column', 'options-column', 'options-popup-column',
         'pv-column', 'import-export-column', 'car-column'];
         
+        const bothValues = ["Both", "Both-Idle", "Both-Chg", "Both-Dis", "Both-Dis-Snail"];
+        const isBothField = bothValues.includes(theItem.value);
+        
         // This var will be used to collect the different parts of the response and build at the end.
         let cellResponseArray = [];
         
@@ -1216,7 +1211,8 @@ class PredbatTableCard extends HTMLElement {
         
         let useOldSkool = false;
         if((this.config.old_skool || this.config.old_skool_columns?.includes(column)) && !isNonDataColumn) {
-            newCell.style.backgroundColor = theItem.color;
+            if(!isBothField)
+                newCell.style.backgroundColor = theItem.color;
             if(theItem.color)
                 newCell.style.color = "#000000";
             useOldSkool = true;
@@ -1466,9 +1462,9 @@ class PredbatTableCard extends HTMLElement {
                             priceStrings = this.getPricesFromPriceString(contentWithoutTags, hasBoldTags, hasItalicTags, false);
                 
                                 if(this.config.stack_pills === false){
-                                    newCell.innerHTML = '<div class="iconContainer">' + this.getTransformedCostToPill({"value":priceStrings[0], "color":theItem.color}, darkMode) 
+                                    cellResponseArray.push('<div class="iconContainer">' + this.getTransformedCostToPill({"value":priceStrings[0], "color":theItem.color}, darkMode) 
                                     + this.getTransformedCostToPill({"value":priceStrings[1], "color":theItem.color}, darkMode) 
-                                    + '</div>';
+                                    + '</div>');
                                 } else {
                                     newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill({"value":priceStrings[0], "color":theItem.color}, darkMode) + '</div>';
                                     newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill({"value":priceStrings[1], "color":theItem.color}, darkMode) + '</div>';
@@ -1512,9 +1508,7 @@ class PredbatTableCard extends HTMLElement {
             if(column === "state-column"){
                 
                 let stateText;
-                const bothValues = ["Both", "Both-Idle", "Both-Chg", "Both-Dis", "Both-Dis-Snail"];
-                const isBothField = bothValues.includes(theItem.value);
-                
+ 
                 if(useOldSkool){
                     
                     if(isBothField){
@@ -1529,8 +1523,6 @@ class PredbatTableCard extends HTMLElement {
                             stateText = this.getFriendlyNamesForState(theItem.value);
                         
                         cellResponseArray = this.replaceArrowsWithIcons(theItem.value);
-                        
-                        //if(this.config.use_friendly_states)
                         cellResponseArray[0] = stateText;
                     }
                 } else {
@@ -1627,19 +1619,6 @@ class PredbatTableCard extends HTMLElement {
                     }
                 }
             }
-            
-            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            
-            // Export Column export-column
-            
-            if(column === "export-column" && !useOldSkool){
-                
-                // If not oldSkool do something different
-                if(!useOldSkool){
-                    
-                }
-                
-            }    
             
             //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             
@@ -1767,6 +1746,9 @@ class PredbatTableCard extends HTMLElement {
                     newCell.style.color = "var(--primary-text-color)";
                 else 
                     newCell.style.color = theItem.color;
+                    
+                if (darkMode && useOldSkool)
+                    newCell.style.color = "#000000";
             }
 
             //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
