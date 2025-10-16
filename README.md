@@ -218,9 +218,9 @@ Full explanations of the Predbat status's [can be found here](https://springfall
 | ↘ | Discharging |
 | → | Idle | 
 | FrzExp | Charging Paused | 
-| FrzChrg | Maintaining SOC | 
-| HoldChrg | Maintaining SOC | 
-| NoChrg | Charge to "limit" |
+| FrzChrg | Maintaining SoC | 
+| HoldChrg | Maintain SoC to Limit | 
+| NoChrg | Charge to Limit |
 | Chrg | Planned Charge | 
 | Exp | Planned Export | 
 
