@@ -293,10 +293,12 @@ class PredbatTableCard extends HTMLElement {
     
     // set out the data rows
     let newTableBody = document.createElement('tbody');
-    
-    let loadTotal = 0, pvTotal = 0, carTotal = 0, iboostTotal = 0, netTotal = 0, costTotal = 0, clipTotal = 0, co2kwhTotal = 0, co2kgTotal = 0, xloadTotal = 0, 
-    loadDayTotal = 0, pvDayTotal = 0, carDayTotal = 0, iboostDayTotal = 0, netDayTotal = 0, costDayTotal = 0, clipDayTotal = 0, co2kwhDayTotal = 0, co2kgDayTotal = 0, xloadDayTotal = 0;
 
+    let overallTotal = {};
+    let dayTotal = {};
+    const columnsWithTotals = ["load-column", "pv-column", "car-column", "iboost-column", "net-power-column", 
+    "cost-column", "clip-column", "co2kwh-column", "co2kg-column", "xload-column", "limit-column"];
+    
     // before we display the rows, lets drop any that the user doesnt want.
     
     if(this.config.row_limit && this.config.row_limit > 0)
@@ -305,6 +307,10 @@ class PredbatTableCard extends HTMLElement {
     //const useRefactor = this._hass.states['input_boolean.predbat_tablecard_refactor']?.state === 'on';
     
     const useRefactor = !this.config?.bypassRefactor;
+    
+    // iterate through the data
+    //dataArray.forEach((item, index) => {
+    //});
 
     // iterate through the data
     dataArray.forEach((item, index) => {
@@ -324,57 +330,14 @@ class PredbatTableCard extends HTMLElement {
                 else 
                     newColumn = this.getCellTransformation(item[column], column, hass.themes.darkMode, index, item["time-column"]);
     
-                newRow.appendChild(newColumn); 
+                newRow.appendChild(newColumn);
                 
-                if(column === "load-column" && !item["load-column"].value.includes("⚊")) {
-                    let val = parseFloat(item["load-column"].value);
-                    loadTotal += val;
-                    loadDayTotal += val;
-                }
-                if(column === "pv-column" && !item["pv-column"].value.includes("⚊")) {
-                    let val = parseFloat(item["pv-column"].value.replace(/[☀]/g, ''));
-                    pvTotal += val;
-                    pvDayTotal += val;
-                }
-                if(column === "car-column" && !item["car-column"].value.includes("⚊")) {
-                    let val = parseFloat(item["car-column"].value);
-                    carTotal += val;
-                    carDayTotal += val;
-                }
-                if(column === "net-power-column" && !item["net-power-column"].value.includes("⚊")) {
-                    let val = parseFloat(item["net-power-column"].value);
-                    netTotal += val;
-                    netDayTotal += val;
-                }
-                if(column === "cost-column" && !item["cost-column"].value.includes("→")) {
-                    let val = parseFloat(item["cost-column"].value.replace(/[↘↗→p]/g, ''));
-                    costTotal += val;
-                    costDayTotal += val;
-                }
-                if(column === "iboost-column" && !item["iboost-column"].value.includes("⚊")) {
-                    let val = parseFloat(item["iboost-column"].value);
-                    iboostTotal += val;
-                    iboostDayTotal += val;
-                }
-                if(column === "clip-column" && !item["clip-column"].value.includes("⚊")) {
-                    let val = parseFloat(item["clip-column"].value);
-                    clipTotal += val;
-                    clipDayTotal += val;
-                }
-                if(column === "xload-column" && !item["xload-column"].value.includes("⚊")) {
-                    let val = parseFloat(item["xload-column"].value);
-                    xloadTotal += val;
-                    xloadDayTotal += val;
-                }
-                if(column === "co2kwh-column" && !item["co2kwh-column"].value.includes("⚊")) {
-                    let val = parseFloat(item["co2kwh-column"].value);
-                    co2kwhTotal += val;
-                    co2kwhDayTotal += val;
-                }
-                if(column === "co2kg-column" && !item["co2kg-column"].value.includes("⚊")) {
-                    let val = parseFloat(item["co2kg-column"].value);
-                    co2kgTotal += val;
-                    co2kgDayTotal += val;
+                if(columnsWithTotals.includes(column)){
+                    let val = parseFloat(item[column].value.replace(/[⚊↘↗→p☀]/g, ''));
+                    if (isNaN(val)) val = 0;
+                    
+                    overallTotal[column] = (overallTotal[column] || 0) + val;
+                    dayTotal[column] = (dayTotal[column] || 0) + val;
                 }
                 
             } else {
@@ -407,47 +370,31 @@ class PredbatTableCard extends HTMLElement {
                     
                     let totalCell = document.createElement('td');
                     
+                    if(columnsWithTotals.includes(column) && column !== 'limit-column'){
+                        let returnTotal;
+                        if(column === "cost-column"){
+                            let formattedCost = "";
+                            
+                            if (dayTotal[column] < 0) {
+                              formattedCost = `-£${(Math.abs(dayTotal[column]) / 100).toFixed(2)}`;
+                            } else {
+                              formattedCost = `£${(dayTotal[column] / 100).toFixed(2)}`;
+                            }
+                            returnTotal = `<b>${formattedCost}</b>`;
+                        } else
+                            returnTotal = `<b>${dayTotal[column].toFixed(2)}</b>`;
+                        
+                        totalCell.innerHTML = returnTotal;
+                    }
+                    
                     if(column === "time-column" && index === 0)
                         totalCell.innerHTML = `<b>TOTALS</b>`;                    
             
-                    if(column === 'pv-column')
-                        totalCell.innerHTML = `<b>${pvDayTotal.toFixed(2)}</b>`;
-                    
-                    if(column === 'car-column')
-                        totalCell.innerHTML = `<b>${carDayTotal.toFixed(2)}</b>`;
-                    
-                    if(column === 'load-column')
-                        totalCell.innerHTML = `<b>${loadDayTotal.toFixed(2)}</b>`;
-                        
-                    if(column === 'net-power-column')
-                        totalCell.innerHTML = `<b>${netDayTotal.toFixed(2)}</b>`; 
-                        
-                    let formattedCost = "";
-                    
-                    if (costDayTotal < 0) {
-                      formattedCost = `-£${(Math.abs(costDayTotal) / 100).toFixed(2)}`;
-                    } else {
-                      formattedCost = `£${(costDayTotal / 100).toFixed(2)}`;
-                    }                
-                    
-                    if(column === 'cost-column')
-                        totalCell.innerHTML = `<b>${formattedCost}</b>`; 
-                        
-                    if(column === 'clip-column')
-                        totalCell.innerHTML = `<b>${clipDayTotal.toFixed(2)}</b>`;
-                    if(column === 'xload-column')
-                        totalCell.innerHTML = `<b>${xloadDayTotal.toFixed(2)}</b>`;                 
-                    if(column === 'co2kwh-column')
-                        totalCell.innerHTML = `<b>${co2kwhDayTotal.toFixed(2)}</b>`;    
-                    if(column === 'co2kg-column')
-                        totalCell.innerHTML = `<b>${co2kgDayTotal.toFixed(2)}</b>`;                 
-                    
                     dayTotalsRow.appendChild(totalCell);
                 
                 });
                 
-                newTableBody.appendChild(dayTotalsRow);            
-                loadDayTotal = 0, pvDayTotal = 0, carDayTotal = 0, iboostDayTotal = 0, netDayTotal = 0, costDayTotal = 0, clipDayTotal = 0, co2kwhDayTotal = 0, co2kgDayTotal = 0, xloadDayTotal = 0;
+                newTableBody.appendChild(dayTotalsRow);
                 for (let i = 0; i < 2; i++) {
                     newTableBody.appendChild(this.createDividerRows(columnsToReturn.length, hass.themes.darkMode));
                 }   
@@ -467,39 +414,24 @@ class PredbatTableCard extends HTMLElement {
             
             if(column === "time-column" && index === 0)
                 totalCell.innerHTML = `<b>PLAN TOTALS</b>`;
-    
-            if(column === 'pv-column')
-                totalCell.innerHTML = `<b>${pvTotal.toFixed(2)}</b>`;
-            
-            if(column === 'car-column')
-                totalCell.innerHTML = `<b>${carTotal.toFixed(2)}</b>`;
-            
-            if(column === 'load-column')
-                totalCell.innerHTML = `<b>${loadTotal.toFixed(2)}</b>`;
                 
-            if(column === 'net-power-column')
-                totalCell.innerHTML = `<b>${netTotal.toFixed(2)}</b>`; 
+            if(columnsWithTotals.includes(column) && column !== 'limit-column'){
+                let returnTotal;
+                if(column === "cost-column"){
+                    let formattedCost = "";
+                    
+                    if (overallTotal[column] < 0) {
+                      formattedCost = `-£${(Math.abs(overallTotal[column]) / 100).toFixed(2)}`;
+                    } else {
+                      formattedCost = `£${(overallTotal[column] / 100).toFixed(2)}`;
+                    }
+                    returnTotal = `<b>${formattedCost}</b>`;
+                } else
+                    returnTotal = `<b>${overallTotal[column].toFixed(2)}</b>`;
                 
-            let formattedCost = "";
-            
-            if (costTotal < 0) {
-              formattedCost = `-£${(Math.abs(costTotal) / 100).toFixed(2)}`;
-            } else {
-              formattedCost = `£${(costTotal / 100).toFixed(2)}`;
+                totalCell.innerHTML = returnTotal;
             }                
-            
-            if(column === 'cost-column')
-                totalCell.innerHTML = `<b>${formattedCost}</b>`; 
-                
-            if(column === 'clip-column')
-                totalCell.innerHTML = `<b>${clipTotal.toFixed(2)}</b>`;
-            if(column === 'xload-column')
-                totalCell.innerHTML = `<b>${xloadTotal.toFixed(2)}</b>`;                 
-            if(column === 'co2kwh-column')
-                totalCell.innerHTML = `<b>${co2kwhTotal.toFixed(2)}</b>`;    
-            if(column === 'co2kg-column')
-                totalCell.innerHTML = `<b>${co2kgTotal.toFixed(2)}</b>`;                 
-            
+    
             totalsRow.appendChild(totalCell);
         
         });
@@ -565,37 +497,15 @@ class PredbatTableCard extends HTMLElement {
         
     newTableHead.appendChild(newHeaderRow);    
     
-    // This section of code is hiding the car and iboost columns if they have no value (and the user has set them as a column to return)
+    // This section of code is hiding any columns if they have no value (and the user has set them as a column to return)
     
     if(this.config.hide_empty_columns === true){
-
-        let carEmpty;
-        let iBoostEmpty;
         
-        if(columnsToReturn.includes("car-column"))
-            carEmpty = true;
-            
-        if(columnsToReturn.includes("iboost-column"))
-            iBoostEmpty = true;
-            
-        dataArray.forEach((item, index) => {
-            
-            if(item["car-column"] !== undefined)
-                if(item["car-column"].value.length > 0 && item["car-column"].value !== "⚊")
-                    carEmpty = false;
-            
-            if(item["iboost-column"] !== undefined)
-                if (item["iboost-column"].value.length > 0 && item["iboost-column"].value !== "⚊")
-                    iBoostEmpty = false;                    
-        });
-        
-        //hide columns if empty
         let indexesToRemove = [];
-        if(carEmpty === true)
-            indexesToRemove.push(columnsToReturn.indexOf("car-column"));
-
-        if(iBoostEmpty === true)
-            indexesToRemove.push(columnsToReturn.indexOf("iboost-column"));
+        columnsToReturn.forEach((column, index) => {
+            if(columnsWithTotals.includes(column) && overallTotal[column] === 0)
+                indexesToRemove.push(columnsToReturn.indexOf(column));
+        });
         
         if(indexesToRemove.length > 0) {
             for (let row of newTableHead.rows) {
