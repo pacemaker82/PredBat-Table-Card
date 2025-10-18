@@ -235,13 +235,7 @@ class PredbatTableCard extends HTMLElement {
     
     console.log(`[${new Date().toLocaleTimeString()}] PROCESS AND RENDER TABLE`);
     console.log(this._lastOnText);
-    /*  
-    this.hass.callWS({
-        type: "weather/forecast",
-        entity_id: "weather.forecast_stone_cottage",
-        forecast_type: "daily" // or "hourly"
-    }); */
-      
+
     const entityId = this.config.entity;
     
     const state = hass.states[entityId];
@@ -251,9 +245,6 @@ class PredbatTableCard extends HTMLElement {
       throw new Error("Predbat HTML entity is not currently available. Hit REFRESH when it is...");
     }
     
-    // Predbat Version entity
-    const versionEntity = this.config.version_entity;
-
     let columnsToReturn = this.config.columns;
     let rawHTML = hass.states[entityId].attributes.html;
     const dataArray = this.getArrayDataFromHTML(rawHTML, hass.themes.darkMode); 
@@ -267,29 +258,6 @@ class PredbatTableCard extends HTMLElement {
     theTable.setAttribute('id', 'predbat-table');
     theTable.setAttribute('cellpadding', '0px');
     let newTableHead = document.createElement('thead');
-    
-    // Create an optional Last Updated Table Header Row
-    if(this.config.hide_last_update !== true) {
-        
-        const lastUpdated = state ? state.last_updated : "Unavailable";
-        const time = this.getLastUpdatedFromHTML(lastUpdated);
-
-        if (time !== undefined){
-            let lastUpdateHeaderRow = document.createElement('tr');
-            let lastUpdateCell = document.createElement('th');
-            lastUpdateCell.classList.add('lastUpdateRow');
-            lastUpdateCell.colSpan = columnsToReturn.length;
-            lastUpdateCell.innerHTML = `<b>Plan Last Updated:</b> ${time}. Duration: ${this._lastOnText}`;
-            
-            if(hass.states[predbatActiveEntityId].state === "on"){
-                //console.log("Switch: " + hass.states['switch.predbat_active'].state);
-                lastUpdateCell.innerHTML += `<ha-icon class="icon-spin" icon="mdi:loading" style="--mdc-icon-size: 18px; margin-left: 4px;" title="Generating next plan"></ha-icon>`;
-            }
-            
-            lastUpdateHeaderRow.appendChild(lastUpdateCell);
-            newTableHead.appendChild(lastUpdateHeaderRow);
-        }
-    }
     
     // set out the data rows
     let newTableBody = document.createElement('tbody');
@@ -308,10 +276,6 @@ class PredbatTableCard extends HTMLElement {
     
     const useRefactor = !this.config?.bypassRefactor;
     
-    // iterate through the data
-    //dataArray.forEach((item, index) => {
-    //});
-
     // iterate through the data
     dataArray.forEach((item, index) => {
         
@@ -438,49 +402,13 @@ class PredbatTableCard extends HTMLElement {
         
         newTableBody.appendChild(totalsRow);
     }   
-    
-    let headOrFoot = "td";
-    if(this.config.show_versions_top === true)
-        headOrFoot = "th";    
-    
-    if (versionEntity !== undefined){
 
-        const predbatVersion = hass.states[versionEntity].attributes.installed_version;
-        const latestPredbatVersion = hass.states[versionEntity].attributes.latest_version;
-        let lastUpdateHeaderRow = document.createElement('tr');
-        let lastUpdateCell = document.createElement(headOrFoot);
-        lastUpdateCell.classList.add('versionRow');
-        lastUpdateCell.colSpan = columnsToReturn.length;
-        let updateIcon = ``;
-        if(predbatVersion !== latestPredbatVersion)
-            updateIcon = `<ha-icon icon="mdi:download-circle-outline" style="--mdc-icon-size: 18px; margin-left: 4px;" title="Predbat version ${latestPredbatVersion} available"></ha-icon>`;
-        lastUpdateCell.innerHTML = `Predbat Version: ${predbatVersion}${updateIcon}`;
-        lastUpdateHeaderRow.appendChild(lastUpdateCell);
-        
-        if(this.config.show_versions_top === true)
-            newTableHead.appendChild(lastUpdateHeaderRow);
-        else
-            newTableBody.appendChild(lastUpdateHeaderRow);
-    }  
+      
+//    let headOrFoot = "td";
+//    if(this.config.show_versions_top === true)
+//        headOrFoot = "th";    
     
-    if(this.config.show_tablecard_version === true){
-        const version = hass.states["update.predbat_table_card_update"].attributes.installed_version;
-        const latestVersion = hass.states["update.predbat_table_card_update"].attributes.latest_version;
-        let lastUpdateHeaderRow = document.createElement('tr');
-        let lastUpdateCell = document.createElement(headOrFoot);
-        lastUpdateCell.classList.add('versionRow');
-        lastUpdateCell.colSpan = columnsToReturn.length;
-        let updateIcon = ``;
-        if(version !== latestVersion)
-            updateIcon = `<ha-icon icon="mdi:download-circle-outline" style="--mdc-icon-size: 18px; margin-left: 4px;" title="Predbat Table Card version ${latestVersion} available"></ha-icon>`;
-        lastUpdateCell.innerHTML = `Predbat Table Card Version: ${version}${updateIcon}`;
-        lastUpdateHeaderRow.appendChild(lastUpdateCell);
-        newTableBody.appendChild(lastUpdateHeaderRow);
-        if(this.config.show_versions_top === true)
-            newTableHead.appendChild(lastUpdateHeaderRow);
-        else
-            newTableBody.appendChild(lastUpdateHeaderRow);        
-    }      
+    
     
     let newHeaderRow = document.createElement('tr');
     newTableHead.classList.add('topHeader');   
@@ -540,14 +468,67 @@ class PredbatTableCard extends HTMLElement {
     theTable.appendChild(newTableBody);
     
     this.content.innerHTML = "";         // Clear existing content
+
+    if(this.config.hide_last_update !== true) {
+        
+        const lastUpdated = state ? state.last_updated : "Unavailable";
+        const time = this.getLastUpdatedFromHTML(lastUpdated);
+
+        if (time !== undefined){
+            let lastUpdateHeaderDiv = document.createElement('div');
+            
+            lastUpdateHeaderDiv.classList.add('lastUpdateRow');
+            lastUpdateHeaderDiv.innerHTML = `<b>Plan Last Updated:</b> ${time}. Duration: ${this._lastOnText}`;
+            
+            if(hass.states[predbatActiveEntityId].state === "on"){
+                //console.log("Switch: " + hass.states['switch.predbat_active'].state);
+                lastUpdateHeaderDiv.innerHTML += `<ha-icon class="icon-spin" icon="mdi:loading" style="--mdc-icon-size: 18px; margin-left: 4px;" title="Generating next plan"></ha-icon>`;
+            }
+            
+            this.content.appendChild(lastUpdateHeaderDiv);
+        
+        }
+    }      
+    
     this.content.appendChild(theTable);  // Add actual DOM node (preserves listeners)
     
-    // this.content.innerHTML = theTable.outerHTML; OLD WAY
-    //this.content.innerHTML = `<button @click=${this.handleClick}>Hello world</button>`;
+    if(this.config.show_predbat_version === true)
+        this.content.appendChild(this.createVersionLabelsForFooter("update.predbat_version","Predbat Version", this));
+    
+    if(this.config.show_tablecard_version === true)
+        this.content.appendChild(this.createVersionLabelsForFooter("update.predbat_table_card_update","Predbat Table Card Version", this));
 
     const styleTag = document.createElement('style');
 	styleTag.innerHTML = this.getStyles(this.getLightMode(hass.themes.darkMode));
 	this.content.appendChild(styleTag);      
+  }
+  
+  createVersionLabelsForFooter(entity, label, cardContext){
+        const version = this._hass.states[entity].attributes.installed_version;
+        const latestVersion = this._hass.states[entity].attributes.latest_version;
+        
+        let lastUpdateHeaderDiv = document.createElement('div');
+        
+        lastUpdateHeaderDiv.classList.add('versionRow');
+
+        let updateIcon = ``;
+        if(version !== latestVersion){
+            updateIcon = `<ha-icon icon="mdi:download-circle-outline" style="color: var(--primary-color); --mdc-icon-size: 18px; margin-left: 4px;" title="Predbat Table Card version ${latestVersion} available"></ha-icon>`;
+            lastUpdateHeaderDiv.style.cursor = "pointer";
+            lastUpdateHeaderDiv.addEventListener('click', () => {
+                const event = new CustomEvent('hass-more-info', {
+                    bubbles: true,
+                    composed: true,
+                    detail: { entityId: entity }
+                });
+            
+                cardContext.dispatchEvent(event);
+            }); 
+        }
+        
+        lastUpdateHeaderDiv.innerHTML = `<b>${label}:</b> ${version}${updateIcon}`;     
+        
+        return lastUpdateHeaderDiv;
   }
   
   navigateToPath(path) {
@@ -3402,7 +3383,7 @@ previous_findForecastForLabel(label, forecastArray) {
 	let tableHeaderFontColour;
 	let tableHeaderBackgroundColour;
 	let tableHeaderColumnsBackgroundColour;
-	let boldTextDisplay, dayTotalFontColour, dayTotalBackgroundColour, totalBackgroundColour, dividerColour;
+	let boldTextDisplay, dayTotalFontColour, dayTotalBackgroundColour, totalBackgroundColour, dividerColour, tableBorderColor, planTotalFontColour, dayTotalShadowColor;
 	
 	if(isDarkMode){
 	    oddColour = "#181f2a";
@@ -3420,9 +3401,13 @@ previous_findForecastForLabel(label, forecastArray) {
     	tableHeaderFontColour = "#8a919e";
     	tableHeaderBackgroundColour = "transparent";
     	boldTextDisplay = "font-weight: normal;";
-    	dayTotalFontColour = "#FFFFFF";
+    	dayTotalFontColour = "rgba(255, 255, 255, 0.7)";
+    	planTotalFontColour = "rgba(255, 255, 255, 1.0)";
     	dayTotalBackgroundColour = evenColour;
     	totalBackgroundColour = oddColour;
+    	dividerColour = "rgb(105, 109, 114)";
+    	tableBorderColor = "rgba(105, 109, 114, 0.6)";
+    	dayTotalShadowColor = "rgba(0, 0, 0, 0.7)";
     	
 	} else {
 	    // Light Theme
@@ -3443,10 +3428,13 @@ previous_findForecastForLabel(label, forecastArray) {
     	tableHeaderBackgroundColour = "var(--primary-color)";
     	tableHeaderColumnsBackgroundColour = "var(--primary-color)";
     	boldTextDisplay = "font-weight: bold;";
-    	dayTotalFontColour = "#000000";
+    	dayTotalFontColour = "var(--darker-primary-color)";
+    	planTotalFontColour = "rgba(255, 255, 255, 0.9)";
  	    dayTotalBackgroundColour = "var(--light-primary-color)";
     	totalBackgroundColour = tableHeaderBackgroundColour; 
     	dividerColour = "var(--primary-color)";
+    	tableBorderColor = "var(--primary-color)";
+    	dayTotalShadowColor = "#FFFFFF";
 	}
 	
 	//use yaml width if exists
@@ -3474,7 +3462,7 @@ previous_findForecastForLabel(label, forecastArray) {
 		return `
     .card-content table {
       /* Your styles for the table inside .card-content */
-      border: 2px solid ${evenColour};
+      border: 1px solid ${tableBorderColor};
       width: ${tableWidth}%;
       border-spacing: 0px;
       font-size: ${fontSize}px;
@@ -3503,8 +3491,14 @@ previous_findForecastForLabel(label, forecastArray) {
     .totalRow {
         background-color: ${totalBackgroundColour} !important; 
         height: 24px;
-        color: ${tableHeaderFontColour};
-        text-align: center; !important
+        color: ${planTotalFontColour};
+        text-align: center !important;
+        text-shadow: 0px 1px 1px rgba(0, 0, 0, 0.7);
+    }    
+    
+    .totalRow td {
+        border-top: 2px solid ${tableBorderColor} !important;
+        border-bottom: 1px solid ${tableBorderColor} !important;
     }    
     
     .dayTotalRow {
@@ -3512,19 +3506,23 @@ previous_findForecastForLabel(label, forecastArray) {
         height: 24px;
         color: ${dayTotalFontColour};
         text-align: center !important;
+        text-shadow: 0px 1px 1px ${dayTotalShadowColor};
     }        
     
-    .card-content table thead tr .lastUpdateRow {
+    .lastUpdateRow {
         height: 24px;
         font-weight: normal;
-        background-color: ${tableHeaderBackgroundColour};
+        font-size: ${fontSize}px;
+        text-align: center;
+        padding-bottom: 4px;
     }
     
     .versionRow {
         height: 24px;
         font-weight: normal;
-        background-color: ${tableHeaderBackgroundColour}; 
-        color: ${tableHeaderFontColour};
+        text-align: center;
+        padding-top: 4px;
+        font-size: ${fontSize}px;
     }
     
     
