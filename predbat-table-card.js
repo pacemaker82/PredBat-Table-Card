@@ -35,10 +35,6 @@ function formatDuration(ms) {
 
 
 class PredbatTableCard extends HTMLElement {
-    
-    //      - entity: select.predbat_manual_charge
-    //      - entity: select.predbat_manual_export
-    //      - entity: select.predbat_manual_demand
 
   // The user supplied configuration. Throw an exception and Home Assistant
   // will render an error card.
@@ -55,15 +51,329 @@ class PredbatTableCard extends HTMLElement {
     this.config = config;
 
   }    
-    
-  // Whenever the state changes, a new `hass` object is set. Use this to
-  // update your content.
   
-    static getConfigElement() {
-        // Create and return an editor element
-        // return document.createElement("predbat-table-card-editor");
-    }
+  // Let HA know which editor element to use
+  /*
+  static getConfigElement() {
+    return document.createElement('predbat-card-editor');
+  } 
+  */
   
+  static getConfigForm() {
+    return {
+      schema: [
+        {
+          name: "help_text",
+          type: "constant",
+          value: "",
+        },
+        { name: "entity", 
+            required: true, 
+            selector: { 
+                entity: {} 
+            }, 
+            default: "predbat.plan_html",
+        }, 
+          {
+            name: "",
+            title: "General Card Settings",
+            type: "expandable",
+            schema: [
+                { name: "fill_empty_cells", selector: { boolean: {} } },
+                { name: "show_day_totals", selector: { boolean: {} } },
+                { name: "show_plan_totals", selector: { boolean: {} } },
+                { name: "show_predbat_version", selector: { boolean: {} } },
+                { name: "show_tablecard_version", selector: { boolean: {} } },
+                { name: "hide_last_update", selector: { boolean: {} } },
+                { name: "use_friendly_states", selector: { boolean: {} } },
+                { name: "stack_pills", selector: { boolean: {} } }, 
+                { name: "debug_prices_only", selector: { boolean: {} } }, 
+                {
+                  name: "row_limit",
+                  selector: {
+                    number: {
+                      min: 1,
+                      max: 400,
+                      step: 1,                 // allows fractional values (e.g. 12.5)
+                      mode: "box",               // shows a numeric input box instead of slider
+                    },
+                  },
+                  default: 100,
+                },                
+                {
+                  name: "battery_capacity",
+                  selector: {
+                    number: {
+                      min: 1,
+                      mode: "box", // shows a numeric input box instead of slider 
+                      step: 0.01,  
+                      unit_of_measurement: "kWh",
+                    },
+                  },
+                },
+            ]
+          },  
+        {
+            name: "",
+            title: "Card Style Settings",
+            type: "expandable",
+            schema: [
+                {
+                    name: "table_width",
+                    selector: { number: { min: 10, max: 100, step: 1, unit_of_measurement: "%" } },
+                    default: 100,   // starting value
+                },                 
+                { name: "old_skool", selector: { boolean: {} }, default: false },
+                {
+                  name: 'old_skool_columns',
+                  selector: {
+                    select: {
+                      multiple: true,
+                      mode: 'dropdown',
+                      options: [
+                        { value: 'time-column', label: 'Time' },
+                        { value: 'import-column', label: 'Import' },
+                        { value: 'export-column', label: 'Export' },
+                        { value: 'import-export-column', label: 'Import & Export' },
+                        { value: 'load-column', label: 'Load' },
+                        { value: 'pv-column', label: 'PV' },
+                        { value: 'state-column', label: 'State' },
+                        { value: 'soc-column', label: 'SoC' },
+                        { value: 'limit-column', label: 'Limit' },
+                        { value: 'cost-column', label: 'Cost' },
+                        { value: 'total-column', label: 'Total Cost' },
+                        { value: 'car-column', label: 'Car' },
+                        { value: 'iboost-column', label: 'iBoost' },
+                        { value: 'co2kwh-column', label: 'CO2 kWh' },
+                        { value: 'co2kg-column', label: 'CO2 KG' },
+                        { value: 'xload-column', label: 'X-Load' },
+                        { value: 'clip-column', label: 'Clip' },
+                        { value: 'net-power-column', label: 'Net Power' },
+                        { value: 'options-popup-column', label: 'Popup Overrides' },
+                        { value: 'options-column', label: 'Overrides' },
+                      ],
+                    },
+                  },
+                },   
+                {
+                  name: "font_size",
+                  selector: {
+                    number: {
+                      min: 8,
+                      max: 32,
+                      step: 0.1,                 // allows fractional values (e.g. 12.5)
+                      mode: "box",               // shows a numeric input box instead of slider
+                      unit_of_measurement: "px", // optional, just a label suffix
+                    },
+                  },
+                  default: 14,
+                }, 
+                {
+                    name: "light_mode",
+                    selector: {
+                        select: {
+                            multiple: false,
+                            options: [
+                                { value: 'auto', label: 'Automatic' },
+                                { value: 'light', label: 'Light Mode'},
+                                { value: 'dark', label: 'Dark Mode'},
+                            ],
+                        },
+                    },
+                },
+                {
+                  name: "color_help_text",
+                  type: "constant",
+                  value: "",
+                },                
+                {
+                    name: "",
+                    type: "grid",
+                    schema: [
+                        {
+                          name: "odd_row_colour",
+                          selector: {
+                            text: {
+                              type: "text",
+                            }
+                          },
+                          default: "#ffffff"
+                        }, 
+                        {
+                          name: "even_row_colour",
+                          selector: {
+                            text: {
+                              type: "text",
+                            }
+                          },
+                          default: "#ffffff"
+                        },   
+                        {
+                          name: "odd_row_colour_light",
+                          selector: {
+                            text: {
+                              type: "text",
+                            }
+                          },
+                          default: "#ffffff"
+                        }, 
+                        {
+                          name: "even_row_colour_light",
+                          selector: {
+                            text: {
+                              type: "text",
+                            }
+                          },
+                          default: "#ffffff"
+                        },                          
+                    ]
+                },
+                {
+                  name: "color_help_text_more",
+                  type: "constant",
+                  value: "",
+                },                  
+            ]
+        },          
+        {
+            name: "",
+            title: "Predbat Debug Settings",
+            type: "expandable",
+            schema: [
+                {
+                  name: 'debug_columns',
+                  selector: {
+                    select: {
+                      multiple: true,
+                      mode: 'dropdown',
+                      options: [
+                        { value: 'time-column', label: 'Time' },
+                        { value: 'import-column', label: 'Import' },
+                        { value: 'export-column', label: 'Export' },
+                        { value: 'import-export-column', label: 'Import & Export' },
+                        { value: 'load-column', label: 'Load' },
+                        { value: 'pv-column', label: 'PV' },
+                        { value: 'state-column', label: 'State' },
+                        { value: 'soc-column', label: 'SoC' },
+                        { value: 'limit-column', label: 'Limit' },
+                        { value: 'cost-column', label: 'Cost' },
+                        { value: 'total-column', label: 'Total Cost' },
+                        { value: 'car-column', label: 'Car' },
+                        { value: 'iboost-column', label: 'iBoost' },
+                        { value: 'co2kwh-column', label: 'CO2 kWh' },
+                        { value: 'co2kg-column', label: 'CO2 KG' },
+                        { value: 'xload-column', label: 'X-Load' },
+                        { value: 'clip-column', label: 'Clip' },
+                        { value: 'net-power-column', label: 'Net Power' },
+                        { value: 'options-popup-column', label: 'Popup Overrides' },
+                        { value: 'options-column', label: 'Overrides' },
+                      ],
+                    },
+                  },
+                },            
+            ]
+        },
+        {
+            name: "",
+            title: "Advanced Settings",
+            type: "expandable",
+            schema: [
+                { name: "weather_entity", selector: { entity: {} } },
+                { 
+                    name: "path_for_click", 
+                    selector: { 
+                        text: { 
+                            type: "text", 
+                        } 
+                    }, 
+                    default: "/my-dashboard/predbat-plan",
+                },
+                { name: "bypassRefactor", selector: { boolean: {} } },
+            ]
+        },
+      ],
+      computeLabel: (schema) => {
+        if (schema.name === "entity") return "Predbat HTML Entity:";
+        if (schema.name === "fill_empty_cells") return "Fill Empty Cells?";
+        if (schema.name === "show_day_totals") return "Show Day Totals Row?";
+        if (schema.name === "show_plan_totals") return "Show Plan Totals Row?";
+        if (schema.name === "use_friendly_states") return "Use friendly STATE labels?";
+        if (schema.name === "stack_pills") return "Stack Import/Export Pills?";
+        if (schema.name === "old_skool") return "Use original Predbat Plan stylesheet? (old_skool mode)";
+        if (schema.name === "old_skool_columns") return "Choose specific columns to use original Predbat Plan style";
+        if (schema.name === "help_text") return "Important: You must manually set the columns in your card YAML";
+        if (schema.name === "table_width") return "Table Width (%)";
+        if (schema.name === "font_size") return "Font Size (px)";
+        if (schema.name === "row_limit") return "Number of rows to return";
+        if (schema.name === "show_predbat_version") return "Show Predbat version?";
+        if (schema.name === "show_tablecard_version") return "Show Predbat Table Card version?";
+        if (schema.name === "hide_last_update") return "Hide PLAN LAST UPDATED header?";
+        if (schema.name === "battery_capacity") return "Battery Capacity";
+        if (schema.name === "color_help_text") return "Row colour override settings";
+        if (schema.name === "color_help_text_more") return "Override the HEX (e.g, #AA0000) colour values of the rows";
+        if (schema.name === "light_mode") return "Card Light Mode";
+        if (schema.name === "odd_row_colour") return "Dark Row Colour (odd)";
+        if (schema.name === "odd_row_colour_light") return "Light Row Colour (odd)";
+        if (schema.name === "even_row_colour") return "Dark Row Colour (even)";
+        if (schema.name === "even_row_colour_light") return "Light Row Colour (even)";
+        if (schema.name === "debug_prices_only") return "Show Debug Prices Only?";
+        if (schema.name === "weather_entity") return "Weather Entity";        
+        if (schema.name === "path_for_click") return "Dashboard Path for click";
+        if (schema.name === "bypassRefactor") return "Bypass Refactor Code?";
+        
+        return undefined;
+      },
+      computeHelper: (schema) => {
+        switch (schema.name) {
+          case "entity":
+            return "Usually set to \"predbat.plan_html\"";
+          case "fill_empty_cells":
+            return "This setting fills the column with an icon to fill any empty space";
+          case "stack_pills":
+            return "Only works when old_skool mode is disabled in style settings";
+          case "show_plan_totals":
+            return "Show a new row of plan total values for each supported column"; 
+          case "show_day_totals":
+            return "Show a new row of day total values for each supported column"; 
+          case "use_friendly_states":
+            return "Attempts to make the STATE column more understandable";
+          case "old_skool":
+            return "Applies the style to the entire table card, aka old_skool setting. This setting always wins and overrides settings below."; 
+          case "old_skool_columns":
+            return "Warning: This setting is overridden by the old_skool setting above. Turn that off if you want to set specific columns";       
+          case "help_text":
+            return "some helpful text"; 
+          case "table_width":
+            return "Set the overall table width as a percentage.";
+          case "font_size":
+            return "Adjust the font size used in the table.";
+          case "row_limit":
+            return "Min: 1, Max: 400";  
+          case "show_predbat_version":
+            return "Displays the Predbat version at the bottom of the table. Click to Upgrade (if available)";  
+          case "show_tablecard_version":
+            return "Displays the Predbat Table Card version at the bottom of the table. Click to Upgrade (if available)";  
+          case "hide_last_update":
+            return "Hides the Plan Last Updated text at the top of the plan";        
+          case "battery_capacity":
+            return "Shows the kWh capacity of your battery in the SoC column";      
+          case "debug_columns":
+            return "Choose which columns reflect the HTML Debug Settings when enabled in Predbat";   
+          case "debug_prices_only":
+            return "If you have enabled Predbat's HTML Plan debug, set to true to only show the adjusted prices, rather than the default (actual and adjusted prices). Important: Only works if HTML Plan debug is enabled";
+          case "weather_entity":
+            return "Add a weather forecast entity to see the weather for each time slot. Must add weather-column or temp-column to columns to see weather"; 
+          case "path_for_click":
+            return "Add a dashboard path like /my-dashboard/predbat-plan to be navigated to when you click the plan"; 
+          case "bypassRefactor":
+            return "Bypasses the new refactored codebase if there is a serious issue you need to get around with Version 1.9x +"; 
+            
+        }
+        return undefined;
+      },
+    };
+  }  
+
   static getStubConfig() {
     return {
       "entity": "predbat.plan_html",
@@ -97,6 +407,9 @@ class PredbatTableCard extends HTMLElement {
     this.forecast = [];
     this.unsubscribe = null;
   }    
+    
+  // Whenever the state changes, a new `hass` object is set. Use this to
+  // update your content.    
     
   set hass(hass) {
     // Initialize the content if it's not there yet.
@@ -177,14 +490,7 @@ class PredbatTableCard extends HTMLElement {
         if (oldEntityUpdateTime !== newEntityUpdateTime || carSwitchChanged || activeSwitchChanged || manualForceChanged) {
             this.processAndRender(hass);
         }
-          
-        /*
-        //only render new HTML if the entity actually changed
-        if(oldEntityUpdateTime !== newEntityUpdateTime){
-            this.processAndRender(hass);        
-        }*/
     }
-
   }
   
   async subscribeForecast() {
@@ -247,7 +553,11 @@ class PredbatTableCard extends HTMLElement {
     
     let columnsToReturn = this.config.columns;
     let rawHTML = hass.states[entityId].attributes.html;
+    
     const dataArray = this.getArrayDataFromHTML(rawHTML, hass.themes.darkMode); 
+    
+    //const dataArray = this.getArrayDataFromRaw(hass.states[entityId].attributes.raw, hass.themes.darkMode);
+    
     //filter out any columns not in the data
     columnsToReturn = columnsToReturn.filter(column => {
         if (column === "options-column" || column === "options-popup-column") return true;
@@ -366,7 +676,8 @@ class PredbatTableCard extends HTMLElement {
         }
     });
     
-    // Create an optional Last Updated Table Header Row
+    // Create total rows if in the config
+    
     if(this.config.show_totals === true || this.config.show_plan_totals === true) {
         
         let totalsRow = document.createElement('tr');
@@ -403,13 +714,6 @@ class PredbatTableCard extends HTMLElement {
         newTableBody.appendChild(totalsRow);
     }   
 
-      
-//    let headOrFoot = "td";
-//    if(this.config.show_versions_top === true)
-//        headOrFoot = "th";    
-    
-    
-    
     let newHeaderRow = document.createElement('tr');
     newTableHead.classList.add('topHeader');   
         
@@ -3037,21 +3341,174 @@ previous_findForecastForLabel(label, forecastArray) {
         }
   }
   
+convertTimeStampToFriendly(timestamp){
+    
+    const date = new Date(timestamp.replace(/(\+\d{2})(\d{2})$/, "$1:$2")); // auto fix timezone colon
+    
+    const formatter = new Intl.DateTimeFormat("en-GB", {
+      weekday: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+    
+    const formatted = formatter.format(date).replace(",", "");
+    return formatted;
+}
+  
+  getArrayDataFromRaw(raw, hassDarkMode) {
+ 
+    let rowsToReturn = [];
+    
+    for (const row of raw.rows) {
+        let rowDictionary = {};
+        let color = "#FFFFFF";
+        
+        // change the color, logic from 
+        // https://github.com/springfall2008/batpred/blob/dc18d2d9ffaae8b7b2fa4addf7f40bdec1da4890/apps/predbat/output.py#L1141
+        
+        let pvColor = color;
+        if(row.pv_forecast >= 0.2)
+            pvColor = "#FFAAAA";
+        else if(row.pv_forecast >= 0.1)
+            pvColor = "#FFFF00";
+            
+        let socColor = "#3AEE85";
+        if(row.soc_percent < 20.0)
+            socColor = "#F18261";
+        else if (row.soc_percent < 50.0)
+            socColor = "#FFFF00";
+            
+        let loadColor = color;
+        if(row.load_forecast >= 0.5)
+            loadColor = "#F18261";
+        else if (row.load_forecast >= 0.25)
+            loadColor = "#FFFF00";
+        else if (row.load_forecast > 0.0)
+            loadColor = "#AAFFAA";
+            
+        let stateColor = color;
+        if(row.state === "FrzChrg")
+            stateColor = "#EEEEEE";
+        if(row.state === "HoldChrg")
+            stateColor = "#34DBEB";
+        if(row.state === "Chrg")
+            stateColor = "#3AEE85"; 
+        if(row.state === "FrzExp")
+            stateColor = "#AAAAAA"; 
+        if(row.state === "Exp")
+            stateColor = "#FFFF00";
+            
+        
+        const arrowGroups = {
+          "→": ["Demand", "FrzExp"],
+          "↗": ["Chrg"],
+          "↘": ["Exp"],
+        };
+        
+        const stateArrow =
+          Object.entries(arrowGroups).find(([, states]) =>
+            states.includes(row.state)
+          )?.[0] || "";
+        
+        const costArrow =
+          row.cost_change > 0 ? "↗" :
+          row.cost_change < 0 ? "↘" :
+          "→";
+          
+        const socArrow =
+          row.soc_change > 0 ? "↗" :
+          row.soc_change < 0 ? "↘" :
+          "→";
+        
+        let trueCost = row.cost_change + " p " + costArrow;
+        if(row.cost_change === 0)
+            trueCost = "";
+        
+        if(row.pv_forecast === 0)
+            row.pv_forecast = "";
+            
+            
+        //{"value": "Both", "color": "green"};
+        
+        rowDictionary["time-column"] = {"value": this.convertTimeStampToFriendly(row.time), "color": color};
+        rowDictionary["import-column"] = {"value": String(row.import_rate.toFixed(2)), "color": color};
+        rowDictionary["export-column"] = {"value": String(row.export_rate.toFixed(2)), "color": color};
+        rowDictionary["state-column"] = {"value": String(row.state) + socArrow, "color": stateColor};
+        rowDictionary["limit-column"] = {"value": String(row.state_target), "color": color};
+        rowDictionary["pv-column"] = {"value": String(row.pv_forecast) + "☀", "color": pvColor};
+        rowDictionary["load-column"] = {"value": String(row.load_forecast), "color": loadColor};
+        rowDictionary["soc-column"] = {"value": String(row.soc_percent) + socArrow, "color": socColor};
+        rowDictionary["cost-column"] = {"value": String(trueCost), "color": color};
+        rowDictionary["total-column"] = {"value": "£" + String(row.total_cost.toFixed(2)), "color": color};
+        if(row.car_charging !== undefined && row.car_charging !== null)
+            rowDictionary["car-column"] = {"value": String(row.car_charging), "color": color};
+        if(row.clipped !== undefined && row.clipped !== null)
+            rowDictionary["clip-column"] = {"value": String(row.clipped), "color": color};
+        if(row.iboost !== undefined && row.iboost !== null)
+            rowDictionary["iboost-column"] = {"value": String(row.iboost), "color": color};
+
+        const num = (x) => Number.isFinite(parseFloat(x)) ? parseFloat(x) : 0;
+        const netPower = (
+          num(row?.pv_forecast) -
+          num(row?.load_forecast) -
+          num(row?.car_charging) -
+          num(row?.iboost)
+        ).toFixed(2);
+        
+        rowDictionary["net-power-column"] = {"value": netPower, "color": color};
+        
+        // weather forecast
+        if(this.forecast){
+            let weatherColor = "#FFFFFF"; // var(--primary-text-color)
+            const match = this.findForecastForLabel(this.convertTimeStampToFriendly(row.time), this.forecast);
+            if(match !== undefined && match !== null){
+                let matchStore = match;
+                
+                if(this.isLabelDuringNight(this.convertTimeStampToFriendly(row.time), this._hass) && match.condition === "partlycloudy")
+                    matchStore.condition = "partlycloudynight";
+                
+                const weatherEntity = this._hass.states[this.config.weather_entity];
+                const tempUnit = weatherEntity?.attributes?.temperature_unit || this._hass.config.unit_system.temperature;
+                
+                if((tempUnit === "°F" && match.temperature >= 77) || (tempUnit === "°C" && match.temperature >= 25))
+                    weatherColor = "rgb(220, 67, 20)";
+                
+                if((tempUnit === "°F" && match.temperature <= 32) || (tempUnit === "°C" && match.temperature <= 0))
+                    weatherColor = "rgb(31, 136, 207)";
+                
+                rowDictionary["weather-column"] = {"value": matchStore, "color": weatherColor};
+                rowDictionary["temp-column"] = {"value": matchStore, "color": weatherColor};
+                rowDictionary["rain-column"] = {"value": matchStore, "color": weatherColor};
+            } else {
+                rowDictionary["weather-column"] = {"value": null, "color": null};
+                rowDictionary["temp-column"] = {"value": null, "color": null};
+                rowDictionary["rain-column"] = {"value": null, "color": null};
+            }
+        }        
+            
+        rowsToReturn.push(rowDictionary);
+    }
+    
+    return rowsToReturn;
+    
+  }
+  
   getArrayDataFromHTML(html, hassDarkMode) {
       
       // Define column headers and corresponding classes
-      const headerClassesArray = [
-          'time-column',
-          'import-column',
-          'export-column',
-          'state-column',
-          'limit-column',
-          'pv-column',
-          'load-column',
-          'soc-column',
-          'cost-column',
-          'total-column'
-        ];
+  const headerClassesArray = [
+      'time-column',
+      'import-column',
+      'export-column',
+      'state-column',
+      'limit-column',
+      'pv-column',
+      'load-column',
+      'soc-column',
+      'cost-column',
+      'total-column'
+    ];  
     
       // Create a dummy element to manipulate the HTML
       const dummyElement = document.createElement('div');
