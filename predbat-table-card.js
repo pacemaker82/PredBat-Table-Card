@@ -895,22 +895,45 @@ class PredbatTableCard extends HTMLElement {
     return 3;
   }
   
-  getTimeframeForOverride(timeString){
-      const match = timeString.match(/\b(\d{2}):(\d{2})\b/);
-      if (!match) return null;
-    
-      let hours = parseInt(match[1], 10);
-      let minutes = parseInt(match[2], 10);
-    
-      // Floor to the nearest half-hour
-      minutes = minutes >= 30 ? 30 : 0;
-    
-      const hh = String(hours).padStart(2, '0');
-      const mm = String(minutes).padStart(2, '0');
-    
-      return `${hh}:${mm}:00`;      
+isVersionGreater(a, b) {
+  const pa = a.replace(/^v/, '').split('.').map(Number);
+  const pb = b.replace(/^v/, '').split('.').map(Number);
+
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const na = pa[i] || 0;
+    const nb = pb[i] || 0;
+    if (na > nb) return true;
+    if (na < nb) return false;
   }
-  
+  return false; // equal
+} 
+
+getTimeframeForOverride(timeString) {
+  const predBatVersion =
+    this._hass.states["update.predbat_version"].attributes.installed_version;
+
+  // Match either "Wed 08:05" or "08:05"
+  const match = timeString.match(/^(?:(\w{3})\s)?(\d{2}):(\d{2})$/);
+  if (!match) return null;
+
+  const day = match[1] || null;
+  let hours = parseInt(match[2], 10);
+  let minutes = parseInt(match[3], 10);
+
+  // Floor to the nearest half hour
+  minutes = minutes >= 30 ? 30 : 0;
+
+  const hh = String(hours).padStart(2, "0");
+  const mm = String(minutes).padStart(2, "0");
+
+  // New format if version > v8.28.2 and a day is present
+  if (this.isVersionGreater(predBatVersion, "v8.28.1"))
+    return `${day} ${hh}:${mm}`;
+
+  // Old format
+  return `${hh}:${mm}:00`;
+}
+
   getArrayForEntityForceStates(entity){
       
       let entityState = entity.state;
@@ -1980,11 +2003,11 @@ class PredbatTableCard extends HTMLElement {
                 
                 if(theItem.value !== undefined && theItem.value !== null){
                     
-                    const roundedTemp = Math.round(parseFloat(theItem.value.temperature));
+                    const temp = parseFloat(theItem.value.temperature);
                     const weatherEntity = this._hass.states[this.config.weather_entity];
                     const tempUnit = weatherEntity?.attributes?.temperature_unit || this._hass.config.unit_system.temperature;
         
-                    cellResponseArray.push(`<div class="iconContainer">${roundedTemp}<div class="tempUnit">${tempUnit}</div></div>`);
+                    cellResponseArray.push(`<div class="iconContainer">${temp.toFixed(1)}<div class="tempUnit">${tempUnit}</div></div>`);
                 }
             } 
             
