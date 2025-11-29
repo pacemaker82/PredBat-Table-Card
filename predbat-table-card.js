@@ -88,6 +88,7 @@ class PredbatTableCard extends HTMLElement {
                 { name: "use_friendly_states", selector: { boolean: {} } },
                 { name: "stack_pills", selector: { boolean: {} } }, 
                 { name: "debug_prices_only", selector: { boolean: {} } }, 
+                { name: "reset_day_totals", selector: { boolean: {} } }, 
                 {
                   name: "row_limit",
                   selector: {
@@ -320,6 +321,7 @@ class PredbatTableCard extends HTMLElement {
         if (schema.name === "weather_entity") return "Weather Entity";        
         if (schema.name === "path_for_click") return "Dashboard Path for click";
         if (schema.name === "bypassRefactor") return "Bypass Refactor Code?";
+        if (schema.name === "reset_day_totals") return "Reset Total Cost at midnight?";
         
         return undefined;
       },
@@ -367,7 +369,8 @@ class PredbatTableCard extends HTMLElement {
             return "Add a dashboard path like /my-dashboard/predbat-plan to be navigated to when you click the plan"; 
           case "bypassRefactor":
             return "Bypasses the new refactored codebase if there is a serious issue you need to get around with Version 1.9x +"; 
-            
+          case "reset_day_totals":
+            return "Resets the total-column at midnight to £0.00 and increments by cost-column";             
         }
         return undefined;
       },
@@ -816,8 +819,10 @@ class PredbatTableCard extends HTMLElement {
         lastUpdateHeaderDiv.classList.add('versionRow');
 
         let updateIcon = ``;
+        let updateText = ``;
         if(version !== latestVersion){
             updateIcon = `<ha-icon icon="mdi:download-circle-outline" style="color: var(--primary-color); --mdc-icon-size: 18px; margin-left: 4px;" title="Predbat Table Card version ${latestVersion} available"></ha-icon>`;
+            updateText = `<span style="color: var(--primary-color);"><b>Version ${latestVersion} available</b></span>`;
             lastUpdateHeaderDiv.style.cursor = "pointer";
             lastUpdateHeaderDiv.addEventListener('click', () => {
                 const event = new CustomEvent('hass-more-info', {
@@ -830,7 +835,7 @@ class PredbatTableCard extends HTMLElement {
             }); 
         }
         
-        lastUpdateHeaderDiv.innerHTML = `<b>${label}:</b> ${version}${updateIcon}`;     
+        lastUpdateHeaderDiv.innerHTML = `<b>${label}:</b> ${version}${updateIcon} ${updateText}`;     
         
         return lastUpdateHeaderDiv;
   }
@@ -1404,7 +1409,9 @@ getTimeframeForOverride(timeString) {
       
         let newCell = document.createElement('td');
         let newContent = (typeof theItem?.value === 'string') ? theItem.value.trim() : theItem?.value ?? '';
-        let rawValue, debugValue;
+        
+        let rawValue = theItem.value;
+        let debugValue;
         let hasBoldTags = false, hasItalicTags = false;
         const wrap = (text, tag) => `<${tag}>${text}</${tag}>`;
         
@@ -1479,7 +1486,7 @@ getTimeframeForOverride(timeString) {
             }
         }
         
-      
+
         // Column Specific Configuration
         // These are the custom column treatments, must be included in the array first, then specifically called out in the IF statement
         
@@ -2047,8 +2054,8 @@ getTimeframeForOverride(timeString) {
                 newContent = rawValue + " (" + debugValue + ")";
             else 
                 newContent = rawValue;
-                
-            if(newContent.length > 0)
+            
+            if(newContent !== undefined && newContent.length > 0 )
                 cellResponseArray.push(newContent);
         }        
 
@@ -3533,6 +3540,8 @@ convertTimeStampToFriendly(timestamp){
       'total-column'
     ];  
     
+    let totalCostCalculated = 0;
+    
       // Create a dummy element to manipulate the HTML
       const dummyElement = document.createElement('div');
       dummyElement.innerHTML = html;
@@ -3576,6 +3585,9 @@ convertTimeStampToFriendly(timestamp){
                 }
             }
         }); 
+        
+        let isCostReset = false;
+        let currentCost = 0;
         
         trElements.forEach((trElement, index) => {
         
@@ -3630,6 +3642,10 @@ convertTimeStampToFriendly(timestamp){
                 // Loop through each <td> element inside the current <tr>
                 tdElements.forEach((tdElement, tdIndex) => {
                     
+                    const userResetFlag = this.config.reset_day_totals;
+                    if(tdIndex === 0 && tdElement.innerHTML.includes("00:00") && userResetFlag)
+                        isCostReset = true;
+                    
                     let bgColor = tdElement.getAttribute('bgcolor'); 
                     if (bgColor && !bgColor.startsWith('#')) {
                         bgColor = `#${bgColor}`;
@@ -3676,7 +3692,33 @@ convertTimeStampToFriendly(timestamp){
                          }                    
                     }
                     
-                    newTRObject[headerClassesArray[headerIndex]] = {"value": tdElement.innerHTML, "color": bgColor};
+                    if(headerClassesArray[headerIndex] === "cost-column" && !isNaN(parseFloat(tdElement.innerHTML))){
+                        currentCost = parseFloat(tdElement.innerHTML);
+                    }
+                        
+                    if(headerClassesArray[headerIndex] === "cost-column" && !isNaN(parseFloat(tdElement.innerHTML)) && isCostReset)
+                        totalCostCalculated += parseFloat(tdElement.innerHTML);
+                    
+                    
+                    if(headerClassesArray[headerIndex] === "total-column") {
+                        
+                        let totalCostString;
+                        
+                        if(this.config.fix_totals){
+                            let value = parseFloat(tdElement.innerHTML.replace(/[^0-9.\-]/g, ""));
+                            totalCostString = "£" + (value + (currentCost/100)).toFixed(3);
+                        }
+                        
+                        // calculate new cost
+                        if(isCostReset)
+                            totalCostString = "£" + (totalCostCalculated / 100).toFixed(2);
+                        
+                        if(!isCostReset && !this.config.fix_totals)
+                            totalCostString = tdElement.innerHTML;
+                        
+                        newTRObject[headerClassesArray[headerIndex]] = {"value": totalCostString, "color": bgColor};
+                    } else
+                        newTRObject[headerClassesArray[headerIndex]] = {"value": tdElement.innerHTML, "color": bgColor};
 
                     //exception||override for 12 cells and 11 headers (-1 count difference) and handling index 2
                     if(countDifference < 0 && tdIndex == 3) {
