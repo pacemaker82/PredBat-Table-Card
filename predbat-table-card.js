@@ -577,8 +577,9 @@ class PredbatTableCard extends HTMLElement {
 
     let overallTotal = {};
     let dayTotal = {};
+    let dayTotalCost = 0;
     const columnsWithTotals = ["load-column", "pv-column", "car-column", "iboost-column", "net-power-column", 
-    "cost-column", "clip-column", "co2kwh-column", "co2kg-column", "xload-column", "limit-column"];
+    "cost-column", "total-column", "clip-column", "co2kwh-column", "co2kg-column", "xload-column", "limit-column"];
     
     // before we display the rows, lets drop any that the user doesnt want.
     
@@ -595,6 +596,7 @@ class PredbatTableCard extends HTMLElement {
         let newRow = document.createElement('tr');
         
         let isMidnight = false;
+        let currentCost;
         columnsToReturn.forEach((column, columnIndex) => { // Use arrow function here
             if(item[column] !== undefined){
                 //console.log(column + " " + item[column]);
@@ -609,12 +611,24 @@ class PredbatTableCard extends HTMLElement {
     
                 newRow.appendChild(newColumn);
                 
+                if(column === "cost-column")
+                    currentCost = parseFloat(item[column].value);
+                
                 if(columnsWithTotals.includes(column)){
-                    let val = parseFloat(item[column].value.replace(/[⚊↘↗→p☀]/g, ''));
-                    if (isNaN(val)) val = 0;
                     
-                    overallTotal[column] = (overallTotal[column] || 0) + val;
-                    dayTotal[column] = (dayTotal[column] || 0) + val;
+                    if(column === "total-column"){
+                        if(isMidnight){
+                            let currentTotal = parseFloat(item[column].value.replace(/[^0-9.\-]/g, ""));
+                            overallTotal[column] = (overallTotal[column] || 0) + (currentTotal*100);
+                            dayTotal[column] = (currentTotal*100)+currentCost;
+                        }
+                    } else {
+                        let val = parseFloat(item[column].value.replace(/[⚊↘↗→p☀]/g, ''));
+                        if (isNaN(val)) val = 0;
+                    
+                        overallTotal[column] = (overallTotal[column] || 0) + val;
+                        dayTotal[column] = (dayTotal[column] || 0) + val;
+                    }
                 }
                 
             } else {
@@ -649,28 +663,33 @@ class PredbatTableCard extends HTMLElement {
                     
                     if(columnsWithTotals.includes(column) && column !== 'limit-column'){
                         let returnTotal;
-                        if(column === "cost-column"){
+                        if(column === "cost-column" || column === "total-column"){
                             let formattedCost = "";
                             
                             if (dayTotal[column] < 0) {
                               formattedCost = `-£${(Math.abs(dayTotal[column]) / 100).toFixed(2)}`;
+                              totalCell.style.color = "rgb(58, 238, 133)";
                             } else {
                               formattedCost = `£${(dayTotal[column] / 100).toFixed(2)}`;
+                              totalCell.style.color = "rgb(241, 130, 97)";
                             }
                             returnTotal = `<b>${formattedCost}</b>`;
                         } else
                             returnTotal = `<b>${dayTotal[column].toFixed(2)}</b>`;
+
                         
                         totalCell.innerHTML = returnTotal;
                     }
                     
                     if(column === "time-column" && index === 0)
-                        totalCell.innerHTML = `<b>TOTALS</b>`;                    
+                        totalCell.innerHTML = `<b>TOTALS</b>`;  
+                        
+
             
                     dayTotalsRow.appendChild(totalCell);
                 
                 });
-                
+                console.log(dayTotalsRow);
                 newTableBody.appendChild(dayTotalsRow);
                 for (let i = 0; i < 2; i++) {
                     newTableBody.appendChild(this.createDividerRows(columnsToReturn.length, hass.themes.darkMode));
@@ -694,8 +713,9 @@ class PredbatTableCard extends HTMLElement {
                 totalCell.innerHTML = `<b>PLAN TOTALS</b>`;
                 
             if(columnsWithTotals.includes(column) && column !== 'limit-column'){
+                
                 let returnTotal;
-                if(column === "cost-column"){
+                if(column === "cost-column" || column === "total-column"){
                     let formattedCost = "";
                     
                     if (overallTotal[column] < 0) {
@@ -3588,6 +3608,8 @@ convertTimeStampToFriendly(timestamp){
         
         let isCostReset = false;
         let currentCost = 0;
+        let currentTotal = 0;
+        let currentCostSet = false, currentTotalSet = false;
         
         trElements.forEach((trElement, index) => {
         
@@ -3691,10 +3713,17 @@ convertTimeStampToFriendly(timestamp){
                             bgColor = null; 
                          }                    
                     }
+            
                     
                     if(headerClassesArray[headerIndex] === "cost-column" && !isNaN(parseFloat(tdElement.innerHTML))){
                         currentCost = parseFloat(tdElement.innerHTML);
+                        currentCostSet = true;
                     }
+                    
+                    if(headerClassesArray[headerIndex] === "total-column" && !isNaN(parseFloat(tdElement.innerHTML))){
+                        currentTotal = parseFloat(tdElement.innerHTML.replace(/[^0-9.\-]/g, ""));
+                        currentTotalSet = true;
+                    }                    
                         
                     if(headerClassesArray[headerIndex] === "cost-column" && !isNaN(parseFloat(tdElement.innerHTML)) && isCostReset)
                         totalCostCalculated += parseFloat(tdElement.innerHTML);
@@ -3704,16 +3733,10 @@ convertTimeStampToFriendly(timestamp){
                         
                         let totalCostString;
                         
-                        if(this.config.fix_totals){
-                            let value = parseFloat(tdElement.innerHTML.replace(/[^0-9.\-]/g, ""));
-                            totalCostString = "£" + (value + (currentCost/100)).toFixed(3);
-                        }
-                        
                         // calculate new cost
                         if(isCostReset)
-                            totalCostString = "£" + (totalCostCalculated / 100).toFixed(2);
-                        
-                        if(!isCostReset && !this.config.fix_totals)
+                            totalCostString = "£" + ((totalCostCalculated-currentCost) / 100).toFixed(2);
+                        else
                             totalCostString = tdElement.innerHTML;
                         
                         newTRObject[headerClassesArray[headerIndex]] = {"value": totalCostString, "color": bgColor};
