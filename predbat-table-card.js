@@ -689,7 +689,6 @@ class PredbatTableCard extends HTMLElement {
                     dayTotalsRow.appendChild(totalCell);
                 
                 });
-                console.log(dayTotalsRow);
                 newTableBody.appendChild(dayTotalsRow);
                 for (let i = 0; i < 2; i++) {
                     newTableBody.appendChild(this.createDividerRows(columnsToReturn.length, hass.themes.darkMode));
@@ -842,7 +841,7 @@ class PredbatTableCard extends HTMLElement {
         let updateText = ``;
         if(version !== latestVersion){
             updateIcon = `<ha-icon icon="mdi:download-circle-outline" style="color: var(--primary-color); --mdc-icon-size: 18px; margin-left: 4px;" title="Predbat Table Card version ${latestVersion} available"></ha-icon>`;
-            updateText = `<span style="color: var(--primary-color);"><b>Version ${latestVersion} available</b></span>`;
+            updateText = `<span style="color: var(--primary-color);"><b>${latestVersion} available</b></span>`;
             lastUpdateHeaderDiv.style.cursor = "pointer";
             lastUpdateHeaderDiv.addEventListener('click', () => {
                 const event = new CustomEvent('hass-more-info', {
@@ -1430,8 +1429,11 @@ getTimeframeForOverride(timeString) {
         let newCell = document.createElement('td');
         let newContent = (typeof theItem?.value === 'string') ? theItem.value.trim() : theItem?.value ?? '';
         
-        let rawValue = theItem.value;
-        let debugValue;
+        let debugValue, rawValue;
+        
+        if(theItem)
+            rawValue = theItem.value;
+        
         let hasBoldTags = false, hasItalicTags = false;
         const wrap = (text, tag) => `<${tag}>${text}</${tag}>`;
         
