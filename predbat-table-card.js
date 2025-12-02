@@ -668,10 +668,10 @@ class PredbatTableCard extends HTMLElement {
                             
                             if (dayTotal[column] < 0) {
                               formattedCost = `-£${(Math.abs(dayTotal[column]) / 100).toFixed(2)}`;
-                              totalCell.style.color = "rgb(58, 238, 133)";
+                              totalCell.style.color = "var(--success-color)";
                             } else {
                               formattedCost = `£${(dayTotal[column] / 100).toFixed(2)}`;
-                              totalCell.style.color = "rgb(241, 130, 97)";
+                              totalCell.style.color = "var(--error-color)";
                             }
                             returnTotal = `<b>${formattedCost}</b>`;
                         } else
@@ -3720,6 +3720,9 @@ convertTimeStampToFriendly(timestamp){
                     if(headerClassesArray[headerIndex] === "cost-column" && !isNaN(parseFloat(tdElement.innerHTML))){
                         currentCost = parseFloat(tdElement.innerHTML);
                         currentCostSet = true;
+                    } else if (isNaN(parseFloat(tdElement.innerHTML))) {
+                        currentCost = 0;
+                        currentCostSet = true;
                     }
                     
                     if(headerClassesArray[headerIndex] === "total-column" && !isNaN(parseFloat(tdElement.innerHTML))){
@@ -3727,8 +3730,9 @@ convertTimeStampToFriendly(timestamp){
                         currentTotalSet = true;
                     }                    
                         
-                    if(headerClassesArray[headerIndex] === "cost-column" && !isNaN(parseFloat(tdElement.innerHTML)) && isCostReset)
-                        totalCostCalculated += parseFloat(tdElement.innerHTML);
+                    if(headerClassesArray[headerIndex] === "cost-column" && isCostReset)
+                        totalCostCalculated += currentCost;
+                    
                     
                     
                     if(headerClassesArray[headerIndex] === "total-column") {
