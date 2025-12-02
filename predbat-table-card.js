@@ -3720,7 +3720,7 @@ convertTimeStampToFriendly(timestamp){
                     if(headerClassesArray[headerIndex] === "cost-column" && !isNaN(parseFloat(tdElement.innerHTML))){
                         currentCost = parseFloat(tdElement.innerHTML);
                         currentCostSet = true;
-                    } else if (isNaN(parseFloat(tdElement.innerHTML))) {
+                    } else if(headerClassesArray[headerIndex] === "cost-column" && isNaN(parseFloat(tdElement.innerHTML))) {
                         currentCost = 0;
                         currentCostSet = true;
                     }
@@ -3730,15 +3730,15 @@ convertTimeStampToFriendly(timestamp){
                         currentTotalSet = true;
                     }                    
                         
-                    if(headerClassesArray[headerIndex] === "cost-column" && isCostReset)
-                        totalCostCalculated += currentCost;
+                    if(headerClassesArray[headerIndex] === "cost-column" && !isNaN(parseFloat(tdElement.innerHTML)) && isCostReset)
+                        totalCostCalculated += parseFloat(tdElement.innerHTML);
                     
                     
                     
                     if(headerClassesArray[headerIndex] === "total-column") {
                         
                         let totalCostString;
-                        
+                        console.log(totalCostCalculated, currentCost);
                         // calculate new cost
                         if(isCostReset)
                             totalCostString = "£" + ((totalCostCalculated-currentCost) / 100).toFixed(2);
