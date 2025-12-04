@@ -611,14 +611,18 @@ class PredbatTableCard extends HTMLElement {
     
                 newRow.appendChild(newColumn);
                 
-                if(column === "cost-column")
+                if(column === "cost-column"){
                     currentCost = parseFloat(item[column].value);
+                    if (isNaN(currentCost)) currentCost = 0;
+                }
                 
                 if(columnsWithTotals.includes(column)){
                     
                     if(column === "total-column"){
                         if(isMidnight){
                             let currentTotal = parseFloat(item[column].value.replace(/[^0-9.\-]/g, ""));
+                            if (isNaN(currentTotal)) currentTotal = 0;
+                            
                             overallTotal[column] = (overallTotal[column] || 0) + (currentTotal*100);
                             dayTotal[column] = (currentTotal*100)+currentCost;
                         }
@@ -628,6 +632,7 @@ class PredbatTableCard extends HTMLElement {
                     
                         overallTotal[column] = (overallTotal[column] || 0) + val;
                         dayTotal[column] = (dayTotal[column] || 0) + val;
+
                     }
                 }
                 
@@ -1327,6 +1332,7 @@ getTimeframeForOverride(timeString) {
         
         if(friendlyText.includes("ⅎ")){
             friendlyText = friendlyText.replace('Exp', 'Export');
+            friendlyText = friendlyText.replace('Chrg', 'Charge');
             friendlyText = "Manually Forced " + friendlyText;
             if(!friendlyText.includes("Charge") && !friendlyText.includes("Discharge") && !friendlyText.includes("Export"))
                 friendlyText = friendlyText + "Demand";
@@ -3738,7 +3744,6 @@ convertTimeStampToFriendly(timestamp){
                     if(headerClassesArray[headerIndex] === "total-column") {
                         
                         let totalCostString;
-                        console.log(totalCostCalculated, currentCost);
                         // calculate new cost
                         if(isCostReset)
                             totalCostString = "£" + ((totalCostCalculated-currentCost) / 100).toFixed(2);
