@@ -619,12 +619,16 @@ class PredbatTableCard extends HTMLElement {
                 if(columnsWithTotals.includes(column)){
                     
                     if(column === "total-column"){
+                        let currentTotal = parseFloat(item[column].value.replace(/[^0-9.\-]/g, ""));
+                        if (isNaN(currentTotal)) currentTotal = 0;
+                        
+                        overallTotal[column] = (currentTotal*100)+currentCost;
+                        
                         if(isMidnight){
-                            let currentTotal = parseFloat(item[column].value.replace(/[^0-9.\-]/g, ""));
-                            if (isNaN(currentTotal)) currentTotal = 0;
-                            
+                        
                             overallTotal[column] = (overallTotal[column] || 0) + (currentTotal*100);
                             dayTotal[column] = (currentTotal*100)+currentCost;
+                            
                         }
                     } else {
                         let val = parseFloat(item[column].value.replace(/[⚊↘↗→p☀]/g, ''));
@@ -647,6 +651,9 @@ class PredbatTableCard extends HTMLElement {
                 }
             }
         });
+        
+        console.log("overallTotalDay:", dayTotal);
+        console.log("overallTotalPlan:", overallTotal);
         
         newTableBody.appendChild(newRow);
         
@@ -720,6 +727,10 @@ class PredbatTableCard extends HTMLElement {
                 
                 let returnTotal;
                 if(column === "cost-column" || column === "total-column"){
+                    
+                    if(column === "total-column" && dayTotal[column])
+                        overallTotal[column] = overallTotal[column] + dayTotal[column];
+                    
                     let formattedCost = "";
                     
                     if (overallTotal[column] < 0) {
