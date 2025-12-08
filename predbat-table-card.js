@@ -430,7 +430,8 @@ class PredbatTableCard extends HTMLElement {
     
     const entityId = this.config.entity;
     const switchEntityId = this.config.car_charge_switch; // optional
-    const predbatActiveEntityId = 'switch.predbat_active';
+    const prefix = this.config.entity.match(/^[^.]+/)[0];      
+    const predbatActiveEntityId = `switch.${prefix}_active`;
     
     if(oldHass === undefined){
         // Render html on the first load
@@ -526,8 +527,9 @@ class PredbatTableCard extends HTMLElement {
   }
   
  async processAndRender(hass){
-      
-    const predbatActiveEntityId = 'switch.predbat_active';
+    
+    const prefix = this.config.entity.match(/^[^.]+/)[0];        
+    const predbatActiveEntityId = `switch.${prefix}_active`;
 
     if(this._lastOnText === null){
 
@@ -651,9 +653,6 @@ class PredbatTableCard extends HTMLElement {
                 }
             }
         });
-        
-        console.log("overallTotalDay:", dayTotal);
-        console.log("overallTotalPlan:", overallTotal);
         
         newTableBody.appendChild(newRow);
         
@@ -833,9 +832,10 @@ class PredbatTableCard extends HTMLElement {
     }      
     
     this.content.appendChild(theTable);  // Add actual DOM node (preserves listeners)
-    
+   
+
     if(this.config.show_predbat_version === true)
-        this.content.appendChild(this.createVersionLabelsForFooter("update.predbat_version","Predbat Version", this));
+        this.content.appendChild(this.createVersionLabelsForFooter(`update.${prefix}_version`,"Predbat Version", this));
     
     if(this.config.show_tablecard_version === true)
         this.content.appendChild(this.createVersionLabelsForFooter("update.predbat_table_card_update","Predbat Table Card Version", this));
@@ -949,8 +949,11 @@ isVersionGreater(a, b) {
 } 
 
 getTimeframeForOverride(timeString) {
+
+  const prefix = this.config.entity.match(/^[^.]+/)[0];
+  
   const predBatVersion =
-    this._hass.states["update.predbat_version"].attributes.installed_version;
+    this._hass.states[`update.${prefix}_version`].attributes.installed_version;
 
   // Match either "Wed 08:05" or "08:05"
   const match = timeString.match(/^(?:(\w{3})\s)?(\d{2}):(\d{2})$/);
@@ -981,8 +984,10 @@ getTimeframeForOverride(timeString) {
   }
   
     createButtonForOverrides(entityObject, timeForSelectOverride, iconSize, textColor, hideLabel, isAllowed, fromPopup = false) {
-      const key = entityObject.entityName.replace('select.predbat_manual_', '');
-    
+      
+      const prefix = this.config.entity.match(/^[^.]+/)[0];        
+      const key = entityObject.entityName.replace(`select.${prefix}_manual_`, '');
+
       const iconOpacityOff = 1.00;
       const iconOpacityOn = 1.00;
       const iconColorOff = "rgb(75, 80, 87)";
@@ -1134,12 +1139,15 @@ getTimeframeForOverride(timeString) {
     }  
     
   getOverrideEntities() {
+
+        const prefix = this.config.entity.match(/^[^.]+/)[0];      
+      
         const forceEntityArray = [
-          "select.predbat_manual_demand",
-          "select.predbat_manual_charge",
-          "select.predbat_manual_export",
-          "select.predbat_manual_freeze_charge",
-          "select.predbat_manual_freeze_export"
+          `select.${prefix}_manual_demand`,
+          `select.${prefix}_manual_charge`,
+          `select.${prefix}_manual_export`,
+          `select.${prefix}_manual_freeze_charge`,
+          `select.${prefix}_manual_freeze_export`
         ];
         
         const titleMap = {
@@ -1159,7 +1167,7 @@ getTimeframeForOverride(timeString) {
         };
         
         const forceEntityObjects = forceEntityArray.map(entityName => {
-          const key = entityName.replace('select.predbat_manual_', '');  // e.g., "freeze_export"
+          const key = entityName.replace(`select.${prefix}_manual_`, '');  // e.g., "freeze_export"
           return {
             entityName,
             entityIcon: iconMap[key],
