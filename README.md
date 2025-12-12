@@ -314,6 +314,7 @@ The card now supports the following Predbat overrides:
 - Manual Force Export
 - Manual Freeze Charge
 - Manual Freeze Export
+- Manual SoC Override
 
 There are a number of ways you can use these manual override settings, choose your favoured option below:
 
