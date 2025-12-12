@@ -85,6 +85,7 @@ class PredbatTableCard extends HTMLElement {
                 { name: "show_predbat_version", selector: { boolean: {} } },
                 { name: "show_tablecard_version", selector: { boolean: {} } },
                 { name: "hide_last_update", selector: { boolean: {} } },
+                { name: "hide_empty_columns", selector: { boolean: {} } },
                 { name: "use_friendly_states", selector: { boolean: {} } },
                 { name: "stack_pills", selector: { boolean: {} } }, 
                 { name: "debug_prices_only", selector: { boolean: {} } }, 
@@ -308,6 +309,7 @@ class PredbatTableCard extends HTMLElement {
         if (schema.name === "show_predbat_version") return "Show Predbat version?";
         if (schema.name === "show_tablecard_version") return "Show Predbat Table Card version?";
         if (schema.name === "hide_last_update") return "Hide PLAN LAST UPDATED header?";
+        if (schema.name === "hide_empty_columns") return "Hide empty columns?";
         if (schema.name === "battery_capacity") return "Battery Capacity";
         if (schema.name === "color_help_text") return "Row colour override settings";
         if (schema.name === "color_help_text_more") return "Override the HEX (e.g, #AA0000) colour values of the rows";
@@ -355,6 +357,8 @@ class PredbatTableCard extends HTMLElement {
             return "Displays the Predbat Table Card version at the bottom of the table. Click to Upgrade (if available)";  
           case "hide_last_update":
             return "Hides the Plan Last Updated text at the top of the plan";        
+          case "hide_empty_columns":
+            return "Hide columns where there are no values for the entire plan";
           case "battery_capacity":
             return "Shows the kWh capacity of your battery in the SoC column";      
           case "debug_columns":
@@ -1232,6 +1236,63 @@ getTimeframeForOverride(timeString) {
         return forceEntityObjects;
   }
 
+  openModal(overlayId, buildModalBox, overlayStyles = {}, modalStyles = {}) {
+    if (document.getElementById(overlayId)) return null;
+
+    const overlay = document.createElement('div');
+    Object.assign(overlay.style, {
+      position: 'fixed',
+      top: '0',
+      left: '0',
+      width: '100vw',
+      height: '100vh',
+      backgroundColor: 'rgba(0, 0, 0, 0.4)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: '10000',
+      opacity: '0',
+      transition: 'opacity 200ms ease-in-out',
+    }, overlayStyles);
+    overlay.id = overlayId;
+
+    let escHandler = null;
+    const closeModal = () => {
+      overlay.remove();
+      if (escHandler) document.removeEventListener('keydown', escHandler);
+    };
+
+    const modalBox = buildModalBox(closeModal);
+    if (!modalBox) return null;
+
+    Object.assign(modalBox.style, {
+      background: 'rgba(0, 0, 0, 0.8)',
+      padding: '20px 40px 20px 40px',
+      borderRadius: '8px',
+      border: '2px solid var(--text-primary-color)',
+      boxShadow: '0 2px 10px rgba(0,0,0,1)',
+      display: 'flex',
+      flexDirection: 'column',
+      position: 'relative',
+    }, modalStyles);
+
+    overlay.appendChild(modalBox);
+    document.body.appendChild(overlay);
+
+    escHandler = (e) => {
+      if (e.key === 'Escape') closeModal();
+    };
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) closeModal();
+    });
+    document.addEventListener('keydown', escHandler);
+
+    void overlay.offsetWidth;
+    overlay.style.opacity = '1';
+
+    return { overlay, closeModal };
+  }
+
   createPopUpForSoCOverride(entityObject, timeForSelectOverride){
 
     const prefix = this.config.entity.match(/^[^.]+/)[0];
@@ -1241,313 +1302,192 @@ getTimeframeForOverride(timeString) {
     
     console.log(entityObject.entityName);
 
-    // Check if modal already exists
-    if (document.getElementById('custom-modal-overlay-soc')) return;
-  
-    // Create overlay
-    const overlay = document.createElement('div');
-    overlay.id = 'custom-modal-overlay-soc';
-    overlay.style.position = 'fixed';
-    overlay.style.top = '0';
-    overlay.style.left = '0';
-    overlay.style.width = '100vw';
-    overlay.style.height = '100vh';
-    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.4)';
-    overlay.style.display = 'flex';
-    overlay.style.alignItems = 'center';
-    overlay.style.justifyContent = 'center';
-    overlay.style.zIndex = '10000';
-    overlay.style.opacity = '0';
-    overlay.style.transition = 'opacity 200ms ease-in-out';  
-    
-    // Create modal box
-    const modalBox = document.createElement('div');
-    modalBox.style.background = 'rgba(0, 0, 0, 0.8)';
-    modalBox.style.padding = '20px 40px 20px 40px';
-    modalBox.style.borderRadius = '8px';
-    modalBox.style.border = "2px solid var(--text-primary-color)";
-    modalBox.style.boxShadow = '0 2px 10px rgba(0,0,0,1)';
-    modalBox.style.display = "flex";
-    modalBox.style.flexDirection = 'column';
-    modalBox.style.position = 'relative';
-    modalBox.style.width = '200px';
-    
-    const headerRow = document.createElement('div');
-    headerRow.style.display = 'flex';
-    headerRow.style.justifyContent = 'space-between';
-    headerRow.style.alignItems = 'center';
-    headerRow.style.paddingBottom = '20px';
-    
-    const titleBox = document.createElement('div');
-    titleBox.style.color = 'var(--text-primary-color)';
-    titleBox.innerHTML = "Target SoC for " + timeForSelectOverride;
-    titleBox.style.width = '100%';
-    titleBox.style.display = 'flex';
-    titleBox.style.justifyContent = 'center';   // horizontal center
-    titleBox.style.alignItems = 'center';       // vertical center
-    titleBox.style.flex = '1';
-    titleBox.style.fontSize = '16px';
-    titleBox.style.fontWeight = 'bold';
-    titleBox.style.textShadow = '1px 1px 1px black';
-    
-    const closeBox = document.createElement('div');
-    closeBox.style.position = 'absolute';
-    closeBox.style.top = '5px';
-    closeBox.style.right = '5px'; 
-    
-    const closeButton = document.createElement('ha-icon');
-    closeButton.setAttribute('title', "SoC Override");
-    closeButton.setAttribute('icon', "mdi:close-circle-outline");
-    closeButton.style.cursor = 'pointer';
-    closeButton.style.margin = '0 2px';
-    closeButton.style.color = "var(--text-primary-color)";
-    closeButton.style.setProperty('--mdc-icon-size', '40px');
-    closeButton.id = 'modal-close-btn';     
-    
-    closeBox.appendChild(closeButton);    
-    headerRow.appendChild(titleBox);    
-    modalBox.appendChild(closeBox);
-    modalBox.appendChild(headerRow);
+    this.openModal('custom-modal-overlay-soc', (closeModal) => {
+      const modalBox = document.createElement('div');
+      modalBox.style.width = '200px';
 
-    const inputWrapper = document.createElement('div');
-    inputWrapper.style.display = 'flex';
-    inputWrapper.style.flexDirection = 'column';
-    inputWrapper.style.gap = '6px';
-    inputWrapper.style.marginBottom = '16px';
-    const inputId = 'predbat-soc-target-input';
+      const headerRow = document.createElement('div');
+      headerRow.style.display = 'flex';
+      headerRow.style.justifyContent = 'space-between';
+      headerRow.style.alignItems = 'center';
+      headerRow.style.paddingBottom = '20px';
+      
+      const titleBox = document.createElement('div');
+      titleBox.style.color = 'var(--text-primary-color)';
+      titleBox.innerHTML = "Target SoC for " + timeForSelectOverride;
+      titleBox.style.width = '100%';
+      titleBox.style.display = 'flex';
+      titleBox.style.justifyContent = 'center';
+      titleBox.style.alignItems = 'center';
+      titleBox.style.flex = '1';
+      titleBox.style.fontSize = '16px';
+      titleBox.style.fontWeight = 'bold';
+      titleBox.style.textShadow = '1px 1px 1px black';
+      
+      const closeBox = document.createElement('div');
+      closeBox.style.position = 'absolute';
+      closeBox.style.top = '5px';
+      closeBox.style.right = '5px'; 
+      
+      const closeButton = document.createElement('ha-icon');
+      closeButton.setAttribute('title', "SoC Override");
+      closeButton.setAttribute('icon', "mdi:close-circle-outline");
+      closeButton.style.cursor = 'pointer';
+      closeButton.style.margin = '0 2px';
+      closeButton.style.color = "var(--text-primary-color)";
+      closeButton.style.setProperty('--mdc-icon-size', '40px');
+      closeButton.id = 'modal-close-btn';
+      closeButton.addEventListener('click', closeModal);
+      
+      closeBox.appendChild(closeButton);    
+      headerRow.appendChild(titleBox);    
+      modalBox.appendChild(closeBox);
+      modalBox.appendChild(headerRow);
 
-    const inputElement = document.createElement('input');
-    inputElement.type = 'number';
-    inputElement.min = '0';
-    inputElement.max = '100';
-    inputElement.step = '1';
-    inputElement.name = 'predbat_soc_target';
-    inputElement.value = defaultSocValue;
-    inputElement.id = inputId;
-    inputElement.style.padding = '8px';
-    inputElement.style.borderRadius = '4px';
-    inputElement.style.border = '1px solid var(--text-primary-color)';
-    inputElement.style.background = 'rgba(255, 255, 255, 0.1)';
-    inputElement.style.color = 'var(--text-primary-color)';
+      const inputWrapper = document.createElement('div');
+      inputWrapper.style.display = 'flex';
+      inputWrapper.style.flexDirection = 'column';
+      inputWrapper.style.gap = '6px';
+      inputWrapper.style.marginBottom = '16px';
+      const inputId = 'predbat-soc-target-input';
 
-    inputWrapper.appendChild(inputElement);
-    modalBox.appendChild(inputWrapper);
+      const inputElement = document.createElement('input');
+      inputElement.type = 'number';
+      inputElement.min = '0';
+      inputElement.max = '100';
+      inputElement.step = '1';
+      inputElement.name = 'predbat_soc_target';
+      inputElement.value = defaultSocValue;
+      inputElement.id = inputId;
+      inputElement.style.padding = '8px';
+      inputElement.style.borderRadius = '4px';
+      inputElement.style.border = '1px solid var(--text-primary-color)';
+      inputElement.style.background = 'rgba(255, 255, 255, 0.1)';
+      inputElement.style.color = 'var(--text-primary-color)';
 
-    const saveButton = document.createElement('button');
-    saveButton.textContent = 'Override';
-    saveButton.style.padding = '10px 16px';
-    saveButton.style.borderRadius = '6px';
-    saveButton.style.border = '1px solid var(--text-primary-color)';
-    saveButton.style.background = 'var(--text-primary-color)';
-    saveButton.style.color = 'var(--primary-background-color)';
-    saveButton.style.fontWeight = 'bold';
-    saveButton.style.cursor = 'pointer';
-    saveButton.style.alignSelf = 'center';
-    saveButton.style.marginBottom = '10px';
-    saveButton.addEventListener('click', () => {
-      const newValue = parseFloat(inputElement.value);
-      if (Number.isNaN(newValue)) return;
-      const formattedValue = newValue.toFixed(1);
+      inputWrapper.appendChild(inputElement);
+      modalBox.appendChild(inputWrapper);
 
-      // Update input_number
-      this._hass.callService('input_number', 'set_value', {
-        entity_id: inputEntity,
-        value: formattedValue,
-      });
+      const saveButton = document.createElement('button');
+      saveButton.textContent = 'Override';
+      saveButton.style.padding = '10px 16px';
+      saveButton.style.borderRadius = '6px';
+      saveButton.style.border = '1px solid var(--text-primary-color)';
+      saveButton.style.background = 'var(--text-primary-color)';
+      saveButton.style.color = 'var(--primary-background-color)';
+      saveButton.style.fontWeight = 'bold';
+      saveButton.style.cursor = 'pointer';
+      saveButton.style.alignSelf = 'center';
+      saveButton.style.marginBottom = '10px';
+      saveButton.addEventListener('click', () => {
+        const newValue = parseFloat(inputElement.value);
+        if (Number.isNaN(newValue)) return;
+        const formattedValue = newValue.toFixed(1);
 
-      // Update select.<prefix>_manual_soc with time=value entries
-      const existingState = this._hass.states?.[entityObject.entityName]?.state || '';
-      const existingEntries = existingState
-        .replace(/^\+/, '')
-        .split(',')
-        .map((entry) => entry.trim())
-        .filter(Boolean);
+        this._hass.callService('input_number', 'set_value', {
+          entity_id: inputEntity,
+          value: formattedValue,
+        });
 
-      const timeSlot = timeForSelectOverride;
-      const newEntry = `${timeSlot}=${formattedValue}`;
-      const updatedEntries = existingEntries.filter((entry) => !entry.startsWith(`${timeSlot}=`));
-      updatedEntries.push(newEntry);
+        const existingState = this._hass.states?.[entityObject.entityName]?.state || '';
+        const existingEntries = existingState
+          .replace(/^\+/, '')
+          .split(',')
+          .map((entry) => entry.trim())
+          .filter(Boolean);
 
-      this._hass.callService('select', 'select_option', {
-        entity_id: entityObject.entityName,
-        option: 'off',
-      });
+        const timeSlot = timeForSelectOverride;
+        const newEntry = `${timeSlot}=${formattedValue}`;
+        const updatedEntries = existingEntries.filter((entry) => !entry.startsWith(`${timeSlot}=`));
+        updatedEntries.push(newEntry);
 
-      for (const entry of updatedEntries) {
         this._hass.callService('select', 'select_option', {
           entity_id: entityObject.entityName,
-          option: entry,
+          option: 'off',
         });
-      }
 
-      overlay.remove();
-      document.removeEventListener('keydown', escHandler);
+        for (const entry of updatedEntries) {
+          this._hass.callService('select', 'select_option', {
+            entity_id: entityObject.entityName,
+            option: entry,
+          });
+        }
+
+        closeModal();
+      });
+      modalBox.appendChild(saveButton);
+
+      return modalBox;
     });
-    modalBox.appendChild(saveButton);
-
-    // Add modal to overlay
-    overlay.appendChild(modalBox);
-    document.body.appendChild(overlay);
-    
-    // Trigger fade-in
-    void overlay.offsetWidth;  // Force reflow
-    overlay.style.opacity = '1';              
-
-    const escHandler = (e) => {
-      if (e.key === 'Escape') {
-        overlay.remove();
-        document.removeEventListener('keydown', escHandler);
-      }
-    };
-
-    // Close handler
-    document.getElementById('modal-close-btn').addEventListener('click', () => {
-      overlay.remove();
-      document.removeEventListener('keydown', escHandler);
-    });
-    
-    // Close on click outside modal
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) {
-        overlay.remove();
-        document.removeEventListener('keydown', escHandler);
-      }
-    });
-    
-    // Close on Escape key
-    document.addEventListener('keydown', escHandler);       
-
   }
   
   createPopUpForOverrides(timeForSelectOverride, timestamp, isAllowed) {
       
       const forceEntityObjects = this.getOverrideEntities();
      
-          // Check if modal already exists
-          if (document.getElementById('custom-modal-overlay')) return;
+      this.openModal('custom-modal-overlay', (closeModal) => {
+        const modalBox = document.createElement('div');
         
-          // Create overlay
-          const overlay = document.createElement('div');
-          overlay.id = 'custom-modal-overlay';
-          overlay.style.position = 'fixed';
-          overlay.style.top = '0';
-          overlay.style.left = '0';
-          overlay.style.width = '100vw';
-          overlay.style.height = '100vh';
-          overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.4)';
-          overlay.style.display = 'flex';
-          overlay.style.alignItems = 'center';
-          overlay.style.justifyContent = 'center';
-          overlay.style.zIndex = '10000';
-          overlay.style.opacity = '0';
-          overlay.style.transition = 'opacity 200ms ease-in-out';
+        const headerRow = document.createElement('div');
+        headerRow.style.display = 'flex';
+        headerRow.style.justifyContent = 'space-between';
+        headerRow.style.alignItems = 'center';
+        headerRow.style.paddingBottom = '20px';
         
-          // Create modal box
-          const modalBox = document.createElement('div');
-            modalBox.style.background = 'rgba(0, 0, 0, 0.8)';
-            modalBox.style.padding = '20px 40px 20px 40px';
-            modalBox.style.borderRadius = '8px';
-            modalBox.style.border = "2px solid var(--text-primary-color)";
-            modalBox.style.boxShadow = '0 2px 10px rgba(0,0,0,1)';
-            modalBox.style.display = "flex";
-            modalBox.style.flexDirection = 'column';
-            modalBox.style.position = 'relative';
+        const titleBox = document.createElement('div');
+        titleBox.style.color = 'var(--text-primary-color)';
+        titleBox.innerHTML = timestamp.value;
+        titleBox.style.width = '100%';
+        titleBox.style.display = 'flex';
+        titleBox.style.justifyContent = 'center';
+        titleBox.style.alignItems = 'center';
+        titleBox.style.flex = '1';
+        titleBox.style.fontSize = '16px';
+        titleBox.style.fontWeight = 'bold';
+        titleBox.style.textShadow = '1px 1px 1px black';
+        
+        const closeBox = document.createElement('div');
+        closeBox.style.position = 'absolute';
+        closeBox.style.top = '5px';
+        closeBox.style.right = '5px';
+        
+        const closeButton = document.createElement('ha-icon');
+        closeButton.setAttribute('title', "Battery Overrides");
+        closeButton.setAttribute('icon', "mdi:close-circle-outline");
+        closeButton.style.cursor = 'pointer';
+        closeButton.style.margin = '0 2px';
+        closeButton.style.color = "var(--text-primary-color)";
+        closeButton.style.setProperty('--mdc-icon-size', '40px');
+        closeButton.id = 'modal-close-btn';
+        closeButton.addEventListener('click', closeModal); 
+        
+        closeBox.appendChild(closeButton);
+        
+        headerRow.appendChild(titleBox);
+        
+        modalBox.appendChild(closeBox);
+        modalBox.appendChild(headerRow);
+        
+        const buttonBox = document.createElement('div');
+        buttonBox.style.display = 'flex';
+        buttonBox.style.justifyContent = 'space-between';
+        buttonBox.style.alignItems = 'flex-start';   
+        
+        if(isAllowed){
           
-          const headerRow = document.createElement('div');
-            headerRow.style.display = 'flex';
-            headerRow.style.justifyContent = 'space-between';
-            headerRow.style.alignItems = 'center';
-            headerRow.style.paddingBottom = '20px';
-          
-          const titleBox = document.createElement('div');
-          titleBox.style.color = 'var(--text-primary-color)';
-          titleBox.innerHTML = timestamp.value;
-          titleBox.style.width = '100%';
-            titleBox.style.display = 'flex';
-            titleBox.style.justifyContent = 'center';   // horizontal center
-            titleBox.style.alignItems = 'center';       // vertical center
-          titleBox.style.flex = '1';
-          titleBox.style.fontSize = '16px';
-          titleBox.style.fontWeight = 'bold';
-          titleBox.style.textShadow = '1px 1px 1px black';
-          
-          const closeBox = document.createElement('div');
-          closeBox.style.position = 'absolute';
-          closeBox.style.top = '5px';
-          closeBox.style.right = '5px';
-          
-            const closeButton = document.createElement('ha-icon');
-            closeButton.setAttribute('title', "Battery Overrides");
-            closeButton.setAttribute('icon', "mdi:close-circle-outline");
-            closeButton.style.cursor = 'pointer';
-            closeButton.style.margin = '0 2px';
-            closeButton.style.color = "var(--text-primary-color)";
-            closeButton.style.setProperty('--mdc-icon-size', '40px');
-            closeButton.id = 'modal-close-btn'; 
-            
-            closeBox.appendChild(closeButton);
-          
-          headerRow.appendChild(titleBox);
-          
-          modalBox.appendChild(closeBox);
-          modalBox.appendChild(headerRow);
-          
-          // Add the buttons to the popup
-          
-          const buttonBox = document.createElement('div');
-            buttonBox.style.display = 'flex';
-            buttonBox.style.justifyContent = 'space-between';
-            buttonBox.style.alignItems = 'flex-start';   
-            
-          if(isAllowed){
-            
-            // Only create the buttons if allowed
-            for (const forceEntity of forceEntityObjects) {
-                // Create Icon
-                const icon = this.createButtonForOverrides(forceEntity, timeForSelectOverride, '40', 'var(--text-primary-color)', false, isAllowed, true);
-                // Append to DOM
-                //icon.style.border = '1px solid white';
-                buttonBox.appendChild(icon);            
-            }
-          } else {
-              buttonBox.style.textAlign = "center";
-              buttonBox.style.color = "#FFFFFF";
-              buttonBox.innerHTML = "This slot cannot currently be overridden. <br>Overrides will be available as the day progresses.";
+          for (const forceEntity of forceEntityObjects) {
+              const icon = this.createButtonForOverrides(forceEntity, timeForSelectOverride, '40', 'var(--text-primary-color)', false, isAllowed, true);
+              buttonBox.appendChild(icon);            
           }
-        
-            modalBox.appendChild(buttonBox);        
-          
-          
-          // Add modal to overlay
-          overlay.appendChild(modalBox);
-          document.body.appendChild(overlay);
-          
-            // Trigger fade-in
-            void overlay.offsetWidth;  // Force reflow
-            overlay.style.opacity = '1';              
-        
-            // Close handler
-            document.getElementById('modal-close-btn').addEventListener('click', () => {
-              overlay.remove();
-              document.removeEventListener('keydown', escHandler);
-            });
-            
-            // Close on click outside modal
-            overlay.addEventListener('click', (e) => {
-              if (e.target === overlay) {
-                overlay.remove();
-                document.removeEventListener('keydown', escHandler);
-              }
-            });
-            
-            // Close on Escape key
-            const escHandler = (e) => {
-              if (e.key === 'Escape') {
-                overlay.remove();
-                document.removeEventListener('keydown', escHandler);
-              }
-            };
-            document.addEventListener('keydown', escHandler);      
+        } else {
+            buttonBox.style.textAlign = "center";
+            buttonBox.style.color = "#FFFFFF";
+            buttonBox.innerHTML = "This slot cannot currently be overridden. <br>Overrides will be available as the day progresses.";
+        }
+      
+        modalBox.appendChild(buttonBox);        
+        return modalBox;
+      });
   }
   
   checkRowIsAllowedForOverride(forceEntityObjects, timeForSelectOverride, itemIndex) {
