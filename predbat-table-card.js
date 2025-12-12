@@ -289,7 +289,6 @@ class PredbatTableCard extends HTMLElement {
                     }, 
                     default: "/my-dashboard/predbat-plan",
                 },
-                { name: "bypassRefactor", selector: { boolean: {} } },
             ]
         },
       ],
@@ -320,7 +319,6 @@ class PredbatTableCard extends HTMLElement {
         if (schema.name === "debug_prices_only") return "Show Debug Prices Only?";
         if (schema.name === "weather_entity") return "Weather Entity";        
         if (schema.name === "path_for_click") return "Dashboard Path for click";
-        if (schema.name === "bypassRefactor") return "Bypass Refactor Code?";
         if (schema.name === "reset_day_totals") return "Reset Total Cost at midnight?";
         
         return undefined;
@@ -367,8 +365,6 @@ class PredbatTableCard extends HTMLElement {
             return "Add a weather forecast entity to see the weather for each time slot. Must add weather-column or temp-column to columns to see weather"; 
           case "path_for_click":
             return "Add a dashboard path like /my-dashboard/predbat-plan to be navigated to when you click the plan"; 
-          case "bypassRefactor":
-            return "Bypasses the new refactored codebase if there is a serious issue you need to get around with Version 1.9x +"; 
           case "reset_day_totals":
             return "Resets the total-column at midnight to £0.00 and increments by cost-column";             
         }
@@ -415,6 +411,7 @@ class PredbatTableCard extends HTMLElement {
   // update your content.    
     
   set hass(hass) {
+
     // Initialize the content if it's not there yet.
     if (!this.content) {
       this.innerHTML = `
@@ -588,9 +585,7 @@ class PredbatTableCard extends HTMLElement {
     if(this.config.row_limit && this.config.row_limit > 0)
         dataArray.length = this.config.row_limit;
 
-    //const useRefactor = this._hass.states['input_boolean.predbat_tablecard_refactor']?.state === 'on';
-    
-    const useRefactor = !this.config?.bypassRefactor;
+    const useRefactor = true;
     
     // iterate through the data
     dataArray.forEach((item, index) => {
@@ -608,8 +603,6 @@ class PredbatTableCard extends HTMLElement {
                 let newColumn;
                 if(useRefactor)
                     newColumn = this.getCellTransformationRefactor(item[column], column, hass.themes.darkMode, index, item["time-column"]);
-                else 
-                    newColumn = this.getCellTransformation(item[column], column, hass.themes.darkMode, index, item["time-column"]);
     
                 newRow.appendChild(newColumn);
                 
@@ -647,8 +640,7 @@ class PredbatTableCard extends HTMLElement {
                     let newColumn;
                     if(useRefactor)
                         newColumn = this.getCellTransformationRefactor(item[column], column, hass.themes.darkMode, index, item["time-column"]);
-                    else
-                        newColumn = this.getCellTransformation(item[column], column, hass.themes.darkMode, index, item["time-column"]);
+
                     newRow.appendChild(newColumn); 
                 }
             }
@@ -995,8 +987,12 @@ getTimeframeForOverride(timeString) {
       const snowIconColorOn = "#000000";
       const snowIconColorOff = "#FFFFFF";
     
-      const settings = this.getArrayForEntityForceStates(this._hass.states[entityObject.entityName]);
-      const isActive = settings.includes(timeForSelectOverride);
+      const settings = this.getArrayForEntityForceStates(this._hass.states[entityObject.entityName])
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const isActive = key === 'soc'
+        ? settings.some((entry) => entry.startsWith(`${timeForSelectOverride}=`))
+        : settings.includes(timeForSelectOverride);
     
       const iconColor = isAllowed ? (isActive ? iconColorOn : iconColorOff) : iconColorOff;
       const iconOpacity = isAllowed ? (isActive ? iconOpacityOn : iconOpacityOff) : '0.25';
@@ -1033,10 +1029,52 @@ getTimeframeForOverride(timeString) {
       iconEl.style.width = iconSize + "px";
       iconEl.style.height = iconSize + "px";
       
-      if(isAllowed) {   
-    
-      // Click handler ONLY if allowed
-      
+      if(isAllowed) {  
+        
+      // if soc override then setup different click
+      if(key === "soc") {        
+        iconEl.addEventListener('click', () => {
+            const currentSettings = this.getArrayForEntityForceStates(this._hass.states[entityObject.entityName])
+              .map((s) => s.trim())
+              .filter(Boolean);
+            const isSocActive = currentSettings.some((entry) => entry.startsWith(`${timeForSelectOverride}=`));
+
+            if (isSocActive) {
+              const remaining = currentSettings.filter((entry) => !entry.startsWith(`${timeForSelectOverride}=`));
+
+              this._hass.callService('select', 'select_option', {
+                entity_id: entityObject.entityName,
+                option: 'off'
+              });
+
+              for (const entry of remaining) {
+                this._hass.callService('select', 'select_option', {
+                  entity_id: entityObject.entityName,
+                  option: entry
+                });
+              }
+
+              iconEl.style.opacity = iconOpacityOff;
+              iconEl.style.color = iconColorOff;
+              if (snowflakeIcon) snowflakeIcon.style.color = snowIconColorOff;
+            } else {
+              if (fromPopup) {
+                const openCloseButton = document.querySelector('#custom-modal-overlay #modal-close-btn');
+                if (openCloseButton) {
+                  openCloseButton.click();
+                } else {
+                  const openOverlay = document.getElementById('custom-modal-overlay');
+                  if (openOverlay) openOverlay.remove();
+                }
+              }
+              // open up soc pop up
+              this.createPopUpForSoCOverride(entityObject, timeForSelectOverride);
+            }
+        });
+
+      } else {
+
+      // Click handler ONLY if allowed      
         iconEl.addEventListener('click', () => {
           const currentSettings = this.getArrayForEntityForceStates(this._hass.states[entityObject.entityName]);
           const isActive = currentSettings.includes(timeForSelectOverride);
@@ -1094,6 +1132,7 @@ getTimeframeForOverride(timeString) {
                   }
             }
         });
+      }
     
       }
       
@@ -1139,6 +1178,8 @@ getTimeframeForOverride(timeString) {
     }  
     
   getOverrideEntities() {
+      
+      // 100✎ →
 
         const prefix = this.config.entity.match(/^[^.]+/)[0];      
       
@@ -1147,15 +1188,17 @@ getTimeframeForOverride(timeString) {
           `select.${prefix}_manual_charge`,
           `select.${prefix}_manual_export`,
           `select.${prefix}_manual_freeze_charge`,
-          `select.${prefix}_manual_freeze_export`
+          `select.${prefix}_manual_freeze_export`,
+          `select.${prefix}_manual_soc`
         ];
-        
+                
         const titleMap = {
           demand: "Force Manual Demand",
           charge: "Force Manual Charge",
           export: "Force Manual Export",
           freeze_export: "Force Freeze Export",
-          freeze_charge: "Force Freeze Charge"
+          freeze_charge: "Force Freeze Charge",
+          soc: "Force SoC"
         };
         
         const iconMap = {
@@ -1163,7 +1206,8 @@ getTimeframeForOverride(timeString) {
           charge: "mdi:battery-plus",
           export: "mdi:battery-minus",
           freeze_export: "mdi:battery-minus",
-          freeze_charge: "mdi:battery-plus"          
+          freeze_charge: "mdi:battery-plus",
+          soc: "mdi:battery-charging-high"
         };
         
         const forceEntityObjects = forceEntityArray.map(entityName => {
@@ -1176,6 +1220,205 @@ getTimeframeForOverride(timeString) {
         }); 
         
         return forceEntityObjects;
+  }
+
+  createPopUpForSoCOverride(entityObject, timeForSelectOverride){
+
+    const prefix = this.config.entity.match(/^[^.]+/)[0];
+    const inputEntity = `input_number.${prefix}_manual_soc_value`;
+    const entityState = this._hass.states?.[inputEntity];
+    const defaultSocValue = entityState?.state ?? '';
+    
+    console.log(entityObject.entityName);
+
+    // Check if modal already exists
+    if (document.getElementById('custom-modal-overlay-soc')) return;
+  
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'custom-modal-overlay-soc';
+    overlay.style.position = 'fixed';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.width = '100vw';
+    overlay.style.height = '100vh';
+    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.4)';
+    overlay.style.display = 'flex';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.style.zIndex = '10000';
+    overlay.style.opacity = '0';
+    overlay.style.transition = 'opacity 200ms ease-in-out';  
+    
+    // Create modal box
+    const modalBox = document.createElement('div');
+    modalBox.style.background = 'rgba(0, 0, 0, 0.8)';
+    modalBox.style.padding = '20px 40px 20px 40px';
+    modalBox.style.borderRadius = '8px';
+    modalBox.style.border = "2px solid var(--text-primary-color)";
+    modalBox.style.boxShadow = '0 2px 10px rgba(0,0,0,1)';
+    modalBox.style.display = "flex";
+    modalBox.style.flexDirection = 'column';
+    modalBox.style.position = 'relative';
+    modalBox.style.width = '200px';
+    
+    const headerRow = document.createElement('div');
+    headerRow.style.display = 'flex';
+    headerRow.style.justifyContent = 'space-between';
+    headerRow.style.alignItems = 'center';
+    headerRow.style.paddingBottom = '20px';
+    
+    const titleBox = document.createElement('div');
+    titleBox.style.color = 'var(--text-primary-color)';
+    titleBox.innerHTML = timeForSelectOverride;
+    titleBox.style.width = '100%';
+    titleBox.style.display = 'flex';
+    titleBox.style.justifyContent = 'center';   // horizontal center
+    titleBox.style.alignItems = 'center';       // vertical center
+    titleBox.style.flex = '1';
+    titleBox.style.fontSize = '16px';
+    titleBox.style.fontWeight = 'bold';
+    titleBox.style.textShadow = '1px 1px 1px black';
+    
+    const closeBox = document.createElement('div');
+    closeBox.style.position = 'absolute';
+    closeBox.style.top = '5px';
+    closeBox.style.right = '5px'; 
+    
+    const closeButton = document.createElement('ha-icon');
+    closeButton.setAttribute('title', "SoC Override");
+    closeButton.setAttribute('icon', "mdi:close-circle-outline");
+    closeButton.style.cursor = 'pointer';
+    closeButton.style.margin = '0 2px';
+    closeButton.style.color = "var(--text-primary-color)";
+    closeButton.style.setProperty('--mdc-icon-size', '40px');
+    closeButton.id = 'modal-close-btn';     
+    
+    closeBox.appendChild(closeButton);    
+    headerRow.appendChild(titleBox);    
+    modalBox.appendChild(closeBox);
+    modalBox.appendChild(headerRow);
+
+    const inputWrapper = document.createElement('div');
+    inputWrapper.style.display = 'flex';
+    inputWrapper.style.flexDirection = 'column';
+    inputWrapper.style.gap = '6px';
+    inputWrapper.style.marginBottom = '16px';
+    const inputId = 'predbat-soc-target-input';
+
+    const inputLabel = document.createElement('label');
+    const inputLabelId = 'predbat-soc-target-label';
+    inputLabel.id = inputLabelId;
+    inputLabel.style.color = 'var(--text-primary-color)';
+    inputLabel.style.fontSize = '14px';
+    inputLabel.style.textShadow = '1px 1px 1px black';
+    inputLabel.textContent = 'Target SoC';
+    inputLabel.htmlFor = inputId;
+    inputLabel.setAttribute('for', inputId);
+
+    const inputElement = document.createElement('input');
+    inputElement.type = 'number';
+    inputElement.min = '0';
+    inputElement.max = '100';
+    inputElement.step = '1';
+    inputElement.name = 'predbat_soc_target';
+    inputElement.value = defaultSocValue;
+    inputElement.id = inputId;
+    inputElement.setAttribute('aria-labelledby', inputLabelId);
+    inputElement.style.padding = '8px';
+    inputElement.style.borderRadius = '4px';
+    inputElement.style.border = '1px solid var(--text-primary-color)';
+    inputElement.style.background = 'rgba(255, 255, 255, 0.1)';
+    inputElement.style.color = 'var(--text-primary-color)';
+
+    inputWrapper.appendChild(inputLabel);
+    inputWrapper.appendChild(inputElement);
+    modalBox.appendChild(inputWrapper);
+
+    const saveButton = document.createElement('button');
+    saveButton.textContent = 'Save';
+    saveButton.style.padding = '10px 16px';
+    saveButton.style.borderRadius = '6px';
+    saveButton.style.border = '1px solid var(--text-primary-color)';
+    saveButton.style.background = 'var(--text-primary-color)';
+    saveButton.style.color = 'var(--primary-background-color)';
+    saveButton.style.fontWeight = 'bold';
+    saveButton.style.cursor = 'pointer';
+    saveButton.style.alignSelf = 'center';
+    saveButton.style.marginBottom = '10px';
+    saveButton.addEventListener('click', () => {
+      const newValue = parseFloat(inputElement.value);
+      if (Number.isNaN(newValue)) return;
+      const formattedValue = newValue.toFixed(1);
+
+      // Update input_number
+      this._hass.callService('input_number', 'set_value', {
+        entity_id: inputEntity,
+        value: formattedValue,
+      });
+
+      // Update select.<prefix>_manual_soc with time=value entries
+      const existingState = this._hass.states?.[entityObject.entityName]?.state || '';
+      const existingEntries = existingState
+        .replace(/^\+/, '')
+        .split(',')
+        .map((entry) => entry.trim())
+        .filter(Boolean);
+
+      const timeSlot = timeForSelectOverride;
+      const newEntry = `${timeSlot}=${formattedValue}`;
+      const updatedEntries = existingEntries.filter((entry) => !entry.startsWith(`${timeSlot}=`));
+      updatedEntries.push(newEntry);
+
+      this._hass.callService('select', 'select_option', {
+        entity_id: entityObject.entityName,
+        option: 'off',
+      });
+
+      for (const entry of updatedEntries) {
+        this._hass.callService('select', 'select_option', {
+          entity_id: entityObject.entityName,
+          option: entry,
+        });
+      }
+
+      overlay.remove();
+      document.removeEventListener('keydown', escHandler);
+    });
+    modalBox.appendChild(saveButton);
+
+    // Add modal to overlay
+    overlay.appendChild(modalBox);
+    document.body.appendChild(overlay);
+    
+    // Trigger fade-in
+    void overlay.offsetWidth;  // Force reflow
+    overlay.style.opacity = '1';              
+
+    const escHandler = (e) => {
+      if (e.key === 'Escape') {
+        overlay.remove();
+        document.removeEventListener('keydown', escHandler);
+      }
+    };
+
+    // Close handler
+    document.getElementById('modal-close-btn').addEventListener('click', () => {
+      overlay.remove();
+      document.removeEventListener('keydown', escHandler);
+    });
+    
+    // Close on click outside modal
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        overlay.remove();
+        document.removeEventListener('keydown', escHandler);
+      }
+    });
+    
+    // Close on Escape key
+    document.addEventListener('keydown', escHandler);       
+
   }
   
   createPopUpForOverrides(timeForSelectOverride, timestamp, isAllowed) {
@@ -1453,6 +1696,7 @@ getTimeframeForOverride(timeString) {
       
         let newCell = document.createElement('td');
         let newContent = (typeof theItem?.value === 'string') ? theItem.value.trim() : theItem?.value ?? '';
+        const prefix = this.config.entity.match(/^[^.]+/)[0];
         
         let debugValue, rawValue;
         
@@ -1613,8 +1857,13 @@ getTimeframeForOverride(timeString) {
                     iconEl.style.setProperty('--mdc-icon-size', iconSize + 'px');
                     
                     for (const forceEntity of forceEntityObjects) {
-                        const settings = this.getArrayForEntityForceStates(this._hass.states[forceEntity.entityName]);
-                        const isActive = settings.includes(timeForSelectOverride);
+                        const settings = this.getArrayForEntityForceStates(this._hass.states[forceEntity.entityName])
+                          .map((s) => s.trim())
+                          .filter(Boolean);
+                        const key = forceEntity.entityName.replace(`select.${prefix}_manual_`, '');
+                        const isActive = key === 'soc'
+                          ? settings.some((entry) => entry.startsWith(`${timeForSelectOverride}=`))
+                          : settings.includes(timeForSelectOverride);
                         if(isActive && isAllowed){
                             iconEl.style.color = "rgb(58, 238, 133)";
                             iconEl.style.opacity = 1.0;
@@ -1958,7 +2207,11 @@ getTimeframeForOverride(timeString) {
                 
                 let arrowForLabel = this.replaceArrowsWithIcons(theItem.value);
     
-                let batteryPercent = rawValue;
+                const batteryPercentLabel = rawValue;
+                const parsedPercent = parseFloat(String(rawValue ?? '').replace(/[^\d.]+/g, ''));
+                const batteryPercentValue = Number.isNaN(parsedPercent) ? null : parsedPercent;
+                const isManualEdit = (batteryPercentLabel ?? '').toString().includes('✎');
+                const batteryLabelClean = (batteryPercentLabel ?? '').toString().replace(/✎/g, '');
                 let batteryArrow = "";
                 
                 if(theItem.value.includes("↘")) {
@@ -1974,18 +2227,20 @@ getTimeframeForOverride(timeString) {
                 }
                 
                 let battery;
-                let columnContent = batteryPercent + "%";
+                const needsPercentSuffix = batteryLabelClean.includes('%') ? '' : '%';
+                const batteryTitle = `${batteryLabelClean}${needsPercentSuffix}`;
+                let columnContent = `${batteryLabelClean}${needsPercentSuffix}`;
 
                 //calculate % in kWh if battery_capacity is present
-                
-                if(this.config.battery_capacity && !isNaN(parseFloat(this.config.battery_capacity))){
+                // could be 54✎%
+                if(this.config.battery_capacity && !isNaN(parseFloat(this.config.battery_capacity)) && batteryPercentValue !== null){
                 
                     let capacity = parseFloat(this.config.battery_capacity);
-                    let actualCapacity = ((batteryPercent / 100) * capacity).toFixed(2);
+                    let actualCapacity = ((batteryPercentValue / 100) * capacity).toFixed(2);
                     columnContent = actualCapacity;
                 }
                 
-                const roundedPercent = Math.round(parseInt(batteryPercent, 10) / 10) * 10;
+                const roundedPercent = Math.round(parseInt(batteryPercentValue ?? 0, 10) / 10) * 10;
                 let batteryIcon;
                 if(roundedPercent === 100){
                     batteryIcon = "battery";
@@ -1996,16 +2251,20 @@ getTimeframeForOverride(timeString) {
                     batteryIcon = `battery-${roundedPercent}`;
                 }
     
-                battery = `<ha-icon icon="mdi:${batteryIcon}" style="--mdc-icon-size: 20px;" title="${batteryPercent}%"></ha-icon>${batteryArrow}`;
+                battery = `<ha-icon icon="mdi:${batteryIcon}" style="--mdc-icon-size: 20px;" title="${batteryTitle}"></ha-icon>${batteryArrow}`;
                 
                 newCell.style.paddingLeft = "4px";
                 newCell.style.minWidth = "70px";
                 newCell.style.alignItems = "center";
                 
+                const manualEditIcon = isManualEdit
+                  ? '<ha-icon icon="mdi:hand-back-right-outline" style="--mdc-icon-size: 14px; margin-left: 4px;"></ha-icon>'
+                  : '';
+
                 if(useOldSkool)
-                    cellResponseArray.push(`<div title="${batteryPercent}%">${columnContent}${arrowForLabel[1]}</div>`);
+                    cellResponseArray.push(`<div title="${batteryTitle}">${columnContent}${arrowForLabel[1]}${manualEditIcon}</div>`);
                 else 
-                    cellResponseArray.push(`<div style="width: 70px; align-items: center; display: flex; justify-content: center; margin: 0 auto;"><div class="iconContainerSOC" title="${batteryPercent}%">${battery}</div><div style="margin-left: 5px; margin-top: 2px;">${columnContent}</div></div>`);                
+                    cellResponseArray.push(`<div style="width: 70px; align-items: center; display: flex; justify-content: center; margin: 0 auto;"><div class="iconContainerSOC" title="${batteryTitle}">${battery}</div><div style="margin-left: 5px; margin-top: 2px; display:flex; align-items:center;">${columnContent}${manualEditIcon}</div></div>`);                
                              
             }
             
@@ -2119,834 +2378,6 @@ getTimeframeForOverride(timeString) {
         return newCell;
       
   }
-  
-  getCellTransformation(theItem, column, darkMode, itemIndex, timestamp) {
-      
-    let newCell = document.createElement('td');
-    let newContent = "";
-    
-    const timeForSelectOverride = this.getTimeframeForOverride(timestamp.value);
-    const forceEntityObjects = this.getOverrideEntities();    
-    const isAllowed = this.checkRowIsAllowedForOverride(forceEntityObjects, timeForSelectOverride, itemIndex);    
-    
-    //newCell.setAttribute('onclick', 'console.log("hello")');
-    
-    //override fill empty cells
-    let fillEmptyCells;
-    if(this.config.fill_empty_cells === undefined)
-        fillEmptyCells = true;
-    else 
-        fillEmptyCells = this.config.fill_empty_cells;
-      
-    //  
-    //Set the table up for people that like the Trefor style
-    //
-    
-    if(column === "options-popup-column" || column === "options-column"){
-        
-        // check if its allowed for the override to be set on the row.
-        
-        if(column === "options-popup-column") {
-            
-            const iconSize = 24;
-            const iconOpacity = isAllowed ? '0.8' : '0.25';
-            const iconPointer = isAllowed ? 'pointer' : 'not-allowed';
-            
-            // CREATE THE ICON
-            const iconEl = document.createElement('ha-icon');
-            iconEl.setAttribute('title', "Battery Overrides");
-            iconEl.setAttribute('icon', "mdi:application-edit-outline");
-            iconEl.style.cursor = iconPointer;
-            iconEl.style.opacity = iconOpacity;
-            iconEl.style.fill = "var(--text-primary-color)";
-            iconEl.style.setProperty('--mdc-icon-size', iconSize + 'px');
-            
-            for (const forceEntity of forceEntityObjects) {
-                const settings = this.getArrayForEntityForceStates(this._hass.states[forceEntity.entityName]);
-                const isActive = settings.includes(timeForSelectOverride);
-                if(isActive && isAllowed){
-                    iconEl.style.color = "rgb(58, 238, 133)";
-                    iconEl.style.opacity = 1.0;
-                    break;
-                }
-            }            
-            
-            // Add click handler
-            iconEl.addEventListener('click', () => {
-                this.createPopUpForOverrides(this.getTimeframeForOverride(timestamp.value), timestamp, isAllowed);
-            });
-            
-            newCell.style.height = (iconSize+10) + 'px';
-            newCell.appendChild(iconEl);        
-        }
-        
-        if(column === "options-column"){
-            
-            const headerRow = document.createElement('div');
-            headerRow.style.display = 'flex';
-            headerRow.style.justifyContent = 'space-between';
-            headerRow.style.alignItems = 'flex-start';
-            
-            for (const forceEntity of forceEntityObjects) {
-                // Create Icon
-                const icon = this.createButtonForOverrides(forceEntity, timeForSelectOverride, '24', 'var(--primary-text-color)', true, isAllowed, true);
-                // Append to DOM
-                icon.style.width = '34px';
-                headerRow.appendChild(icon);            
-            }
-            
-            newCell.style.width = '170px';
-            newCell.appendChild(headerRow);     
-    
-        }
-        
-    }
-    
-
-    
-    if(column === "time-column" && this.config.force_single_line === true)
-        newCell.style.whiteSpace = "nowrap";
-    
-    if(column !== 'import-export-column' && column !== "options-column" && column !== "options-popup-column" && column !== "rain-column" && column !== "temp-column" && column !== "weather-column" && column !== "car-column"){ // weather and car not supported by old skool
-        if(this.config.old_skool === true || this.config.old_skool_columns !== undefined){ 
-            
-            if(this.config.old_skool === true || this.config.old_skool_columns.indexOf(column) >= 0){
-            
-                //this.config.old_skool_columns.indexOf(column) >= 0
-                newContent = theItem.value.replace(/[↘↗→]/g, '');
-                newContent = this.adjustStatusFields(newContent);
-              
-                let additionalArrow = "";
-    
-                if(theItem.value.includes("↘")) {
-                    // include a down arrow
-                    additionalArrow = `<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 0 0 -5px; opacity:0.75;"></ha-icon>`;
-                    newCell.style.paddingRight = "0px";
-                } else if (theItem.value.includes("↗")) {
-                    // include a up arrow
-                    additionalArrow = `<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 0 0 -5px; opacity:0.75;"></ha-icon>`;   
-                    newCell.style.paddingRight = "0px";
-                } else if (theItem.value.includes("→")) {
-                    additionalArrow = `<ha-icon icon="mdi:arrow-right-thin" style="margin: 0 0 0 -5px; opacity: 0.75;"></ha-icon>`;                 
-                    newCell.style.paddingRight = "0px";
-                }
-                
-                if(this.config.old_skool === true) {
-                    newCell.style.border = "1px solid white";
-                    newCell.style.backgroundColor = "#FFFFFF";
-                }
-                
-                
-                //newCell.style.backgroundColor = "#FFFFFF";
-                newCell.style.height = "22px";
-                
-                // set the PV or Load column to use the HTML debug 10% options if in the card YAML
-                
-                if(column === 'import-column' || column === 'export-column'){
-                    
-                }
-                
-                if(column === "pv-column" || column === "load-column" || column === 'import-column' || column === 'export-column' || column === "limit-column"){
-    
-                    const hasBoldTags = /<b>.*?<\/b>/.test(theItem.value);
-                    const hasItalicTags = /<i>.*?<\/i>/.test(theItem.value);
-                    let contentWithoutTags = theItem.value.replace(/<b>(.*?)<\/b>/g, '$1');
-                    contentWithoutTags = contentWithoutTags.replace(/<i>(.*?)<\/i>/g, '$1');
-                    let debugPrices = false;
-                    if (theItem.value.includes("(") && theItem.value.includes(")"))
-                        debugPrices = true;
-                    
-                    if(this.config.debug_columns !== undefined) { // there are debug columns in the YAML
-                        if(this.config.debug_columns !== undefined && this.config.debug_columns.indexOf(column) > -1){ // the column is a debug column
-                        
-                            // SHOW THE DEBUG VALUE TOO!
-                            newContent = theItem.value.replace(/[ⅎ]/g, '');
-                            if(theItem.value.includes("ⅎ"))
-                                newContent += ` <ha-icon icon="mdi:hand-back-right-outline" title="FORCED" style="--mdc-icon-size: 18px;"></ha-icon>`;  
-                        } else {
-                            // we need to remove the debug value from the string
-                            if(column === "pv-column" || column === "load-column" || column === "limit-column")
-                                if(column === "pv-column" || column === "load-column")
-                                    newContent = parseFloat(theItem.value).toFixed(2);
-                                else 
-                                    newContent = parseFloat(theItem.value).toFixed(0);
-                                    
-                                if(theItem.value.includes("ⅎ"))
-                                    newContent += ` <ha-icon icon="mdi:hand-back-right-outline" title="FORCED" style="--mdc-icon-size: 18px;"></ha-icon>`;  
-                            
-                            else {
-                                if(debugPrices){
-                                    let priceStrings = this.getPricesFromPriceString(contentWithoutTags, hasBoldTags, hasItalicTags, debugPrices);
-                                    newContent = priceStrings[0];
-                                }                            
-                            }
-                        }
-                    } else { // there are NO debug columns in the YAML, so dont show debug values even if HTML Debug is ON
-                        if(column === "pv-column" || column === "load-column" || column === "limit-column")
-                            if(column === "pv-column" || column === "load-column")
-                                newContent = parseFloat(theItem.value).toFixed(2);
-                            else 
-                                newContent = parseFloat(theItem.value).toFixed(0);
-                            if(theItem.value.includes("ⅎ"))
-                                newContent += ` <ha-icon icon="mdi:hand-back-right-outline" title="FORCED" style="--mdc-icon-size: 18px;"></ha-icon>`;                                  
-                        else {
-                            if(debugPrices){
-                                let priceStrings = this.getPricesFromPriceString(contentWithoutTags, hasBoldTags, hasItalicTags, debugPrices);
-                                newContent = priceStrings[0];
-                            }
-                        }
-                            
-                    }
-                }   
-                
-                
-                if((theItem.value === "Both" || theItem.value === "Both-Idle" || theItem.value === "Both-Chg" || theItem.value === "Both-Dis" || theItem.value === "Both-Dis-Snail") && column === "state-column"){
-                    
-                    newCell.style.minWidth = "186px";
-                    if(this.config.use_friendly_states === true)
-                        newCell.style.minWidth = "276px";
-                    newCell.style.paddingLeft = "0px";
-                    newCell.style.paddingRight = "0px";
-                    
-                    let chargeString = "Charge";
-                    if(theItem.value === "Both-Chg" || theItem.value === "Both-Dis" || theItem.value === "Both-Idle" || theItem.value === "Both-Dis-Snail")
-                        chargeString = "";
-                    
-                    let dischargeString = "Export";
-                    
-                    //console.log("1: " + dischargeString);
-                    
-                    if(this.isSmallScreen() && (this.config.use_friendly_states === false || this.config.use_friendly_states === undefined)){
-                        
-                        if(theItem.value === "Both") {
-                            chargeString = "Chg";
-                            dischargeString = "Exp";
-                        }
-                        
-                        if(theItem.value === "Both-Chg" || theItem.value === "Both-Dis" || theItem.value === "Both-Idle" || theItem.value === "Both-Dis-Snail") {
-                            dischargeString = "Exp";                        
-                        }
-                        
-                        newCell.style.minWidth = "110px";
-                    }
-                    
-                    //console.log("2: " + dischargeString);
-                    
-                    
-                    if(this.config.use_friendly_states === true && this.isSmallScreen() === false){
-                        if(theItem.value === "Both")
-                            chargeString = "Planned Charge";
-                        else if(theItem.value === "Both-Chg")
-                            chargeString = "Charging";
-                        else if(theItem.value === "Both-Dis")
-                            chargeString = "Discharging";
-                            
-                        dischargeString = "Planned Export";                    
-                    } else if(this.config.use_friendly_states === true && this.isSmallScreen() === true){
-                        if(theItem.value === "Both")
-                            chargeString = "Plnd Chg";
-                        else if(theItem.value === "Both-Chg")
-                            chargeString = "Chg";    
-                        else if(theItem.value === "Both-Dis" || theItem.value === "Both-Dis-Snail")
-                            chargeString = "Dis"; 
-                            
-                        dischargeString = "Plnd Dis"; 
-                        newCell.style.minWidth = "110px";
-                    }
-                    
-                    //console.log("3: " + dischargeString);
-                    
-                    let chargeBackgroundColor = "background-color:#3AEE85;";
-                    let chargeTextColor = "color: #000000;";
-                    if(theItem.value === "Both-Idle" || theItem.value === "Both-Dis" || theItem.value === "Both-Chg" || theItem.value === "Both-Dis-Snail"){
-                        chargeBackgroundColor = "";
-                        chargeTextColor = "";
-                    }
-                    let chargeIcon;
-                    if(theItem.value === "Both" || theItem.value === "Both-Chg")
-                        chargeIcon = '<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 0 0 -5px"></ha-icon>';
-                    else if(theItem.value === "Both-Idle")
-                        chargeIcon = '<ha-icon icon="mdi:arrow-right-thin" style="margin: 0 0 0 -3px"></ha-icon>';
-                    else if(theItem.value === "Both-Dis" || theItem.value === "Both-Dis-Snail")
-                        chargeIcon = '<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 0 0 -5px"></ha-icon>';
-                    
-                    let snail = ``;
-                    if(theItem.value === "Both-Dis-Snail")
-                        snail = `<ha-icon icon="mdi:snail" title="Low Power Mode" style="--mdc-icon-size: 14px;"></ha-icon>`;
-                     
-                        
-                    newCell.innerHTML = `<div style="width: 100%; height: 100%;" id="${theItem.value}">
-                    <div style='${chargeBackgroundColor} width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center; ${chargeTextColor}'>${chargeString}${chargeIcon}</div>
-                    <div style='background-color:#FFFF00; width: 50%; height: 100%; float: left; display: flex; align-items: center; justify-content: center; color: #000000;'>${dischargeString}<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 0 0 -5px"></ha-icon>${snail}</div>
-                    </div>`;
-                
-                } else if(column === "import-export-column"){
-                    
-                    theItem.forEach((item, index) => {
-                        newContent += `<div style="display: flex; align-items: center; justify-content: center; height: 50%; background-color: ${item.color}">${item.value}</div>`;
-                    });
-                    
-                    newCell.innerHTML = newContent;
-                    
-                } else if(column === "pv-column") {
-                    
-                    newCell.style.backgroundColor = theItem.color;
-                    
-                    if((theItem.value.includes("☀") || theItem.value.length > 0) && !theItem.value.includes("⚊")) {
-                        
-                        if (theItem.value.length > 0 && !theItem.value.includes("☀"))
-                            newCell.style.backgroundColor = "#FFFFFF";
-                        
-                        //console.log("PV Data: " + theItem.value);
-                        newContent = newContent.replace(/[☀]/g, '');
-                        
-                        if(!newContent.includes("(") && !newContent.includes(")"))
-                            newContent = parseFloat(newContent).toFixed(2);
-                        
-                        
-                        let additionalIcon = "";
-                        if(!this.isSmallScreen())
-                            additionalIcon = '<ha-icon icon="mdi:white-balance-sunny" style="margin: 0; opacity: 0.5; --mdc-icon-size: 16px; display: flex; align-items: center; justify-content: center;"></ha-icon>';
-                        
-                        newCell.innerHTML = `<div class="iconContainer">${additionalIcon} <div style="margin: 0 4px;">${newContent}</div></div>`;
-                    } else {
-                    if(fillEmptyCells)
-                            newCell.innerHTML = `<div class="iconContainer"><ha-icon icon="mdi:minus" style="margin: 0 2px; opacity: 0.25;"></ha-icon></div>`;
-                        
-                    }
-                } else {
-                    
-                    let snail = ``;
-                    if(newContent.includes("🐌")){
-                        newContent = newContent.replace('Exp🐌', 'Export');
-                        snail = `<ha-icon icon="mdi:snail" title="Low Power Mode" style="--mdc-icon-size: 14px;"></ha-icon>`;
-                    }
-                    
-                    let weatherAlert = ``;
-                    if(newContent.includes("⚠"))
-                        weatherAlert = `<ha-icon icon="mdi:alert-outline" title="Weather Alert" style="--mdc-icon-size: 18px;"></ha-icon>`;
-                    
-                   
-                   let friendlyText = "";
-                   if(column === "state-column") {
-                    
-                        friendlyText = newContent;
-                        
-                        friendlyText = friendlyText.replace('Force Dischrg', 'Discharge');
-                        friendlyText = friendlyText.replace('Force Charge', 'Charge');
-                        //friendlyText = friendlyText.replace('Exp🐌', 'Export');
-                        
-                        
-                        if(theItem.value.includes("ⅎ")){
-                            friendlyText = friendlyText.replace('Exp', 'Export');
-                            
-                            friendlyText = "Manually Forced " + friendlyText;
-                            
-                            if(!friendlyText.includes("Charge") && !friendlyText.includes("Discharge") && !friendlyText.includes("Export"))
-                                friendlyText = friendlyText + "Demand";
-                            friendlyText = friendlyText.replace('ⅎ', '');
-                        } else {
-                            if(theItem.value === "↘") {
-                                friendlyText = "Discharging";
-                            } else if (theItem.value === "↗") {
-                                friendlyText = "Charging";
-                            } else if (theItem.value === "→") {
-                                friendlyText = "Idle";
-                            }
-                            
-                            friendlyText = friendlyText.replace('FreezeDis', 'Charging Paused');
-                            friendlyText = friendlyText.replace('FreezeExp', 'Charging Paused');
-                            friendlyText = friendlyText.replace('FreezeChrg', 'Maintaining SOC'); //FreezeChrg
-                            friendlyText = friendlyText.replace('HoldChrg', 'Maintaining SOC'); //HoldChrg
-                            friendlyText = friendlyText.includes("NoCharge") ? friendlyText.replace('NoCharge','Charge to "limit"') : friendlyText.replace('Charge', 'Planned Charge');
-                            friendlyText = friendlyText.replace('Discharge', 'Planned Export'); //Discharge
-                            friendlyText = friendlyText.replace('Export', 'Planned Export'); //Discharge
-                            friendlyText = friendlyText.replace('Alert Charge', 'Planned Charge ⚠'); // Alert Charge
-                        }
-                        
-                        if(this.config.use_friendly_states === true){
-                            newContent = friendlyText;
-                        }
-                   }
-                    
-                    newCell.style.backgroundColor = theItem.color;
-                    
-                    if(theItem.value.replace(/\s/g, '').length === 0 || theItem.value === "0" || theItem.value === "⚊") {
-                        
-                        if(fillEmptyCells)
-                            newCell.innerHTML = `<div class="iconContainer"><ha-icon icon="mdi:minus" style="margin: 0 2px; opacity: 0.25;"></ha-icon></div>`;
-                    } else {
-                        if(column === "cost-column"){
-                            newContent = newContent.replace(' ', '');
-                            newContent = newContent.trim();                        
-                        }
-                        if(column === "total-column")
-                            newContent = this.adjustTotalCostField(newContent); 
-    /*                    if(column === "load-column"){
-                            newContent = parseFloat(newContent).toFixed(2);
-                        }
-                            */
-                        newCell.innerHTML = `<div class="iconContainer" title="${friendlyText}"><div style="margin: 0 2px;">${weatherAlert}${newContent}</div>${additionalArrow}${snail}</div>`;
-                    }
-                }
-                
-                // if user uses old_skool: true AND old_skool_columns on dark mode then this will not work, they need to turn off old_skool
-                if(this.config.old_skool_columns !== undefined && this.config.old_skool_columns.indexOf(column) >= 0 && darkMode){
-                    if(theItem.value.includes("ⅎ"))
-                        newCell.style.backgroundColor = "white";
-                    newCell.style.color = "black";
-                    if(newCell.style.backgroundColor.length === 0)
-                        newCell.style.color = "white";
-                } else {
-                    newCell.style.color = "#000000";
-                }
-            
-                return newCell;
-            }
-        }    
-    }
-        
-    if(column !== "import-export-column" && column !== "weather-column" && column !== "temp-column" && column !== "rain-column" && column !== "options-column" && column !== "options-popup-column"){
-        newCell.style.color = theItem.color;
-        if(theItem.value.replace(/\s/g, '').length === 0 || theItem.value === "0" || theItem.value === "⚊") {
-            if(fillEmptyCells)
-                newCell.innerHTML = `<div class="iconContainer"><ha-icon icon="mdi:minus" style="margin: 0 2px; opacity: 0.25;"></ha-icon></div>`;
-        } else {
-            
-            if(column === "car-column") {
-                newCell.style.color = "var(--primary-text-color)";
-                let additionalIcon = "";
-                
-                if(this.config.car_charge_switch){
-                    const entity = this._hass.states[this.config.car_charge_switch];
-                    if (entity && entity.state === 'on' && itemIndex === 0) {
-                        additionalIcon = '<ha-icon class="pulse-icon" icon="mdi:ev-plug-type2" style="--mdc-icon-size: 16px; margin-top: -2px; margin-left: 2px;"></ha-icon>';
-                    }
-                }
-                
-                newCell.innerHTML = `<div class="iconContainer">${theItem.value}${additionalIcon}</div>`;
-            
-            } else {
-                newCell.innerHTML = `<div class="iconContainer">${theItem.value}</div>`;
-            }
-        }
-    }
-    
-    if(column === "weather-column" || column === "temp-column" || column === "rain-column"){
-        if(theItem.color === "#FFFFFF")
-            newCell.style.color = "var(--primary-text-color)";
-        else
-            newCell.style.color = theItem.color;
-    }
-    
-    if(column === "weather-column") {
-
-        if(theItem.value !== undefined && theItem.value !== null){
-           
-            let condition = theItem.value.condition;
-            if(condition === "partlycloudynight")
-                condition = "partlycloudy";
-            const lang = this._hass.language;
-            const key = `component.weather.entity_component._.state.${condition}`;
-            
-            const readableCondition = this._hass.resources[lang]?.[key] || condition;            
-            
-            let weatherIcon = this.convertConditionToIcon(theItem.value.condition);
-            //const readableCondition = this._hass.localize(`component.weather.state._.${theItem.value.condition}`);
-            
-            const weatherEntity = this._hass.states[this.config.weather_entity];
-            const tempUnit = weatherEntity?.attributes?.temperature_unit || this._hass.config.unit_system.temperature;
-
-            newCell.innerHTML = `<div class="iconContainer"><ha-icon icon="mdi:${weatherIcon}" title="${readableCondition}, ${theItem.value.temperature}${tempUnit}"></ha-icon></div>`;
-        }
-    }
-    
-    if(column === "temp-column") {
-
-        if(theItem.value !== undefined && theItem.value !== null){
-            
-            const roundedTemp = Math.round(parseFloat(theItem.value.temperature));
-            const weatherEntity = this._hass.states[this.config.weather_entity];
-            const tempUnit = weatherEntity?.attributes?.temperature_unit || this._hass.config.unit_system.temperature;
-
-            newCell.innerHTML = `<div class="iconContainer">${roundedTemp}<div class="tempUnit">${tempUnit}</div></div>`;
-        }
-    } 
-    
-    if(column === "rain-column") {
-        
-        if(theItem.value !== undefined && theItem.value !== null){
-            
-            const rainChance = Math.round(parseFloat(theItem.value.precipitation_probability));
-            newCell.innerHTML = `<div class="iconContainer">${rainChance}%</div>`;
-        }
-    }        
-
-    if(column === "load-column" || column === "pv-column") {
-        
-            // set the PV or Load column to use the HTML debug 10% options if in the card YAML
-            newContent = theItem.value;
-
-            //check for HTML Debug values
-            if(newContent.includes("(") && newContent.includes(")")){
-                let content = theItem.value.replace(/[↘↗→ⅎ🐌⚠]/g, '').trim();
-                const match = content.match(/(\d+(?:\.\d+)?)\s*\((\d+(?:\.\d+)?)\)/);
-                let newVals = parseFloat(match[1]).toFixed(2) + " (" + parseFloat(match[2]).toFixed(2) + ")";
-                newContent = newVals;
-            }
-            
-            if(this.config.debug_columns !== undefined) {// there are debug columns in the YAML
-                if(this.config.debug_columns.indexOf(column) < 0)
-                    newContent = parseFloat(newContent).toFixed(2);
-            } else {
-                newContent = parseFloat(newContent).toFixed(2);
-            }
-                    
-            let additionalIcon = "";
-            if(column === "pv-column"){
-                if((theItem.value.includes("☀") || theItem.value.length > 0)  && !theItem.value.includes("⚊")) {
-                    newContent = newContent.replace(/[☀]/g, '');
-                
-                    if(!this.isSmallScreen())
-                        additionalIcon = '<ha-icon icon="mdi:white-balance-sunny" style="margin: 0; --mdc-icon-size: 18px; display: flex; align-items: center; justify-content: center;"></ha-icon>';
-                    
-                    newCell.innerHTML = `<div class="iconContainer">${additionalIcon} <div style="margin: 0 4px;">${newContent}</div></div>`;
-                }
-            } else {
-                
-                if(theItem.value.includes("ⅎ"))
-                    newContent += ` <ha-icon icon="mdi:hand-back-right-outline" title="FORCED" style="--mdc-icon-size: 18px;"></ha-icon>`;                  
-                
-                newCell.innerHTML = `<div class="iconContainer">${newContent}</div>`;
-            }
-
-    } else if(column === "time-column" || column === "total-column"){
-          
-        newCell.style.color = theItem.color;
-        newCell.style.textShadow = "none";
-        if(column === "time-column")
-            newCell.style.width = "70px";
-        
-        let content = theItem.value;
-        if(column === "total-column")
-            content = this.adjustTotalCostField(content); 
-        
-        newCell.innerHTML = `<div class="iconContainer">${content}</div>`;
-        
-    } else if(column === "soc-column" || column === "cost-column"){
-
-        newContent = theItem.value.replace(/[↘↗→]/g, '');
-        newContent = newContent.replace(' ', '');
-        newContent = newContent.trim();
-        let batteryPercent = newContent;
-          
-        let additionalArrow = "";
-        let batteryArrow = "";
-        
-        if(theItem.value.includes("↘")) {
-            // include a down arrow
-            additionalArrow = '<ha-icon icon="mdi:arrow-down-thin" style="margin: 0 0 0 -5px;"></ha-icon>';
-            newCell.style.paddingRight = "0px";
-            batteryArrow = '<ha-icon icon="mdi:arrow-down-thin" style="--mdc-icon-size: 16px; margin: 0 -5px 0 -5px;"></ha-icon>';
-        } else if (theItem.value.includes("↗")) {
-            // include a down arrow
-            additionalArrow = '<ha-icon icon="mdi:arrow-up-thin" style="margin: 0 0 0 -5px;"></ha-icon>';                    
-            newCell.style.paddingRight = "0px";
-            batteryArrow = '<ha-icon icon="mdi:arrow-up-thin" style="--mdc-icon-size: 16px; margin: 0 -5px 0 -5px;"></ha-icon>';
-        } else {
-            batteryArrow = '<ha-icon icon="mdi:arrow-right-thin" style="--mdc-icon-size: 16px; margin: 0 -5px 0 -5px;"></ha-icon>';
-            if(fillEmptyCells && column === "cost-column")
-                additionalArrow = '<ha-icon icon="mdi:minus" style="margin: 0 0 0 -5px; opacity: 0.25;"></ha-icon>';                 
-        }
-        let battery;
-        
-        if(column === "soc-column") {
-            newContent += "%";
-            
-            //calculate % in kWh if battery_capacity is present
-            
-            if(this.config.battery_capacity && !isNaN(parseFloat(this.config.battery_capacity))){
-            
-                let capacity = parseFloat(this.config.battery_capacity);
-                let actualCapacity = ((batteryPercent / 100) * capacity).toFixed(2);
-                newContent = actualCapacity;
-            }
-            
-            const roundedPercent = Math.round(parseInt(batteryPercent, 10) / 10) * 10;
-            let batteryIcon;
-            if(roundedPercent === 100){
-                batteryIcon = "battery";
-            }
-            else if (roundedPercent < 5){
-                batteryIcon = `battery-outline`;
-            } else {
-                batteryIcon = `battery-${roundedPercent}`;
-            }
-
-            battery = `<ha-icon icon="mdi:${batteryIcon}" style="--mdc-icon-size: 20px;"></ha-icon>${batteryArrow}`;
-            
-            //newCell.style.display = "flex";
-            newCell.style.paddingLeft = "4px";
-            
-            newCell.style.minWidth = "70px";
-            
-            newCell.style.alignItems = "center";
-            
-            newCell.innerHTML = `<div style="width: 70px; align-items: center; display: flex; justify-content: center; margin: 0 auto;"><div class="iconContainerSOC">${battery}</div><div style="margin-left: 5px; margin-top: 2px;">${newContent}</div></div>`;                
-        } else {
-            newCell.innerHTML = `<div class="iconContainer"><div style="margin: 0 1px;">${newContent}</div>${additionalArrow}</div>`;
-        }
-
-    } else if(column === "net-power-column"){
-
-            let additionalArrow = "";
-            newContent = theItem.value;
-            if(theItem.value < 0){
-                //exporting
-                //additionalArrow = '<ha-icon icon="mdi:home-export-outline" style="margin: 0 0 0 0; --mdc-icon-size: 18px;"></ha-icon>';
-                //newCell.style.paddingRight = "0px";                
-            } else {
-             //   additionalArrow = '<ha-icon icon="mdi:home-battery-outline" style="margin: 0 0 0 0; --mdc-icon-size: 18px;"></ha-icon>';
-             //   newCell.style.paddingRight = "0px";                  
-            }
-
-          newCell.innerHTML = `<div class="iconContainer"><div style="margin: 0 1px;">${newContent}</div>${additionalArrow}</div>`;
-      
-    } else if(column === "state-column"){
-
-        let snail = ``;
-        if(theItem.value.includes("🐌")){
-            snail = `<ha-icon icon="mdi:snail" title="Low Power Mode" style="--mdc-icon-size: 18px;"></ha-icon>`;
-        }
-            
-        newContent = theItem.value.replace(/[↘↗→ⅎ🐌⚠]/g, '').trim();
-        
-        let weatherAlert = ``;
-        if(theItem.value.includes("⚠"))
-            weatherAlert = `<ha-icon icon="mdi:alert-outline" title="Weather Alert" style="--mdc-icon-size: 18px;"></ha-icon>`;
-        
-          newContent = this.adjustStatusFields(newContent);
-            
-            let additionalArrow = "";
-            newCell.setAttribute('style', 'color: var(--energy-battery-out-color)');
-    
-                if(theItem.value === "↘" || theItem.value === "↗" || theItem.value === "→"){
-                    let tooltip = "Running Normally";
-                    if(theItem.value.includes("ⅎ"))
-                        tooltip = "Manually Forced Idle";
-                        
-                    additionalArrow = `<ha-icon icon="mdi:home-lightning-bolt" title=${tooltip} style="--mdc-icon-size: 22px;"></ha-icon>`;
-                    if(theItem.value.includes("ⅎ"))
-                        additionalArrow += `<ha-icon icon="mdi:hand-back-right-outline" title="${tooltip}" style="--mdc-icon-size: 22px;"></ha-icon>`;
-                        
-                    newCell.setAttribute('style', `color: ${theItem.color}`);
-                } else if(theItem.value === "↘ ⅎ" || theItem.value === "↗ ⅎ" || theItem.value === "→ ⅎ"){
-                    let tooltip = "Manually Forced Idle";
-                    additionalArrow = `<ha-icon icon="mdi:home-lightning-bolt" title=${tooltip} style="--mdc-icon-size: 22px;"></ha-icon>`;
-                    additionalArrow += `<ha-icon icon="mdi:hand-back-right-outline" title="${tooltip}" style="--mdc-icon-size: 22px;"></ha-icon>`;
-                    newCell.setAttribute('style', `color: ${theItem.color}`);
-                } else if(newContent === "Discharge" || newContent === "Export"){
-                        
-                        // use force discharge icon
-                        let tooltip = "Planned Export";
-                        if(theItem.value.includes("ⅎ"))
-                            tooltip = "Manual Forced Discharge";                        
-
-                        additionalArrow = `<ha-icon icon="mdi:battery-minus" style="" title="${tooltip}" class="icons" style="--mdc-icon-size: 22px;"></ha-icon>`;
-                        if(theItem.value.includes("ⅎ"))
-                            additionalArrow += `<ha-icon icon="mdi:hand-back-right-outline" title="${tooltip}" style="--mdc-icon-size: 22px;"></ha-icon>`;
-                        
-                } else if(newContent === "FreezeDis" || newContent === "FreezeChrg" || newContent === "HoldChrg" || newContent === "NoCharge" || newContent === "FreezeExp"){
-                        // use force discharge icon
-                        additionalArrow = '<ha-icon icon="mdi:battery-lock" style="" title="Charging Paused"></ha-icon>';
-                        newCell.setAttribute('style', `color: ${theItem.color}`);
-                } else if(newContent === "Charge" || newContent === "Alert Charge"){
-                    let tooltip = "Planned Charge";
-                    
-                    if(theItem.value.includes("ⅎ"))
-                        tooltip = "Manual Forced Charge";
-                    
-                    additionalArrow = `<ha-icon icon="mdi:battery-charging-100" title="${tooltip}" style="--mdc-icon-size: 22px;"></ha-icon>`;
-                    //if(theItem.value.includes("⚠"))
-                    //    additionalArrow += `<ha-icon icon="mdi:alert-outline" title="${tooltip}" style="--mdc-icon-size: 18px;"></ha-icon>`;
-                    if(theItem.value.includes("ⅎ"))
-                        additionalArrow += `<ha-icon icon="mdi:hand-back-right-outline" title="${tooltip}" style="--mdc-icon-size: 22px;"></ha-icon>`;
-                    newCell.setAttribute('style', 'color: var(--energy-battery-in-color)');                    
-                } else if(newContent === "Both"){
-                    additionalArrow = '<ha-icon icon="mdi:battery-charging-100" style="color: var(--energy-battery-in-color); --mdc-icon-size: 22px;" title="Planned Charge" class="icons"></ha-icon><ha-icon icon="mdi:battery-minus" style="color: var(--energy-battery-out-color);" title="Planned Export" class="icons"></ha-icon>';
-                } else if(newContent === "Both-Idle" || newContent === "Both-Chg" || newContent === "Both-Dis" || newContent === "Both-Dis-Snail"){
-                    let houseColor = "#000000";
-                    if(this.getLightMode(darkMode))
-                        houseColor = "#FFFFFF";
-                            
-                    this.getLightMode(darkMode)
-                    additionalArrow = `<ha-icon icon="mdi:home-lightning-bolt" style="color: ${houseColor}" title="Idle" style="--mdc-icon-size: 22px;"></ha-icon><ha-icon icon="mdi:battery-minus" style="color: var(--energy-battery-out-color);" title="Planned Export" class="icons"></ha-icon>`;
-                    if(newContent === "Both-Dis-Snail")
-                        additionalArrow += `<ha-icon icon="mdi:snail" title="Low Power Mode" style="--mdc-icon-size: 18px;"></ha-icon>`;
-                }
-                
-          newCell.innerHTML = `<div class="iconContainer">${weatherAlert}${additionalArrow}${snail}</div>`;
-          
-    } else if(column === "limit-column"){
-
-        if(theItem.value.replace(/\s/g, '').length > 0){
-            
-            let debugSVG = ``;
-            let debugString = theItem.value;
-            if (theItem.value.includes("(") || theItem.value.includes(")")) {
-                const match = theItem.value.match(/(\d+)\s*\((\d+(?:\.\d+)?)\)/);
-                
-                // match[1]
-                
-                if(this.config.debug_columns !== undefined && this.config.debug_columns.indexOf(column) > -1){
-                    if(match[1] != match[2]){
-                        debugSVG = `<svg version="1.1" width="26" height="26" id="limitSVG">
-                            <circle cx="13" cy="13" r="11" stroke="#2a3240" stroke-width="1" stroke-dasharray="5,3" fill="#e1e1e1"/>
-                            <text class="pill" x="13" y="14" dominant-baseline="middle" text-anchor="middle" fill="#2a3240" font-size="10">${match[2]}</text>
-                            </svg>`;
-                    }
-                }
-                debugString = match[1];
-                //console.log('Match: ' + match);
-            }
-            
-            const mainSVG = `<svg version="1.1" width="26" height="26" id="limitSVG">
-                    <circle cx="13" cy="13" r="11" stroke="#2a3240" stroke-width="2" fill="#e1e1e1"/>
-                    <text class="pill" x="13" y="14" dominant-baseline="middle" text-anchor="middle" fill="#2a3240" font-size="10" font-weight="bold">${debugString}</text>
-                    </svg>`;
-
-            newCell.innerHTML = `
-            
-                <div class="iconContainer">
-                    ${mainSVG} ${debugSVG}
-                </div>`;
-        
-        }
-        
-    } else if (column === "import-column" || column === "export-column") {
-        
-        // manage debug price pills appropriately
-        // debug_prices_only | true | false
-        
-        if ((theItem.value.includes("(") || theItem.value.includes(")")) && this.config.debug_columns !== undefined && this.config.debug_columns.indexOf(column) > -1) {
-            // if debug prices are present based on ( ) search
-            // AND YAML config has debug_columns
-            // AND YAML config has specific column for debug_columns
-            // THEN SHOW THE DEBUG
-            
-            let newPills = "";
-            const hasBoldTags = /<b>.*?<\/b>/.test(theItem.value);
-            const hasItalicTags = /<i>.*?<\/i>/.test(theItem.value);
-            let contentWithoutTags = theItem.value.replace(/<b>(.*?)<\/b>/g, '$1');
-            contentWithoutTags = contentWithoutTags.replace(/<i>(.*?)<\/i>/g, '$1');
-            
-            // TEST
-            //contentWithoutTags = "-1.23? ⚖ (-3.45)";
-            
-            
-            let priceStrings;
-            if(this.config.debug_prices_only === true){
-                // force debug price pill only
-                priceStrings = this.getPricesFromPriceString(contentWithoutTags, hasBoldTags, hasItalicTags, true);
-                newCell.innerHTML = '<div class="iconContainer">' + this.getTransformedCostToPill({"value":priceStrings[1], "color":theItem.color}, darkMode) + '</div>';
-            
-                
-            } else {
-                priceStrings = this.getPricesFromPriceString(contentWithoutTags, hasBoldTags, hasItalicTags, false);
-    
-                    if(this.config.stack_pills === false){
-                        newCell.innerHTML = '<div class="iconContainer">' + this.getTransformedCostToPill({"value":priceStrings[0], "color":theItem.color}, darkMode) 
-                        + this.getTransformedCostToPill({"value":priceStrings[1], "color":theItem.color}, darkMode) 
-                        + '</div>';
-                    } else {
-                        newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill({"value":priceStrings[0], "color":theItem.color}, darkMode) + '</div>';
-                        newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill({"value":priceStrings[1], "color":theItem.color}, darkMode) + '</div>';
-                        newCell.innerHTML = '<div class="multiPillContainer">' + newPills + '</div>';                        
-                    }
-            }
-            
-        } else if(theItem.value.includes("(") || theItem.value.includes(")")){
-
-            const hasBoldTags = /<b>.*?<\/b>/.test(theItem.value);
-            const hasItalicTags = /<i>.*?<\/i>/.test(theItem.value);
-           let contentWithoutTags = theItem.value.replace(/<b>(.*?)<\/b>/g, '$1');
-            contentWithoutTags = contentWithoutTags.replace(/<i>(.*?)<\/i>/g, '$1');
-            // TEST
-            //contentWithoutTags = "-1.23? ⚖ (-3.45)";
-            
-           let priceStrings = this.getPricesFromPriceString(contentWithoutTags, hasBoldTags, hasItalicTags, this.config.debug_prices_only);
-           
-           newCell.innerHTML = '<div class="iconContainer">' + this.getTransformedCostToPill({"value":priceStrings[0], "color":theItem.color}, darkMode) + '</div>';
-            
-        } else {
-
-            newCell.innerHTML = '<div class="iconContainer">' + this.getTransformedCostToPill(theItem, darkMode) + '</div>';
-        }
-
-    } else if(column === "import-export-column"){
-        
-        let newPills = "";
-        let newPillsNoContainer = "";
-        theItem.forEach((item, index) => {
-            
-            const hasBoldTags = /<b>.*?<\/b>/.test(item.value);
-            const hasItalicTags = /<i>.*?<\/i>/.test(item.value);
-            let contentWithoutTags = item.value.replace(/<b>(.*?)<\/b>/g, '$1');
-            contentWithoutTags = contentWithoutTags.replace(/<i>(.*?)<\/i>/g, '$1');
-            let priceStrings;
-            
-            if(this.config.debug_prices_only === true){
-                // force debug price pill only
-                
-                priceStrings = this.getPricesFromPriceString(contentWithoutTags, hasBoldTags, hasItalicTags, true);
-                newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill({"value": priceStrings[1], "color": item.color}, darkMode) + '</div>';
-                newPillsNoContainer += this.getTransformedCostToPill({"value": priceStrings[1], "color": item.color}, darkMode);
-
-            } else {
-                
-                let numberOfPrices = theItem.length;
-                
-                
-                newPills += '<div style="height: 26px; align-items: center;">' + this.getTransformedCostToPill(item, darkMode) + '</div>';
-                newPillsNoContainer += this.getTransformedCostToPill(item, darkMode);
-            }
-            
-        });
-        
-        if(this.config.stack_pills === false){
-            newCell.innerHTML = '<div class="iconContainer">' + newPillsNoContainer + '</div>';
-        } else {
-        
-            newCell.innerHTML = '<div class="multiPillContainer">' + newPills + '</div>';
-            
-        }
-
-    }  
-    
-    // make time column tap/clickable for override pop up
-    
-    const columnsToReturn = this.config.columns;
-    const optionsColumnPresent = (columnsToReturn.includes('options-popup-column') || columnsToReturn.includes('options-column'));
-    if(column === "time-column" && !optionsColumnPresent) {
-        newCell.style.cursor = 'pointer';
-        for (const forceEntity of this.getOverrideEntities()) {
-            const settings = this.getArrayForEntityForceStates(this._hass.states[forceEntity.entityName]);
-            const isActive = settings.includes(this.getTimeframeForOverride(timestamp.value));
-            if(isActive && isAllowed){
-                newCell.style.color = "rgb(58, 238, 133)";
-                break;
-            }
-        }         
-        newCell.addEventListener('click', () => {
-            this.createPopUpForOverrides(this.getTimeframeForOverride(timestamp.value), timestamp, isAllowed);
-        });        
-    }
-    
-
-      return newCell;
-  }
-  
- 
   
   convertConditionToIcon(condition) {
       let icon = "cloud-question";
