@@ -1,4 +1,6 @@
-![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/pacemaker82/predbat-table-card/total) ![GitHub Downloads (all assets, latest release)](https://img.shields.io/github/downloads/pacemaker82/predbat-table-card/latest/total)
+![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/pacemaker82/predbat-table-card/total?label=Total%20Downloads)
+ ![GitHub Downloads (all assets, latest release)](https://img.shields.io/github/downloads/pacemaker82/predbat-table-card/latest/total?label=Latest%20Version)
+
 
 # Predbat-Table-Card
 If you're using the excellent [Predbat](https://github.com/springfall2008/batpred) integration in Home Assistant, this custom table card for the Predbat plan maybe for you.
