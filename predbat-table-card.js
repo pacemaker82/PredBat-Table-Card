@@ -1182,15 +1182,25 @@ getTimeframeForOverride(timeString) {
       // 100✎ →
 
         const prefix = this.config.entity.match(/^[^.]+/)[0];      
+        const versionEntity = this._hass.states?.[`update.${prefix}_version`];
+        const installedVersionRaw = versionEntity?.attributes?.installed_version || '';
+        const installedVersion = installedVersionRaw.startsWith('v')
+          ? installedVersionRaw
+          : (installedVersionRaw ? `v${installedVersionRaw}` : '');
+        const allowManualSoc = installedVersion &&
+          (installedVersion === "v8.29.7" || this.isVersionGreater(installedVersion, "v8.29.7"));
       
         const forceEntityArray = [
           `select.${prefix}_manual_demand`,
           `select.${prefix}_manual_charge`,
           `select.${prefix}_manual_export`,
           `select.${prefix}_manual_freeze_charge`,
-          `select.${prefix}_manual_freeze_export`,
-          `select.${prefix}_manual_soc`
+          `select.${prefix}_manual_freeze_export`
         ];
+
+        if (allowManualSoc) {
+          forceEntityArray.push(`select.${prefix}_manual_soc`);
+        }
                 
         const titleMap = {
           demand: "Force Manual Demand",
@@ -1270,7 +1280,7 @@ getTimeframeForOverride(timeString) {
     
     const titleBox = document.createElement('div');
     titleBox.style.color = 'var(--text-primary-color)';
-    titleBox.innerHTML = timeForSelectOverride;
+    titleBox.innerHTML = "Target SoC for " + timeForSelectOverride;
     titleBox.style.width = '100%';
     titleBox.style.display = 'flex';
     titleBox.style.justifyContent = 'center';   // horizontal center
@@ -1306,16 +1316,6 @@ getTimeframeForOverride(timeString) {
     inputWrapper.style.marginBottom = '16px';
     const inputId = 'predbat-soc-target-input';
 
-    const inputLabel = document.createElement('label');
-    const inputLabelId = 'predbat-soc-target-label';
-    inputLabel.id = inputLabelId;
-    inputLabel.style.color = 'var(--text-primary-color)';
-    inputLabel.style.fontSize = '14px';
-    inputLabel.style.textShadow = '1px 1px 1px black';
-    inputLabel.textContent = 'Target SoC';
-    inputLabel.htmlFor = inputId;
-    inputLabel.setAttribute('for', inputId);
-
     const inputElement = document.createElement('input');
     inputElement.type = 'number';
     inputElement.min = '0';
@@ -1324,19 +1324,17 @@ getTimeframeForOverride(timeString) {
     inputElement.name = 'predbat_soc_target';
     inputElement.value = defaultSocValue;
     inputElement.id = inputId;
-    inputElement.setAttribute('aria-labelledby', inputLabelId);
     inputElement.style.padding = '8px';
     inputElement.style.borderRadius = '4px';
     inputElement.style.border = '1px solid var(--text-primary-color)';
     inputElement.style.background = 'rgba(255, 255, 255, 0.1)';
     inputElement.style.color = 'var(--text-primary-color)';
 
-    inputWrapper.appendChild(inputLabel);
     inputWrapper.appendChild(inputElement);
     modalBox.appendChild(inputWrapper);
 
     const saveButton = document.createElement('button');
-    saveButton.textContent = 'Save';
+    saveButton.textContent = 'Override';
     saveButton.style.padding = '10px 16px';
     saveButton.style.borderRadius = '6px';
     saveButton.style.border = '1px solid var(--text-primary-color)';
