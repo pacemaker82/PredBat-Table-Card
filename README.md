@@ -279,7 +279,7 @@ Using a combination of `columns` and `row_limit` you can show a mini Predbat pla
 
 Use `font_size` to customise the size of the plan even more on your dashboard.
 
-Use `path_to_click` to enable your mini plan card to click through to another dashboard showing the full plan.
+Use `path_for_click` to enable your mini plan card to click through to another dashboard showing the full plan.
 
 Example YAML: 
 
@@ -299,7 +299,7 @@ font_size: 13
 old_skool_columns:
   - state-column
 hide_last_update: true
-path_to_click: /my-dashboard/predbat-plan
+path_for_click: /my-dashboard/predbat-plan
 ```
 
 ## Using the Options Columns
