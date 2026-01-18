@@ -409,7 +409,21 @@ class PredbatTableCard extends HTMLElement {
     //this.attachShadow({ mode: 'open' });
     this.forecast = [];
     this.unsubscribe = null;
+    this._renderErrorMessage = null;
   }    
+
+  renderError(message) {
+    const errorCard = document.createElement("hui-error-card");
+    errorCard.setConfig({
+      type: "error",
+      error: message,
+      origConfig: this.config,
+    });
+    this.innerHTML = "";
+    this.appendChild(errorCard);
+    this.content = null;
+    this._renderErrorMessage = message;
+  }
     
   // Whenever the state changes, a new `hass` object is set. Use this to
   // update your content.    
@@ -429,9 +443,27 @@ class PredbatTableCard extends HTMLElement {
     const oldHass = this._hass;
     this._hass = hass;
     
-    const entityId = this.config.entity;
+    const entityId = this.config?.entity;
+    if (!entityId) {
+      this.renderError("Predbat HTML entity is not set in the card configuration.");
+      return;
+    }
+    const currentEntityState = hass.states?.[entityId];
+    if (!currentEntityState) {
+      this.renderError(`Predbat HTML entity "${entityId}" is not available. Hit REFRESH when it is...`);
+      return;
+    }
+    if (currentEntityState.state === "unavailable") {
+      this.renderError("Predbat HTML entity is not currently available. Hit REFRESH when it is...");
+      return;
+    }
+    const hadError = this._renderErrorMessage !== null;
+    this._renderErrorMessage = null;
     const switchEntityId = this.config.car_charge_switch; // optional
-    const prefix = this.config.entity.match(/^[^.]+/)[0];      
+    let prefix = this.config.entity.match(/^[^.]+/)[0];     
+    if(prefix === "sensor")
+      prefix = "predbat";
+
     const predbatActiveEntityId = `switch.${prefix}_active`;
     
     if(oldHass === undefined){
@@ -454,8 +486,8 @@ class PredbatTableCard extends HTMLElement {
         this._lastOnText = null;
         this.processAndRender(hass);
     } else {
-        const oldEntityUpdateTime = oldHass.states[entityId].last_updated;
-        const newEntityUpdateTime = hass.states[entityId].last_updated;
+        const oldEntityUpdateTime = oldHass.states?.[entityId]?.last_updated;
+        const newEntityUpdateTime = hass.states?.[entityId]?.last_updated;
         let carSwitchChanged = false;
         let activeSwitchChanged = false;
         let manualForceChanged = false;
@@ -492,7 +524,7 @@ class PredbatTableCard extends HTMLElement {
             }
         }        
         
-        if (oldEntityUpdateTime !== newEntityUpdateTime || carSwitchChanged || activeSwitchChanged || manualForceChanged) {
+        if (hadError || oldEntityUpdateTime !== newEntityUpdateTime || carSwitchChanged || activeSwitchChanged || manualForceChanged) {
             this.processAndRender(hass);
         }
     }
@@ -527,9 +559,11 @@ class PredbatTableCard extends HTMLElement {
     }
   }
   
- async processAndRender(hass){
+  async processAndRender(hass){
     
-    const prefix = this.config.entity.match(/^[^.]+/)[0];        
+    let prefix = this.config.entity.match(/^[^.]+/)[0];     
+    if(prefix === "sensor")
+      prefix = "predbat";      
     const predbatActiveEntityId = `switch.${prefix}_active`;
 
     if(this._lastOnText === null){
@@ -550,11 +584,16 @@ class PredbatTableCard extends HTMLElement {
 
     const entityId = this.config.entity;
     
-    const state = hass.states[entityId];
-    const stateStr = state ? state.state : "unavailable";
+    const state = hass.states?.[entityId];
+    if (!state) {
+      this.renderError(`Predbat HTML entity "${entityId}" is not currently available. REFRESH when it is...`);
+      return;
+    }
+    const stateStr = state.state;
 
     if (stateStr === "unavailable") {
-      throw new Error("Predbat HTML entity is not currently available. Hit REFRESH when it is...");
+      this.renderError("Predbat HTML entity is not currently available. Hit REFRESH when it is...");
+      return;
     }
     
     let columnsToReturn = this.config.columns;
@@ -946,7 +985,9 @@ isVersionGreater(a, b) {
 
 getTimeframeForOverride(timeString) {
 
-  const prefix = this.config.entity.match(/^[^.]+/)[0];
+  let prefix = this.config.entity.match(/^[^.]+/)[0];     
+  if(prefix === "sensor")
+    prefix = "predbat";
   
   const predBatVersion =
     this._hass.states[`update.${prefix}_version`].attributes.installed_version;
@@ -981,7 +1022,9 @@ getTimeframeForOverride(timeString) {
   
     createButtonForOverrides(entityObject, timeForSelectOverride, iconSize, textColor, hideLabel, isAllowed, fromPopup = false) {
       
-      const prefix = this.config.entity.match(/^[^.]+/)[0];        
+      let prefix = this.config.entity.match(/^[^.]+/)[0];     
+      if(prefix === "sensor")
+        prefix = "predbat";      
       const key = entityObject.entityName.replace(`select.${prefix}_manual_`, '');
 
       const iconOpacityOff = 1.00;
@@ -1185,7 +1228,9 @@ getTimeframeForOverride(timeString) {
       
       // 100✎ →
 
-        const prefix = this.config.entity.match(/^[^.]+/)[0];      
+        let prefix = this.config.entity.match(/^[^.]+/)[0];     
+        if(prefix === "sensor")
+          prefix = "predbat";    
         const versionEntity = this._hass.states?.[`update.${prefix}_version`];
         const installedVersionRaw = versionEntity?.attributes?.installed_version || '';
         const installedVersion = installedVersionRaw.startsWith('v')
@@ -1295,7 +1340,9 @@ getTimeframeForOverride(timeString) {
 
   createPopUpForSoCOverride(entityObject, timeForSelectOverride){
 
-    const prefix = this.config.entity.match(/^[^.]+/)[0];
+    let prefix = this.config.entity.match(/^[^.]+/)[0];     
+    if(prefix === "sensor")
+      prefix = "predbat";
     const inputEntity = `input_number.${prefix}_manual_soc_value`;
     const entityState = this._hass.states?.[inputEntity];
     const defaultSocValue = entityState?.state ?? '';
@@ -1634,7 +1681,9 @@ getTimeframeForOverride(timeString) {
       
         let newCell = document.createElement('td');
         let newContent = (typeof theItem?.value === 'string') ? theItem.value.trim() : theItem?.value ?? '';
-        const prefix = this.config.entity.match(/^[^.]+/)[0];
+        let prefix = this.config.entity.match(/^[^.]+/)[0];     
+        if(prefix === "sensor")
+          prefix = "predbat";
         
         let debugValue, rawValue;
         
@@ -2943,64 +2992,66 @@ convertTimeStampToFriendly(timestamp){
   getArrayDataFromHTML(html, hassDarkMode) {
       
       // Define column headers and corresponding classes
-  const headerClassesArray = [
-      'time-column',
-      'import-column',
-      'export-column',
-      'state-column',
-      'limit-column',
-      'pv-column',
-      'load-column',
-      'soc-column',
-      'cost-column',
-      'total-column'
-    ];  
-    
+    const headerClassesArray = [
+        'time-column',
+        'import-column',
+        'export-column',
+        'state-column',
+        'limit-column',
+        'pv-column',
+        'load-column',
+        'soc-column',
+        'cost-column',
+        'total-column'
+      ];  
+      
     let totalCostCalculated = 0;
+      
+    // Create a dummy element to manipulate the HTML
+    const dummyElement = document.createElement('div');
+    dummyElement.innerHTML = html;
     
-      // Create a dummy element to manipulate the HTML
-      const dummyElement = document.createElement('div');
-      dummyElement.innerHTML = html;
+    // Find all <tr> elements in the table body
+    const trElements = dummyElement.querySelectorAll('tbody tr');
+        
+    // Loop through each <tr> element
     
-        // Find all <tr> elements in the table body
-        const trElements = dummyElement.querySelectorAll('tbody tr');
-        
-        // Loop through each <tr> element
-        
-        let rowCount = 0;
-        
-        const newDataObject = [];
-        
-        let currentExportRate;
-        let currentExportColor;
-        
-        let firstRowData = 0;
-        
-        /*
-        const str = "1.79 (0.75)";
+    let rowCount = 0;
+    
+    const newDataObject = [];
+    
+    let currentExportRate;
+    let currentExportColor;
+    
+    let firstRowData = 0;
+    
+    /*
+    const str = "1.79 (0.75)";
 
-        // Step 1: Use a regular expression to find all float numbers
-        const floatRegex = /-?\d+(\.\d+)?/g; // This regex matches positive and negative floats
-        const matches = str.match(floatRegex); // Get an array of matches
+    // Step 1: Use a regular expression to find all float numbers
+    const floatRegex = /-?\d+(\.\d+)?/g; // This regex matches positive and negative floats
+    const matches = str.match(floatRegex); // Get an array of matches
+    
+    // Step 2: Convert the matches to floating-point numbers
+    const floats = matches.map(match => parseFloat(match));
+    
+    // Step 3: Loop through each float and do something with it
+    floats.forEach(float => {
+        console.log(float); // Here you can replace this line with whatever you want to do with each float
+    });*/
         
-        // Step 2: Convert the matches to floating-point numbers
-        const floats = matches.map(match => parseFloat(match));
-        
-        // Step 3: Loop through each float and do something with it
-        floats.forEach(float => {
-            console.log(float); // Here you can replace this line with whatever you want to do with each float
-        });*/
-        
-        trElements.forEach((trElement, index) => {
-            if(firstRowData === 0){
-                const numberOfChildren = trElement.children.length;
-                
-                //detect if row data is actual table data not metadata. If children <td> is greater than 2
-                if(numberOfChildren > 2){
-                    firstRowData = index;
-                }
+    trElements.forEach((trElement, index) => {
+        if(firstRowData === 0){
+            const numberOfChildren = trElement.children.length;
+            
+            //detect if row data is actual table data not metadata. If children <td> is greater than 2
+            if(numberOfChildren > 2){
+                firstRowData = index;
             }
-        }); 
+        }
+    }); 
+
+    console.log(firstRowData);
         
         let isCostReset = false;
         let currentCost = 0;
@@ -3059,7 +3110,7 @@ convertTimeStampToFriendly(timestamp){
                 
                 // Loop through each <td> element inside the current <tr>
                 tdElements.forEach((tdElement, tdIndex) => {
-                    
+      
                     const userResetFlag = this.config.reset_day_totals;
                     if(tdIndex === 0 && tdElement.innerHTML.includes("00:00") && userResetFlag)
                         isCostReset = true;
