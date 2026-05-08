@@ -2280,15 +2280,16 @@ getTimeframeForOverride(timeString) {
                     let condition = theItem.value.condition;
                     if(condition === "partlycloudynight")
                         condition = "partlycloudy";
-                    const lang = this._hass.language;
-                    const key = `component.weather.entity_component._.state.${condition}`;
-                    
-                    const readableCondition = this._hass.resources[lang]?.[key] || condition;            
+
+                    const weatherEntity = this._hass.states[this.config.weather_entity];
+                    const readableCondition =
+                        this._hass.formatEntityState?.(weatherEntity, condition) ||
+                        this._hass.localize?.(`component.weather.entity_component._.state.${condition}`) ||
+                        condition;
                     
                     let weatherIcon = this.convertConditionToIcon(theItem.value.condition);
                     //const readableCondition = this._hass.localize(`component.weather.state._.${theItem.value.condition}`);
                     
-                    const weatherEntity = this._hass.states[this.config.weather_entity];
                     const tempUnit = weatherEntity?.attributes?.temperature_unit || this._hass.config.unit_system.temperature;
         
                     cellResponseArray.push(`<div class="iconContainer"><ha-icon icon="mdi:${weatherIcon}" title="${readableCondition}, ${theItem.value.temperature}${tempUnit}"></ha-icon></div>`);
