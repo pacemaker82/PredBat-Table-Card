@@ -634,7 +634,8 @@ class PredbatTableCard extends HTMLElement {
     dataArray.forEach((item, index) => {
         
         let newRow = document.createElement('tr');
-        
+		this._attachRowSelection(newRow, item, index);
+
         let isMidnight = false;
         let currentCost;
         columnsToReturn.forEach((column, columnIndex) => { // Use arrow function here
@@ -3706,6 +3707,424 @@ convertTimeStampToFriendly(timestamp){
     
       return lightenedHexColor;
     }
+
+	/* =============================================================================
+ * Predbat Table Card — Multi-row select + bulk override  (drop-in patch)
+ * =============================================================================
+ *
+ * WHAT THIS ADDS
+ *   • Long-press (~400ms) any plan row to enter "selection mode".
+ *   • Keep your finger/mouse down and swipe up or down to select a range of rows.
+ *   • Release to open a bulk-override modal showing the day/time range + slot
+ *     count, with one button per override (Demand / Charge / Export /
+ *     Freeze Charge / Freeze Export). Tapping a button applies it to every
+ *     eligible selected slot.
+ *   • A short tap still does exactly what it does today (opens the single-slot
+ *     popup), so nothing existing breaks.
+ *
+ * HOW TO DEPLOY  (two edits to predbat-table-card.js)
+ *
+ *   1) Paste EVERYTHING below the "=== METHODS ===" line into the
+ *      PredbatTableCard class — just before the final closing brace "}" of the
+ *      class (i.e. immediately above the line
+ *      `customElements.define("predbat-table-card", PredbatTableCard);`).
+ *
+ *   2) In processAndRender(), inside the main data loop, add ONE line.
+ *      Find this (it's the per-row creation inside dataArray.forEach):
+ *
+ *          dataArray.forEach((item, index) => {
+ *
+ *              let newRow = document.createElement('tr');
+ *
+ *      and add the call directly under it so it becomes:
+ *
+ *          dataArray.forEach((item, index) => {
+ *
+ *              let newRow = document.createElement('tr');
+ *              this._attachRowSelection(newRow, item, index);   // <-- ADD THIS
+ *
+ * That's it. No YAML changes. Works with the existing time-column tap and the
+ * options-popup-column / options-column.
+ *
+ * NOTE ON TOUCH: long-press-then-drag needs the browser to stop scrolling once
+ * selection begins. Because the long-press only fires after the finger has been
+ * held still (any move >10px before it fires aborts it), no scroll is in
+ * progress when we lock, so setting touch-action:none on the table then takes
+ * effect for the drag. If a particular device still fights it, that's the cue
+ * to fall back to a dedicated drag-handle column.
+ * ===========================================================================*/
+
+
+  _selLazyInit() {
+    if (!this._selected) this._selected = new Set();          // keys = timeframe strings, e.g. "Sat 14:00"
+    if (this._dragOccurred === undefined) this._dragOccurred = false;
+    if (this._isSelecting === undefined) this._isSelecting = false;
+  }
+
+  // Called once per data row from processAndRender. Stamps identity + wires
+  // the long-press/drag handlers. Divider/total rows never call this, so
+  // elementFromPoint hit-testing on 'tr[data-slot-key]' naturally ignores them.
+  _attachRowSelection(row, item, index) {
+    this._selLazyInit();
+
+    const label = item && item["time-column"] && item["time-column"].value;
+    if (!label) return;
+
+    // canonical key the manual_* select entities expect ("Sat 14:00" or "14:00:00")
+    let key;
+    try { key = this.getTimeframeForOverride(label); } catch (_) { key = null; }
+    if (!key) return;
+
+    let allowed = false;
+    try {
+      allowed = this.checkRowIsAllowedForOverride(this.getOverrideEntities(), key, index);
+    } catch (_) { allowed = false; }
+
+    row.dataset.slotKey = key;
+    row.dataset.slotLabel = label;
+    row.dataset.allowed = allowed ? '1' : '0';
+    row.style.userSelect = 'none';
+    row.style.webkitUserSelect = 'none';
+
+    row.addEventListener('pointerdown', (e) => this._onRowPointerDown(e, row));
+    row.addEventListener('pointermove', (e) => this._onRowPointerMove(e, row), { passive: false });
+    row.addEventListener('pointerup',   (e) => this._onRowPointerUp(e, row));
+    row.addEventListener('pointercancel', (e) => this._onRowPointerUp(e, row));
+
+    // Capture-phase click swallow: after a drag, kill the trailing click so the
+    // existing single-slot popup (bound on the <td>) doesn't also fire.
+    row.addEventListener('click', (e) => {
+      if (this._dragOccurred) {
+        e.stopPropagation();
+        e.preventDefault();
+        this._dragOccurred = false;
+      }
+    }, true);
+  }
+
+  _onRowPointerDown(e, row) {
+    if (e.button !== undefined && e.button !== 0) return; // primary / touch only
+    this._selLazyInit();
+
+    this._pointerStart = { x: e.clientX, y: e.clientY, id: e.pointerId, row };
+    this._dragOccurred = false;
+    this._isSelecting = false;
+
+    clearTimeout(this._lpTimer);
+    this._lpTimer = setTimeout(() => {
+      // Long-press fired: enter selection mode.
+      this._isSelecting = true;
+      this._dragOccurred = true; // ensures the eventual click is swallowed
+      if (navigator.vibrate) { try { navigator.vibrate(15); } catch (_) {} }
+
+      // Snapshot current row order straight from the DOM (document order).
+      this._orderedKeys = [...this.content.querySelectorAll('tr[data-slot-key]')]
+        .map(r => r.dataset.slotKey);
+
+      this._anchorKey = row.dataset.slotKey;
+      this._selected.clear();
+      this._setScrollLock(true);
+      try { row.setPointerCapture(this._pointerStart.id); } catch (_) {}
+      this._applyRangeTo(row.dataset.slotKey);
+    }, 400);
+  }
+
+  _onRowPointerMove(e, row) {
+    if (!this._pointerStart) return;
+
+    if (!this._isSelecting) {
+      // Moved before the long-press fired -> treat as scroll/tap, abort the press.
+      const dx = Math.abs(e.clientX - this._pointerStart.x);
+      const dy = Math.abs(e.clientY - this._pointerStart.y);
+      if (dx > 10 || dy > 10) clearTimeout(this._lpTimer);
+      return;
+    }
+
+    e.preventDefault(); // stop the page scrolling while extending the selection
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const overRow = el && el.closest && el.closest('tr[data-slot-key]');
+    if (overRow) this._applyRangeTo(overRow.dataset.slotKey);
+  }
+
+  _onRowPointerUp(e, row) {
+    clearTimeout(this._lpTimer);
+    const wasSelecting = this._isSelecting;
+    this._isSelecting = false;
+    this._pointerStart = null;
+    this._setScrollLock(false);
+    try { row.releasePointerCapture(e.pointerId); } catch (_) {}
+
+    if (wasSelecting) {
+      this._dragOccurred = true; // swallow the trailing click
+      if (this._selected && this._selected.size > 0) this._openBulkOverrideModal();
+    }
+  }
+
+  // Recompute the contiguous range between the anchor and the current row,
+  // then sync the highlight to match.
+  _applyRangeTo(key) {
+    const order = this._orderedKeys || [];
+    const a = order.indexOf(this._anchorKey);
+    const b = order.indexOf(key);
+    if (a === -1 || b === -1) return;
+
+    const lo = Math.min(a, b);
+    const hi = Math.max(a, b);
+    const next = new Set(order.slice(lo, hi + 1));
+
+    this.content.querySelectorAll('tr[data-slot-key]').forEach(r => {
+      const on = next.has(r.dataset.slotKey);
+      const isOn = r.dataset.pbSelected === '1';
+      if (on !== isOn) this._setRowSelected(r, on);
+    });
+
+    this._selected = next;
+  }
+
+  _setRowSelected(row, on) {
+    row.dataset.pbSelected = on ? '1' : '0';
+    // Inset tint overlays whatever the row/cell background is, in light or dark
+    // mode, and reuses the card's existing "active override" green.
+    row.querySelectorAll('td').forEach(td => {
+      td.style.boxShadow = on ? 'inset 0 0 0 9999px rgba(58, 238, 133, 0.22)' : '';
+    });
+  }
+
+  _clearSelection() {
+    if (this.content) {
+      this.content.querySelectorAll('tr[data-slot-key]').forEach(r => {
+        if (r.dataset.pbSelected === '1') this._setRowSelected(r, false);
+      });
+    }
+    if (this._selected) this._selected.clear();
+    this._anchorKey = null;
+    this._orderedKeys = null;
+  }
+
+  _setScrollLock(on) {
+    const tbl = this.content && this.content.querySelector('#predbat-table');
+    if (tbl) tbl.style.touchAction = on ? 'none' : '';
+  }
+
+  // "Sat 14:00 → Sun 02:30" — start of first slot to end of last slot (+30m).
+  _selectionRangeText() {
+    const rows = [...this.content.querySelectorAll('tr[data-slot-key]')]
+      .filter(r => this._selected.has(r.dataset.slotKey));
+    if (!rows.length) return '';
+
+    const firstLabel = rows[0].dataset.slotLabel;
+    const lastLabel = rows[rows.length - 1].dataset.slotLabel;
+
+    let endText = lastLabel;
+    try {
+      const d = this.getStringToDate(lastLabel);     // handles "Sat 14:00"
+      d.setMinutes(d.getMinutes() + 30);
+      const fmt = new Intl.DateTimeFormat('en-GB', {
+        weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false,
+      });
+      endText = fmt.format(d).replace(',', '');
+    } catch (_) { /* leave endText as the raw last label */ }
+
+    return `${firstLabel} \u2192 ${endText}`;
+  }
+
+  // Apply one override entity to every eligible selected slot.
+  // Mirrors createButtonForOverrides: read current list, fire 'off', then
+  // re-add the union (existing + newly selected). Sequenced with await so
+  // Predbat's select entity doesn't drop entries.
+  async _applyOverrideToSelection(entityObject) {
+    if (this._bulkApplying) return { applied: 0, total: this._selected.size, busy: true };
+    this._bulkApplying = true;
+    try {
+      const entityId = entityObject.entityName;
+      const stateObj = this._hass.states[entityId];
+      if (!stateObj) return { applied: 0, total: this._selected.size };
+
+      const allowedOpts = (stateObj.attributes && stateObj.attributes.options) || [];
+      const current = this.getArrayForEntityForceStates(stateObj)
+        .map(s => s.trim()).filter(Boolean);
+
+      const selectedKeys = [...this._selected];
+      const eligible = selectedKeys.filter(k => allowedOpts.includes(k));
+
+      const union = [...current];
+      for (const k of eligible) if (!union.includes(k)) union.push(k);
+
+      // Clear, then re-add the whole list (off == clear for these selects).
+      await this._hass.callService('select', 'select_option', {
+        entity_id: entityId, option: 'off',
+      });
+      for (const opt of union) {
+        await this._hass.callService('select', 'select_option', {
+          entity_id: entityId, option: opt,
+        });
+        await new Promise(r => setTimeout(r, 150));
+      }
+
+      return { applied: eligible.length, total: selectedKeys.length };
+    } finally {
+      this._bulkApplying = false;
+    }
+  }
+
+  _openBulkOverrideModal() {
+    // SoC excluded from bulk in v1 (per-slot value payload + its own popup).
+    const forceEntities = this.getOverrideEntities()
+      .filter(e => !e.entityName.endsWith('_manual_soc'));
+
+    const count = this._selected.size;
+    const rangeText = this._selectionRangeText();
+
+    const ctrl = this.openModal('predbat-bulk-overlay', (closeModal) => {
+      const fullClose = () => { this._clearSelection(); closeModal(); };
+
+      const modalBox = document.createElement('div');
+      modalBox.style.maxWidth = '380px';
+      modalBox.style.minWidth = '300px';
+
+      // --- header (title + close), matching the existing override popup ---
+      const headerRow = document.createElement('div');
+      headerRow.style.display = 'flex';
+      headerRow.style.flexDirection = 'column';
+      headerRow.style.alignItems = 'center';
+      headerRow.style.paddingBottom = '14px';
+
+      const titleBox = document.createElement('div');
+      titleBox.style.color = 'var(--text-primary-color)';
+      titleBox.textContent = `Apply to ${count} slot${count === 1 ? '' : 's'}`;
+      titleBox.style.fontSize = '16px';
+      titleBox.style.fontWeight = 'bold';
+      titleBox.style.textShadow = '1px 1px 1px black';
+
+      const subtitle = document.createElement('div');
+      subtitle.style.color = 'var(--text-primary-color)';
+      subtitle.style.opacity = '0.8';
+      subtitle.style.fontSize = '12px';
+      subtitle.style.marginTop = '4px';
+      subtitle.textContent = rangeText;
+
+      headerRow.appendChild(titleBox);
+      headerRow.appendChild(subtitle);
+
+      const closeBox = document.createElement('div');
+      closeBox.style.position = 'absolute';
+      closeBox.style.top = '5px';
+      closeBox.style.right = '5px';
+
+      const closeButton = document.createElement('ha-icon');
+      closeButton.setAttribute('title', 'Close');
+      closeButton.setAttribute('icon', 'mdi:close-circle-outline');
+      closeButton.style.cursor = 'pointer';
+      closeButton.style.color = 'var(--text-primary-color)';
+      closeButton.style.setProperty('--mdc-icon-size', '40px');
+      closeButton.id = 'modal-close-btn';
+      closeButton.addEventListener('click', fullClose);
+      closeBox.appendChild(closeButton);
+
+      modalBox.appendChild(closeBox);
+      modalBox.appendChild(headerRow);
+
+      // --- status line (feedback after applying) ---
+      const status = document.createElement('div');
+      status.style.minHeight = '16px';
+      status.style.fontSize = '12px';
+      status.style.textAlign = 'center';
+      status.style.color = 'rgb(58, 238, 133)';
+      status.style.marginBottom = '10px';
+
+      // --- action buttons ---
+      const buttonBox = document.createElement('div');
+      buttonBox.style.display = 'flex';
+      buttonBox.style.flexWrap = 'wrap';
+      buttonBox.style.justifyContent = 'center';
+      buttonBox.style.gap = '6px';
+
+      for (const ent of forceEntities) {
+        const opts = (this._hass.states[ent.entityName]
+          && this._hass.states[ent.entityName].attributes
+          && this._hass.states[ent.entityName].attributes.options) || [];
+        const eligible = [...this._selected].filter(k => opts.includes(k)).length;
+        const key = ent.entityName.replace(/^.*_manual_/, '');
+
+        const btn = document.createElement('div');
+        btn.style.display = 'flex';
+        btn.style.flexDirection = 'column';
+        btn.style.alignItems = 'center';
+        btn.style.justifyContent = 'flex-start';
+        btn.style.width = '64px';
+        btn.style.cursor = eligible > 0 ? 'pointer' : 'not-allowed';
+        btn.style.opacity = eligible > 0 ? '1' : '0.3';
+
+        const iconEl = document.createElement('ha-icon');
+        iconEl.setAttribute('icon', ent.entityIcon);
+        iconEl.setAttribute('title', ent.entityTitle);
+        iconEl.style.color = 'var(--text-primary-color)';
+        iconEl.style.setProperty('--mdc-icon-size', '40px');
+
+        const label = document.createElement('div');
+        label.textContent = key.replace(/_/g, ' ');
+        label.style.fontSize = '9px';
+        label.style.textTransform = 'uppercase';
+        label.style.color = 'var(--text-primary-color)';
+        label.style.textAlign = 'center';
+        label.style.marginTop = '2px';
+        label.style.lineHeight = '1.1';
+
+        const eligLabel = document.createElement('div');
+        eligLabel.textContent = `${eligible}/${count}`;
+        eligLabel.style.fontSize = '9px';
+        eligLabel.style.opacity = '0.7';
+        eligLabel.style.color = 'var(--text-primary-color)';
+        eligLabel.style.marginTop = '1px';
+
+        if (eligible > 0) {
+          btn.addEventListener('click', async () => {
+            status.textContent = 'Applying\u2026';
+            const res = await this._applyOverrideToSelection(ent);
+            if (res && res.busy) return;
+            status.textContent = (res.applied < res.total)
+              ? `Applied to ${res.applied} of ${res.total} (${res.total - res.applied} unavailable)`
+              : `Applied to ${res.applied} slot${res.applied === 1 ? '' : 's'}`;
+            setTimeout(fullClose, 900);
+          });
+        }
+
+        btn.appendChild(iconEl);
+        btn.appendChild(label);
+        btn.appendChild(eligLabel);
+        buttonBox.appendChild(btn);
+      }
+
+      modalBox.appendChild(buttonBox);
+      modalBox.appendChild(status);
+
+      const hint = document.createElement('div');
+      hint.style.fontSize = '11px';
+      hint.style.textAlign = 'center';
+      hint.style.color = 'var(--text-primary-color)';
+      hint.style.opacity = '0.6';
+      hint.style.marginTop = '6px';
+      hint.textContent = 'Predbat re-runs before changes take effect.';
+      modalBox.appendChild(hint);
+
+      return modalBox;
+    });
+
+    // openModal's own backdrop-click / ESC just remove the overlay; make sure
+    // those paths also clear the selection highlight.
+    if (ctrl && ctrl.overlay) {
+      ctrl.overlay.addEventListener('click', (e) => {
+        if (e.target === ctrl.overlay) this._clearSelection();
+      });
+      const escClear = (e) => {
+        if (e.key === 'Escape') {
+          this._clearSelection();
+          document.removeEventListener('keydown', escClear);
+        }
+      };
+      document.addEventListener('keydown', escClear);
+    }
+  }	
 }
 
 customElements.define("predbat-table-card", PredbatTableCard);
