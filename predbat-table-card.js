@@ -1594,6 +1594,7 @@ getTimeframeForOverride(timeString) {
             friendlyText = friendlyText.replace('FrzExp', 'Charging Paused');
             friendlyText = friendlyText.replace('FrzChrg', 'Maintaining SoC'); //FreezeChrg
             friendlyText = friendlyText.replace('HoldChrg', 'Maintain SoC at Limit'); //HoldChrg
+            friendlyText = friendlyText.replace('HoldCar', 'Hold for Car');
             friendlyText = friendlyText.includes("NoCharge") ? friendlyText.replace('NoCharge','Charge to Limit') : friendlyText.replace('Charge', 'Planned Charge');
             friendlyText = friendlyText.replace('Discharge', 'Planned Export'); //Discharge
             friendlyText = friendlyText.replace(/Export|Exp/g, 'Planned Export'); // Exp or Export
@@ -2025,7 +2026,7 @@ getTimeframeForOverride(timeString) {
                         
                     } else {
                         
-                        stateText = theItem.value.replace(/[↘↗→ⅎ🐌⚠]/g, '').trim();
+                        stateText = theItem.value.replace(/[↘↗→ⅎ🐌⚠]/gu, '').trim();
                         stateText = this.adjustStatusFields(stateText);
                         if(this.config.use_friendly_states)
                             stateText = this.getFriendlyNamesForState(theItem.value);
@@ -2040,7 +2041,7 @@ getTimeframeForOverride(timeString) {
                         snail = `<ha-icon icon="mdi:snail" title="Low Power Mode" style="--mdc-icon-size: 18px;"></ha-icon>`;
                     }
                         
-                    stateText = theItem.value.replace(/[↘↗→ⅎ🐌⚠]/g, '').trim();
+                    stateText = theItem.value.replace(/[↘↗→ⅎ🐌⚠]/gu, '').trim();
                     
                     let weatherAlert = ``;
                     if(theItem.value.includes("⚠"))
@@ -2070,6 +2071,9 @@ getTimeframeForOverride(timeString) {
                             // use force discharge icon
                             additionalArrow = '<ha-icon icon="mdi:battery-lock" style="" title="Charging Paused"></ha-icon>';
                             newCell.setAttribute('style', `color: ${theItem.color}`);
+                    } else if(stateText === "HoldCar"){
+                            additionalArrow = '<ha-icon icon="mdi:car-electric" title="Hold for Car" style="--mdc-icon-size: 22px;"></ha-icon><ha-icon icon="mdi:arrow-right-thin" style="margin: 0 -2px;"></ha-icon>';
+                            newCell.setAttribute('style', 'color: var(--primary-text-color)');
                     } else if(stateText === "Charge" || stateText === "Alert Charge"){
                         let tooltip = "Planned Charge";
                         additionalArrow = `<ha-icon icon="mdi:battery-charging-100" title="${tooltip}" style="--mdc-icon-size: 22px;"></ha-icon>`;
@@ -2433,6 +2437,8 @@ getTimeframeForOverride(timeString) {
         newState = "Force Charge"
     if(status === "⚠Chrg")
         newState = "Alert Charge"
+    if(status === "🚗")
+        newState = "HoldCar";
     return newState;      
   }
   
