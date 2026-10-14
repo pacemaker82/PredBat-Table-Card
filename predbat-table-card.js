@@ -3126,6 +3126,13 @@ convertTimeStampToFriendly(timestamp){
                     if (bgColor && !bgColor.startsWith('#')) {
                         bgColor = `#${bgColor}`;
                     }
+                    // Predbat splits the import cell into a house rate and a car rate when a car slot is priced differently.
+                    // Show the house rate so the cell parses like any other.
+                    const houseRate = tdElement.querySelector('div[title^="House rate"]');
+                    if (houseRate) {
+                        tdElement.innerHTML = houseRate.innerHTML;
+                        bgColor = (houseRate.getAttribute('style') || '').match(/background-color:\s*(#[0-9A-Fa-f]{6})/)?.[1] || bgColor;
+                    }
                     
                     if(bgColor !== null){
                         if(bgColor.toUpperCase() === "#FFFFFF" && tdIndex != 1 && tdIndex != 2 && (this.config.old_skool !== true) && this.getLightMode(hassDarkMode) !== true)
